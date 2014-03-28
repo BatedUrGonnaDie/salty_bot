@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 import requests    #required install module
 import socket
 import threading
@@ -10,13 +11,11 @@ loop = 1
 limit = 0
 game = ''
 title = ''
+category = ''
+wr_time = ''
 destroy_loop = 0
 success = 0
 toobou = 1
-to = u'\u30c8'
-dash = u'\u30FC'
-bo = u'\u30DC'
-u = u'\u30A6'
 base_url = 'https://api.twitch.tv/kraken/'
 
 if exists('login.txt')==True:
@@ -70,17 +69,27 @@ def channel_check(channel):
         else:
             data_channel = data_stream['channel']
             global game
-            game = data_stream['game']
+            game = data_stream['game'].lower()
             global title
-            title = data_channel['status']
+            title = data_channel['status'].lower()
             print channel + '\n' + game + '\n' + title
+            global category
+            if title.find('any%') != -1:
+                category = 'any%'
+##            elif title.find('shines') != -1:
+##                category = title.split('shines')[0]
+##                category = category + 'shines'
+            else:
+                raw_input('Enter a category: ')
+            category = category.lower()
+            print category
             success = 0
 
 channel_check(channel)
 while success == 1:
     channel = raw_input('Enter a Valid Channel: ')
     channel_check(channel)
-    
+
 twitch_channel = '#'+channel
 raw_input('Hit Enter to Connect to IRC\n')
 irc_connect()
@@ -102,7 +111,9 @@ while loop == 1:
         global limit
         limit = limit + 1
         if limit < 20:
-            irc.send('PRIVMSG ' + twitch_channel + ' :' + response + '\r\n')
+            to_send = u'PRIVMSG ' + twitch_channel + u' :' + response + u'\r\n'
+            to_send = to_send.encode('utf-8')
+            irc.send(to_send)
         else:
             print 'Sending to quckly'
     
@@ -135,15 +146,19 @@ while loop == 1:
         print 'Pong\'d'
 
     if messages.find('!wr') != -1:
-        category = messages.split('!wr ')[-1]
-
-    if messages.find('!reset') != -1 and sender == 'channel':
+        if game == 'super mario sunshine':
+            if category == 'any%':
+                wr_time = u'1:19:34 by トーボウ'
+            if category == '100%' or category == '120 shines':
+                wr_time = u'3:20:xx by stelzig'
+        send_message(wr_time)
+            
+    if messages.find('!reset') != -1 and sender == channel:
         channel_check(channel)
-        
+
 ##    if messages.find('toobou') != -1:
 ##        if toobou == 1:
-##            response = u'I think you meant ' + to + dash + bo + u
-##            #response = response.encoding('utf-8')
+##            response = u'I think you mean トーボウ, #learnmoonrunes'
 ##            send_message(response)
 ##            toobou = 0
 ##            threading.timer(60).start()
