@@ -136,6 +136,10 @@ while loop == 1:
 
     if messages.find('!wr') != -1:
         category = messages.split('!wr ')[-1]
+
+    if messages.find('!reset') != -1 and sender == 'channel':
+        channel_check(channel)
+        
 ##    if messages.find('toobou') != -1:
 ##        if toobou == 1:
 ##            response = u'I think you meant ' + to + dash + bo + u
