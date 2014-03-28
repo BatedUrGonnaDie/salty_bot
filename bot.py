@@ -40,7 +40,6 @@ channel = raw_input('Enter Channel to Gather Info From and Join: ')
 irc = socket.socket()
 host = 'irc.twitch.tv'
 port = 6667
-twitch_channel = '#'+channel
 
 def irc_connect():
     irc.connect((host, port))
@@ -81,7 +80,8 @@ channel_check(channel)
 while success == 1:
     channel = raw_input('Enter a Valid Channel: ')
     channel_check(channel)
-
+    
+twitch_channel = '#'+channel
 raw_input('Hit Enter to Connect to IRC\n')
 irc_connect()
 time.sleep(2)
@@ -99,10 +99,10 @@ while loop == 1:
         break
 
     def send_message(response):
-        global queue
-        queue = queue + 1
-        if queue < 20:
-            irc.send('PRVMSG ' + twitch_channel + ' :' + response + '\r\n')
+        global limit
+        limit = limit + 1
+        if limit < 20:
+            irc.send('PRIVMSG ' + twitch_channel + ' :' + response + '\r\n')
         else:
             print 'Sending to quckly'
     
@@ -136,24 +136,14 @@ while loop == 1:
 
     if messages.find('!wr') != -1:
         category = messages.split('!wr ')[-1]
-        if game = 'super mario sunshine':
-            if category = 'any%'
-                response = '1:19:34 by ' + to + dash + bo + u
-                print response
-                send_message(response)
-            elif category = '100%':
-                response = '3:20:xx by stelzig'
-                print response
-                send_message(response)
-
-    if messages.find('toobou') != -1:
-        if toobou = 1:
-            response = 'I think you meant ' + to + dash + bo + u
-            send_message(response)
-            toobou = 0
-            threading.timer(60).start()
-            toobou = 1
-
+##    if messages.find('toobou') != -1:
+##        if toobou == 1:
+##            response = u'I think you meant ' + to + dash + bo + u
+##            #response = response.encoding('utf-8')
+##            send_message(response)
+##            toobou = 0
+##            threading.timer(60).start()
+##            toobou = 1
 
 #ideas to add: puns, league lookup
 
