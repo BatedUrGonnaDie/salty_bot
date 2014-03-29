@@ -4,6 +4,7 @@ import socket
 import threading
 import random
 import time
+import sys
 from os.path import exists
 from os import remove
 
@@ -44,7 +45,7 @@ def irc_connect():
     irc.connect((host, port))
     irc.send('PASS ' + password + '\r\n')
     irc.send('NICK ' + nick + '\r\n')
-    irc.send('JOIN ' + twitch_channel + '\r\n')
+    irc.send('JOIN ' + irc_channel + '\r\n')
 
 def limiter():  #from Phredd's irc bot
     global limit
@@ -53,7 +54,7 @@ def limiter():  #from Phredd's irc bot
 limiter()
 def toobou_limiter():
     global toobou
-    toobou = 0
+    toobou = 1
     threading.Timer(60,toobou_limiter).start()
 toobou_limiter()
 
@@ -94,7 +95,7 @@ while success == 1:
     channel = raw_input('Enter a Valid Channel: ')
     channel_check(channel)
 
-twitch_channel = '#'+channel
+irc_channel = '#'+channel
 raw_input('Hit Enter to Connect to IRC\n')
 irc_connect()
 time.sleep(2)
@@ -115,8 +116,9 @@ while loop == 1:
         global limit
         limit = limit + 1
         if limit < 20:
-            to_send = u'PRIVMSG ' + twitch_channel + u' :' + response + u'\r\n'
+            to_send = u'PRIVMSG ' + irc_channel + u' :' + response + u'\r\n'
             to_send = to_send.encode('utf-8')
+            print nick + ':' + response
             irc.send(to_send)
         else:
             print 'Sending to quckly'
@@ -125,7 +127,7 @@ while loop == 1:
     sender = messages.split('!')[0]
     sender = sender.split(':')[-1]
     message_body = messages.split(':')[-1]
-    print messages + '\n'
+    print sender + ':' + message_body
 
     if messages.find('jtv MODE #'+channel+' +o') != -1:
         print 'Mode change found.'
@@ -154,20 +156,18 @@ while loop == 1:
             if category == 'any%':
                 wr_time = u'1:19:34 by トーボウ'
             if category == '100%' or category == '120 shines':
-                wr_time = u'3:20:xx by stelzig'
+                wr_time = u'3:25:27 by stelzig'
         send_message(wr_time)
-            
-    if messages.find('!reset') != -1 and sender == channel:
-        channel_check(channel)
 
     if messages.find('toobou') != -1:
         if toobou == 1:
-            global toobou
             response = u'I think you mean トーボウ, #learnmoonrunes'
             send_message(response)
             toobou = 0
+        elif toobou == 0:
+            print 'Someone is trying to spam\n'
 
-    if message.find('!song') != -1:
+    if messages.find('!song') != -1:
         if game == 'osu!':
             np_song = 'z:\temp\streaming stuff\osunp\np.txt'
             if exists(np_song) == True:
@@ -175,5 +175,17 @@ while loop == 1:
                 song = fo.read()
                 response = 'Currently playing : ' + song
                 send_message(response)
+
+    if messages.find('!recheck') != -1 and sender == channel:
+        channel_check(channel)
+
+    if messages.find('!exit') != -1 and sender == channel:
+        irc.close()
+        loop = 2
+        exit()
+
+##    if messages.find('!restart') != -1 and sender == channel:
+##        irc.close()
+##        execlp('bot.py', '')
 #ideas to add: puns, league lookup
 
