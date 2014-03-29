@@ -119,7 +119,7 @@ while loop == 1:
         if limit < 20:
             to_send = u'PRIVMSG ' + irc_channel + u' :' + response + u'\r\n'
             to_send = to_send.encode('utf-8')
-            print nick + ':' + response
+            print nick + u': ' + response
             irc.send(to_send)
         else:
             print 'Sending to quckly'
@@ -128,7 +128,7 @@ while loop == 1:
     sender = messages.split('!')[0]
     sender = sender.split(':')[-1]
     message_body = messages.split(':')[-1]
-    print sender + ':' + message_body
+    print sender + ': ' + message_body
 
     if messages.find('jtv MODE #'+channel+' +o') != -1:
         print 'Mode change found.'
