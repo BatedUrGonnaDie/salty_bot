@@ -50,7 +50,12 @@ def limiter():  #from Phredd's irc bot
     global limit
     limit = 0
     threading.Timer(30,limiter).start()
-limiter()    
+limiter()
+def toobou_limiter():
+    global toobou
+    toobou = 0
+    threading.Timer(60,toobou_limiter).start()
+toobou_limiter()
 
 def channel_check(channel):
     url = 'https://api.twitch.tv/kraken/streams/'+channel
@@ -76,11 +81,10 @@ def channel_check(channel):
             global category
             if title.find('any%') != -1:
                 category = 'any%'
-##            elif title.find('shines') != -1:
-##                category = title.split('shines')[0]
-##                category = category + 'shines'
+            elif title.find('100%') != -1:
+                category = '100%'
             else:
-                raw_input('Enter a category: ')
+                category = raw_input('Enter a category: ')
             category = category.lower()
             print category
             success = 0
@@ -156,13 +160,20 @@ while loop == 1:
     if messages.find('!reset') != -1 and sender == channel:
         channel_check(channel)
 
-##    if messages.find('toobou') != -1:
-##        if toobou == 1:
-##            response = u'I think you mean トーボウ, #learnmoonrunes'
-##            send_message(response)
-##            toobou = 0
-##            threading.timer(60).start()
-##            toobou = 1
+    if messages.find('toobou') != -1:
+        if toobou == 1:
+            global toobou
+            response = u'I think you mean トーボウ, #learnmoonrunes'
+            send_message(response)
+            toobou = 0
 
+    if message.find('!song') != -1:
+        if game == 'osu!':
+            np_song = 'z:\temp\streaming stuff\osunp\np.txt'
+            if exists(np_song) == True:
+                fo = open(np_song, 'r')
+                song = fo.read()
+                response = 'Currently playing : ' + song
+                send_message(response)
 #ideas to add: puns, league lookup
 
