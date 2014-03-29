@@ -119,7 +119,6 @@ while loop == 1:
         if limit < 20:
             to_send = u'PRIVMSG ' + irc_channel + u' :' + response + u'\r\n'
             to_send = to_send.encode('utf-8')
-            print nick + u': ' + response
             irc.send(to_send)
         else:
             print 'Sending to quckly'
