@@ -7,6 +7,7 @@ import time
 import sys
 from os.path import exists
 from os import remove
+from os import execl
 
 loop = 1
 limit = 0
@@ -184,8 +185,5 @@ while loop == 1:
         loop = 2
         exit()
 
-##    if messages.find('!restart') != -1 and sender == channel:
-##        irc.close()
-##        execlp('bot.py', '')
 #ideas to add: puns, league lookup
 
