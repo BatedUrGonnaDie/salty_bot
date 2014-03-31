@@ -7,7 +7,8 @@ import time
 import sys
 from os.path import exists
 from os import remove
-from os import execl
+from os import environ
+environ['REQUESTS_CA_BUNDLE'] = 'c:\python27\lib\site-packages\certifi\cacert.pem'
 
 loop = 1
 limit = 0
@@ -53,11 +54,10 @@ def limiter():  #from Phredd's irc bot
     limit = 0
     threading.Timer(30,limiter).start()
 limiter()
+
 def toobou_limiter():
     global toobou
     toobou = 1
-    threading.Timer(60,toobou_limiter).start()
-toobou_limiter()
 
 def channel_check(channel):
     url = 'https://api.twitch.tv/kraken/streams/'+channel
@@ -172,8 +172,7 @@ while loop == 1:
             response = u'I think you mean トーボウ, #learnmoonrunes'
             send_message(response)
             toobou = 0
-        elif toobou == 0:
-            print 'Someone is trying to spam\n'
+            threading.Timer(60,toobou_limiter).start()
 
     if messages.find('!song') != -1:
         if game == 'osu!':
@@ -189,8 +188,9 @@ while loop == 1:
 
     if messages.find('!exit') != -1 and sender == channel:
         irc.close()
+        raw_input('Closing down.  Hit enter to conitnue.\n')
         loop = 2
-        exit()
+        sys.exit()
 
 #ideas to add: puns, league lookup
 
