@@ -28,7 +28,7 @@ if exists('login.txt')==True:
 else:
     fo = open('login.txt', 'w+')
     nick = raw_input('Bot Nick: ')
-    print 'Get oauth here (http://www.twitchapps.com/tmi/) if you do\'nt have one'
+    print 'Get oauth here (http://www.twitchapps.com/tmi/) if you don\'t have one'
     password = raw_input('Bot Password (Format:"oauth:xxxxx": ')
     fo.write(nick)
     fo.write('\n')
@@ -158,6 +158,14 @@ while loop == 1:
             if category == '100%' or category == '120 shines':
                 wr_time = u'3:25:27 by stelzig'
         send_message(wr_time)
+        
+    if messages.find('!leaderboards') != -1:
+        if game == 'super mario sunshine':
+            if category == 'any%':
+                response = 'http://www.bomch.us/Gw'
+            if category == '120 shines' or category == '100%':
+                response = 'http://bombch.us/HB'
+            send_message(response)
 
     if messages.find('toobou') != -1:
         if toobou == 1:
@@ -169,7 +177,7 @@ while loop == 1:
 
     if messages.find('!song') != -1:
         if game == 'osu!':
-            np_song = 'z:\temp\streaming stuff\osunp\np.txt'
+            np_song = 'np.txt' #have osu!np output to folder bot.py is in
             if exists(np_song) == True:
                 fo = open(np_song, 'r')
                 song = fo.read()
