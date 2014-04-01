@@ -5,10 +5,7 @@ import threading
 import random
 import time
 import sys
-from os.path import exists
-from os import remove
-from os import environ
-environ['REQUESTS_CA_BUNDLE'] = 'c:\python27\lib\site-packages\certifi\cacert.pem'
+import os
 
 loop = 1
 limit = 0
@@ -21,7 +18,7 @@ success = 0
 toobou = 1
 base_url = 'https://api.twitch.tv/kraken/'
 
-if exists('login.txt')==True:
+if os.path.exists('login.txt')==True:
     fo = open('login.txt', 'r')
     nick = fo.readline()
     password = fo.readline()
@@ -167,6 +164,20 @@ while loop == 1:
                 response = 'http://bombch.us/HB'
             send_message(response)
 
+    if messages.find('!addquote') != -1:
+        quote = messages_body
+        quote = quote.split('!addquote ')[-1]
+        fo = open('quotes review.txt', 'a+')
+        fo.write(quote)
+        fo.close()
+        response = 'Quote has been added to review list.'
+        send_message(response)
+
+    if messages.find('!quote') != -1:
+        quote_lines = sum(1 for line in open('quotes.txt', 'r'))
+        select_quote = random.randrange(1, quote_lines, 1)
+        print select_quote
+
     if messages.find('toobou') != -1:
         if toobou == 1:
             response = u'I think you mean トーボウ, #learnmoonrunes'
@@ -177,7 +188,7 @@ while loop == 1:
     if messages.find('!song') != -1:
         if game == 'osu!':
             np_song = 'np.txt' #have osu!np output to folder bot.py is in
-            if exists(np_song) == True:
+            if os.path.exists(np_song) == True:
                 fo = open(np_song, 'r')
                 song = fo.read()
                 response = 'Currently playing : ' + song
@@ -185,6 +196,9 @@ while loop == 1:
 
     if messages.find('!recheck') != -1 and sender == channel:
         channel_check(channel)
+
+    if messages.find('!restart') != -1 and sender == channel:
+        pass
 
     if messages.find('!exit') != -1 and sender == channel:
         irc.close()
