@@ -1,1 +1,3 @@
 *.txt
+exe/bot.py
+exe/cacert.pem
