@@ -2,6 +2,7 @@
 import requests    #required install module
 import socket
 import threading
+import Queue
 import random
 import time
 import sys
@@ -16,9 +17,10 @@ wr_time = ''
 destroy_loop = 0
 success = 0
 toobou = 1
-base_url = 'https://api.twitch.tv/kraken/'
+base_twitch_url = 'https://api.twitch.tv/kraken/'
+base_league_url = 'https://prod.api.pvp.net'
 
-if os.path.exists('login.txt')==True:
+if os.path.exists('login.txt') == True:
     fo = open('login.txt', 'r')
     nick = fo.readline()
     password = fo.readline()
@@ -165,7 +167,7 @@ while loop == 1:
             send_message(response)
 
     if messages.find('!addquote') != -1:
-        quote = messages_body
+        quote = message_body
         quote = quote.split('!addquote ')[-1]
         fo = open('quotes review.txt', 'a+')
         fo.write(quote)
@@ -176,7 +178,9 @@ while loop == 1:
     if messages.find('!quote') != -1:
         quote_lines = sum(1 for line in open('quotes.txt', 'r'))
         select_quote = random.randrange(1, quote_lines, 1)
-        print select_quote
+        quote = open('quotes.txt', 'r').readlines()
+        quote = quote[select_quote]
+        send_message(quote)
 
     if messages.find('toobou') != -1:
         if toobou == 1:
