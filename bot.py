@@ -14,6 +14,8 @@ game = ''
 title = ''
 category = ''
 wr_time = ''
+quote = ''
+previous_quote = ''
 destroy_loop = 0
 success = 0
 toobou = 1
@@ -121,6 +123,18 @@ while loop == 1:
             irc.send(to_send)
         else:
             print 'Sending to quckly'
+
+    def quote_retrieve():
+        global quote
+        quote_lines = sum(1 for line in open('quotes.txt', 'r'))
+        if quote_lines == 0:
+            quote = 'No quotes added.'
+        elif quote_lines == 1:
+            quote = open('quotes.txt', 'r').readline()
+        else:
+            select_quote = random.randrange(1, quote_lines, 1)
+            quote = open('quotes.txt', 'r').readlines()
+            quote = quote[select_quote]
     
     messages = irc.recv(4096)
     sender = messages.split('!')[0]
@@ -176,11 +190,10 @@ while loop == 1:
         send_message(response)
 
     if messages.find('!quote') != -1:
-        quote_lines = sum(1 for line in open('quotes.txt', 'r'))
-        select_quote = random.randrange(1, quote_lines, 1)
-        quote = open('quotes.txt', 'r').readlines()
-        quote = quote[select_quote]
+        while previous_quote == quote:
+            quote_retrieve()
         send_message(quote)
+        previous_quote = quote
 
     if messages.find('toobou') != -1:
         if toobou == 1:
@@ -196,7 +209,20 @@ while loop == 1:
                 fo = open(np_song, 'r')
                 song = fo.read()
                 response = 'Currently playing : ' + song
+                fo.close()
                 send_message(response)
+        else:
+            np_song = 'current_song.txt'
+            if os.path.exists(np_song) == True:
+                fo = open(np_song, 'r')
+                song = fo.read()
+                if song != '':
+                    response = 'Currently listening to : ' + song
+                    fo.close()
+                    send_message(response)
+                else:
+                    response = 'Not currently listening to anything.'
+                    send_message(response)
 
     if messages.find('!recheck') != -1 and sender == channel:
         channel_check(channel)
