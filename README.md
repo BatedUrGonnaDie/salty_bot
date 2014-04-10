@@ -1,6 +1,6 @@
 Somewhat basic twitch chat bot with Twitch API and soon LoL API integration.
 
-Coded with Python 2.7.6.  Required module install Requests due to "core" integration with the script and how it automates stuff.
+Coded with Python 2.7.6.  Required module install Requests due to "core" integration with the script and how it automates stuff.  More features in the future will be using the Requests module.
 
 Aim of this bot is to be able to retrieve game playing for speedrunners to have rotating commands for different games.  Out of box commands are specific for myself but can be easily modified for any game by simply changing a few lines.
 
