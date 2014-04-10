@@ -225,15 +225,15 @@ while loop == 1:
     if messages.find('!pun') != -1:
         while previous_pun == pun:
             pun_retrieve()
-        send_message(pun)
         previous_quote = pun
+        send_message(pun)
 
     if messages.find('toobou') != -1:
         if toobou == 1:
             response = u'I think you mean トーボウ, #learnmoonrunes'
-            send_message(response)
             toobou = 0
             threading.Timer(60,toobou_limiter).start()
+            send_message(response)
 
     if messages.find('!song') != -1:
         if game == 'osu!':
@@ -261,22 +261,25 @@ while loop == 1:
         sender_bet = messages.split('!bet ')[-1]
         if sender in already_bet and sender_bet == already_bet[sender]:
             response = 'You have already bet for that ' + sender + '.'
-            send_message(response)
         elif sender in already_bet and sender_bet != already_bet[sender]:
             previous_bet = already_bet[sender]
             bets[previous_bet] = bets.get(previous_bet) - 1
-            bets[sender_bet] = 1 ++ bets.get(sender_bet)
-            already_bet[sender] = sender_bet
+            if bets[previous_bet] = 0:
+                del bets[previous_bet]
+            if sender_bet in bets:
+                bets[sender_bet] = 1 ++ bets.get(sender_bet)
+            else:
+                bets[sender_bet] = 1
         else:
             if sender_bet in bets:
                 bets[sender_bet] = 1 ++ bets.get(sender_bet)
             else:
                 bets[sender_bet] = 1
-            response = 'Thanks for thinking I will fail.'
-            send_message(response)
-            print bets
-            already_bet[sender] = sender_bet
-
+            response = 'Thanks for thinking I will fail.'   
+        already_bet[sender] = sender_bet
+        send_message(response)
+        print bets
+        
     if messages.find('!bets') != -1:
         if bool(bets) == False:
             response = "No one thinks I'm going to throw this run away yet."
