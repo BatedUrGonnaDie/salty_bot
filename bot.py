@@ -8,6 +8,8 @@ import time
 import sys
 import os
 
+bets = {}
+already_bet = {}
 loop = 1
 limit = 0
 game = ''
@@ -15,12 +17,15 @@ title = ''
 category = ''
 wr_time = ''
 quote = ''
+pun = ''
 previous_quote = ''
+previous_pun = ''
 destroy_loop = 0
 success = 0
 toobou = 1
-base_twitch_url = 'https://api.twitch.tv/kraken/'
-base_league_url = 'https://prod.api.pvp.net'
+twitch_api = 'https://api.twitch.tv/kraken/'
+league_api = 'https://prod.api.pvp.net/'
+osu_api = 'https://osu.ppy.sh/api/'
 
 if os.path.exists('login.txt') == True:
     fo = open('login.txt', 'r')
@@ -135,12 +140,25 @@ while loop == 1:
             select_quote = random.randrange(1, quote_lines, 1)
             quote = open('quotes.txt', 'r').readlines()
             quote = quote[select_quote]
-    
+
+    def pun_retrieve():
+        global pun
+        pun_lines = sum(1 for line in open('puns.txt', 'r'))
+        if pun_lines == 0:
+            pun = 'No puns added.'
+        elif pun_lines == 1:
+            pun = open('puns.txt', 'r').readline()
+        else:
+            select_pun = random.randrange(1, pun_lines, 1)
+            pun = open('puns.txt', 'r').readlines()
+            pun = pun[select_pun]
+            
     messages = irc.recv(4096)
-    sender = messages.split('!')[0]
-    sender = sender.split(':')[-1]
-    message_body = messages.split(':')[-1]
-    print sender + ': ' + message_body
+    messages = messages.split('\r\n')[0]
+    messages = messages.lower()
+    sender = messages.split(":")[1].split("!")[0]
+    message_body = ":".join(messages.split(":")[2:])
+    print messages
 
     if messages.find('jtv MODE #'+channel+' +o') != -1:
         print 'Mode change found.'
@@ -195,6 +213,21 @@ while loop == 1:
         send_message(quote)
         previous_quote = quote
 
+    if messages.find('!addpun') != -1:
+        pun = message_body
+        pun = pun.split('!addpun ')[-1]
+        fo = open('puns review.txt', 'a+')
+        fo.write(quote)
+        fo.close()
+        response = 'Pun has been added to review list.'
+        send_message(response)
+
+    if messages.find('!pun') != -1:
+        while previous_pun == pun:
+            pun_retrieve()
+        send_message(pun)
+        previous_quote = pun
+
     if messages.find('toobou') != -1:
         if toobou == 1:
             response = u'I think you mean トーボウ, #learnmoonrunes'
@@ -208,7 +241,7 @@ while loop == 1:
             if os.path.exists(np_song) == True:
                 fo = open(np_song, 'r')
                 song = fo.read()
-                response = 'Currently playing : ' + song
+                response = 'Currently playing: ' + song
                 fo.close()
                 send_message(response)
         else:
@@ -217,12 +250,48 @@ while loop == 1:
                 fo = open(np_song, 'r')
                 song = fo.read()
                 if song != '':
-                    response = 'Currently listening to : ' + song
+                    response = 'Currently listening to: ' + song
                     fo.close()
                     send_message(response)
                 else:
                     response = 'Not currently listening to anything.'
                     send_message(response)
+
+    if messages.find('!bet ') != -1:
+        sender_bet = messages.split('!bet ')[-1]
+        if sender in already_bet and sender_bet == already_bet[sender]:
+            response = 'You have already bet for that ' + sender + '.'
+            send_message(response)
+        elif sender in already_bet and sender_bet != already_bet[sender]:
+            previous_bet = already_bet[sender]
+            bets[previous_bet] = bets.get(previous_bet) - 1
+            bets[sender_bet] = 1 ++ bets.get(sender_bet)
+            already_bet[sender] = sender_bet
+        else:
+            if sender_bet in bets:
+                bets[sender_bet] = 1 ++ bets.get(sender_bet)
+            else:
+                bets[sender_bet] = 1
+            response = 'Thanks for thinking I will fail.'
+            send_message(response)
+            print bets
+            already_bet[sender] = sender_bet
+
+    if messages.find('!bets') != -1:
+        if bool(bets) == False:
+            response = "No one thinks I'm going to throw this run away yet."
+            send_message(response)
+        else:
+            winning_key = max(bets, key=bets.get)
+            winning_value = bets[winning_key]
+            winning_key = str(winning_key)
+            winning_value = str(winning_value)
+            response = winning_value + " people think I'm going to throw the run away at " + winning_key + '.'
+            send_message(response)
+
+    if messages.find('!resetbets') != -1 and sender == channel:
+        bets = {}
+        already_bet = {}
 
     if messages.find('!recheck') != -1 and sender == channel:
         channel_check(channel)
@@ -236,5 +305,5 @@ while loop == 1:
         loop = 2
         sys.exit()
 
-#ideas to add: puns, league lookup
+#ideas to add:  league lookup, imgur album, osu skin 
 
