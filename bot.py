@@ -58,7 +58,9 @@ def irc_connect():
 def limiter():  #from Phredd's irc bot
     global limit
     limit = 0
-    threading.Timer(30,limiter).start()
+    t1 = threading.Timer(30,limiter)
+    t1.daemon = True
+    t1.start()
 limiter()
 
 def toobou_limiter():
@@ -156,9 +158,15 @@ while loop == 1:
     messages = irc.recv(4096)
     messages = messages.split('\r\n')[0]
     messages = messages.lower()
-    sender = messages.split(":")[1].split("!")[0]
-    message_body = ":".join(messages.split(":")[2:])
-    print messages
+    try:
+        sender = messages.split(":")[1].split("!")[0]
+    except IndexError:
+        sender = 'server'
+    try:
+        message_body = ":".join(messages.split(":")[2:])
+    except IndexError:
+        message_body = 'PING'
+    print sender + ': ' + message_body
 
     if messages.find('jtv MODE #'+channel+' +o') != -1:
         print 'Mode change found.'
@@ -178,7 +186,7 @@ while loop == 1:
                 fo.write(admin_extract)
                 fo.close()
             
-    if messages.find('PING') != -1:
+    if messages.find('PING tmi.twitch.tv') != -1:
         irc.send(messages.replace('PING', 'PONG'))
         print 'Pong\'d'
 
@@ -232,7 +240,9 @@ while loop == 1:
         if toobou == 1:
             response = u'I think you mean トーボウ, #learnmoonrunes'
             toobou = 0
-            threading.Timer(60,toobou_limiter).start()
+            t2 = threading.Timer(60,toobou_limiter)
+            t2.daemon = True
+            t2.start()
             send_message(response)
 
     if messages.find('!song') != -1:
@@ -264,7 +274,7 @@ while loop == 1:
         elif sender in already_bet and sender_bet != already_bet[sender]:
             previous_bet = already_bet[sender]
             bets[previous_bet] = bets.get(previous_bet) - 1
-            if bets[previous_bet] = 0:
+            if bets[previous_bet] == 0:
                 del bets[previous_bet]
             if sender_bet in bets:
                 bets[sender_bet] = 1 ++ bets.get(sender_bet)
