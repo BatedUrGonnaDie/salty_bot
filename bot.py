@@ -1,4 +1,6 @@
+#! /usr/bin/python2.7
 # -*- coding: utf8 -*-
+
 import requests    #required install module
 import socket
 import threading
