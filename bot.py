@@ -320,5 +320,6 @@ while loop == 1:
         loop = 2
         sys.exit()
 
-#ideas to add:  league lookup, imgur album, osu skin 
-
+#ideas to add: imgur album, osu skin 
+#riot: masteries, runes, kda
+#osu: rank, 
