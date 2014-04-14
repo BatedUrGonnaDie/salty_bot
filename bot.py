@@ -9,53 +9,44 @@ import random
 import time
 import sys
 import os
+import xml.etree.ElementTree as ET
+from salty_bot import *
+from var import *
 
-bets = {}
-already_bet = {}
-loop = 1
-limit = 0
-game = ''
-title = ''
-category = ''
-wr_time = ''
-quote = ''
-pun = ''
-previous_quote = ''
-previous_pun = ''
-destroy_loop = 0
-success = 0
-toobou = 1
-twitch_api = 'https://api.twitch.tv/kraken/'
-league_api = 'https://prod.api.pvp.net/'
-osu_api = 'https://osu.ppy.sh/api/'
+#snitch code
+if "b" in sys.argv:
 
-if os.path.exists('login.txt') == True:
-    fo = open('login.txt', 'r')
-    nick = fo.readline()
-    password = fo.readline()
-    fo.close()
-else:
-    fo = open('login.txt', 'w+')
-    nick = raw_input('Bot Nick: ')
-    print 'Get oauth here (http://www.twitchapps.com/tmi/) if you don\'t have one'
-    password = raw_input('Bot Password (Format:"oauth:xxxxx": ')
-    fo.write(nick)
-    fo.write('\n')
-    fo.write(password)
-    fo.close()
+    bombmaskMain(sys.argv)
+    sys.exit(0)
+#This code exicutes a bot type command
 
-#Channel you want the bot on
-channel = raw_input('Enter Channel to Gather Info From and Join: ')
+##Functions
+def FILE_IO():#I moved your file stuff into a function to make it loop nicer
+    if os.path.exists('login.txt') == True:
+        fo = open('login.txt', 'r')
+        nick = fo.readline()
+        password = fo.readline()
+        fo.close()
+    else:
+        fo = open('login.txt', 'w+')
+        nick = raw_input('Bot Nick: ')
+        print 'Get oauth here (http://www.twitchapps.com/tmi/) if you don\'t have one'
+        password = raw_input('Bot Password (Format:"oauth:xxxxx": ')
+        fo.write(nick)
+        fo.write('\n')
+        fo.write(password)
+        fo.close()
+    return nick,password
 
-irc = socket.socket()
-host = 'irc.twitch.tv'
-port = 6667
+def irc_connect(host,port,nick,password,channel):
 
-def irc_connect():
+    print "Connecting to channel: {channel}\nOn IRC server {server}\nOn port {port}\nWith Name {name}"\
+    .format(channel=channel,server=host,port=port,name=nick)
+
     irc.connect((host, port))
     irc.send('PASS ' + password + '\r\n')
     irc.send('NICK ' + nick + '\r\n')
-    irc.send('JOIN ' + irc_channel + '\r\n')
+    irc.send('JOIN ' + channel + '\r\n')
 
 def limiter():  #from Phredd's irc bot
     global limit
@@ -63,7 +54,6 @@ def limiter():  #from Phredd's irc bot
     t1 = threading.Timer(30,limiter)
     t1.daemon = True
     t1.start()
-limiter()
 
 def toobou_limiter():
     global toobou
@@ -72,17 +62,19 @@ def toobou_limiter():
 def channel_check(channel):
     url = 'https://api.twitch.tv/kraken/streams/'+channel
     headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
+
     data = requests.get(url, headers=headers)
     data_decode = data.json()
+
     if 'error' in data_decode:
         print 'Channel not found'
-        global success
-        success = 1
+        return False
+
     else:
         data_stream = data_decode['stream']
         if data_stream == None:
             print 'Channel Currently Offline'
-            success = 0
+            return True
         else:
             data_channel = data_stream['channel']
             global game
@@ -99,19 +91,71 @@ def channel_check(channel):
                 category = raw_input('Enter a category: ')
             category = category.lower()
             print category
-            success = 0
+            return True
 
-channel_check(channel)
-while success == 1:
+def send_message(response):
+    global limit
+    limit = limit + 1
+    if limit < 20:
+        to_send = u'PRIVMSG ' + irc_channel + u' :' + response + u'\r\n'
+        to_send = to_send.encode('utf-8')
+        irc.send(to_send)
+    else:
+        print 'Sending to quckly'
+
+def quote_retrieve():
+    global quote
+    quote_lines = sum(1 for line in open('quotes.txt', 'r'))
+    if quote_lines == 0:
+        quote = 'No quotes added.'
+    elif quote_lines == 1:
+        quote = open('quotes.txt', 'r').readline()
+    else:
+        select_quote = random.randrange(1, quote_lines, 1)
+        quote = open('quotes.txt', 'r').readlines()
+        quote = quote[select_quote]
+
+def pun_retrieve():
+    global pun
+    pun_lines = sum(1 for line in open('puns.txt', 'r'))
+    if pun_lines == 0:
+        pun = 'No puns added.'
+    elif pun_lines == 1:
+        pun = open('puns.txt', 'r').readline()
+    else:
+        select_pun = random.randrange(1, pun_lines, 1)
+        pun = open('puns.txt', 'r').readlines()
+        pun = pun[select_pun]
+
+
+
+
+
+##Main Program
+nick, password = FILE_IO()
+
+channel = raw_input('Enter Channel to Gather Info From and Join: ')#Channel you want the bot on
+
+irc = socket.socket()
+host = 'irc.twitch.tv'
+port = 6667
+
+limiter()
+
+while channel_check(channel):
     channel = raw_input('Enter a Valid Channel: ')
     channel_check(channel)
 
-irc_channel = '#'+channel
+if '#' not in channel:
+    irc_channel = '#'+channel
+
 raw_input('Hit Enter to Connect to IRC\n')
-irc_connect()
+irc_connect(host,port,nick, password,irc_channel)
 time.sleep(2)
 initial_messages = irc.recv(1024)
+
 print initial_messages
+
 if initial_messages.find('Login unsuccessful') != -1:
     remove('login.txt')
     irc.close()
@@ -119,47 +163,18 @@ if initial_messages.find('Login unsuccessful') != -1:
     raw_input('Hit enter to close this program.\n')
     destroy_loop = 1
 
-while loop == 1:
-    if destroy_loop == 1:
-        break
+while loop == 1 and not destroy_loop:
 
-    def send_message(response):
-        global limit
-        limit = limit + 1
-        if limit < 20:
-            to_send = u'PRIVMSG ' + irc_channel + u' :' + response + u'\r\n'
-            to_send = to_send.encode('utf-8')
-            irc.send(to_send)
-        else:
-            print 'Sending to quckly'
 
-    def quote_retrieve():
-        global quote
-        quote_lines = sum(1 for line in open('quotes.txt', 'r'))
-        if quote_lines == 0:
-            quote = 'No quotes added.'
-        elif quote_lines == 1:
-            quote = open('quotes.txt', 'r').readline()
-        else:
-            select_quote = random.randrange(1, quote_lines, 1)
-            quote = open('quotes.txt', 'r').readlines()
-            quote = quote[select_quote]
 
-    def pun_retrieve():
-        global pun
-        pun_lines = sum(1 for line in open('puns.txt', 'r'))
-        if pun_lines == 0:
-            pun = 'No puns added.'
-        elif pun_lines == 1:
-            pun = open('puns.txt', 'r').readline()
-        else:
-            select_pun = random.randrange(1, pun_lines, 1)
-            pun = open('puns.txt', 'r').readlines()
-            pun = pun[select_pun]
             
     messages = irc.recv(4096)
     messages = messages.split('\r\n')[0]
     messages = messages.lower()
+    print messages
+
+    '''
+
     try:
         sender = messages.split(":")[1].split("!")[0]
     except IndexError:
@@ -319,6 +334,7 @@ while loop == 1:
         raw_input('Closing down.  Hit enter to conitnue.\n')
         loop = 2
         sys.exit()
+    '''
 
 #ideas to add: imgur album, osu skin 
 #riot: masteries, runes, kda
