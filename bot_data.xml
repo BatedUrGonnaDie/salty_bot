@@ -1,0 +1,37 @@
+<salty>
+	<botConfig>
+		<bot name="bomb_bot">
+			<NICK>bomb_bot</NICK>
+			<OAUTH>oauth:8fhhm0jfku4hxnmeoq346adxb3tk301</OAUTH>
+		</bot>
+
+		<bot name="salty">
+			<NICK/>
+			<OAUTH/>
+		</bot>
+		
+	</botConfig>
+
+	<bots>
+		<bot bot="1" name="salty">
+			<channel/>
+		</bot>
+		
+	</bots>
+
+	<quotes>
+		<quote>"snarf made a quote" -SnarfyBobo 20xx</quote>		
+	</quotes>
+
+	<puns>
+		<pun>"Snarf made a pun" -SnarfyBobo 20xx</pun>
+	</puns>
+
+	<history>
+		<tag>Thing.tag</tag>
+
+	</history>
+	
+	<botCount>0</botCount>
+
+</salty>
