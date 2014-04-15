@@ -129,8 +129,6 @@ def pun_retrieve():
 
 
 
-
-
 ##Main Program
 nick, password = FILE_IO()
 
@@ -147,10 +145,9 @@ while channel_check(channel):
     channel_check(channel)
 
 if '#' not in channel:
-
     irc_channel = '#'+channel
-if '#' in channel:
 
+if '#' in channel:
     channel = channel[1:]
 
 
@@ -179,7 +176,7 @@ while loop == 1 and not destroy_loop:
     messages = messages.lower()
     print messages
 
-    '''
+    
 
     try:
         sender = messages.split(":")[1].split("!")[0]
@@ -340,7 +337,7 @@ while loop == 1 and not destroy_loop:
         raw_input('Closing down.  Hit enter to conitnue.\n')
         loop = 2
         sys.exit()
-    '''
+    
 
 #ideas to add: imgur album, osu skin 
 #riot: masteries, runes, kda
