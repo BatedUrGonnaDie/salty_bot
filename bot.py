@@ -147,7 +147,13 @@ while channel_check(channel):
     channel_check(channel)
 
 if '#' not in channel:
+
     irc_channel = '#'+channel
+if '#' in channel:
+
+    channel = channel[1:]
+
+
 
 raw_input('Hit Enter to Connect to IRC\n')
 irc_connect(host,port,nick, password,irc_channel)
