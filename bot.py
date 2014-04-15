@@ -169,7 +169,7 @@ while loop == 1 and not destroy_loop:
     try:
         sender = messages.split(":")[1].split("!")[0]
     except IndexError:
-        pass
+        sender = 'server'
     try:
         message_body = ":".join(messages.split(":")[2:])
     except IndexError:
@@ -195,7 +195,8 @@ while loop == 1 and not destroy_loop:
                 fo.close()
             
     if messages.find('PING tmi.twitch.tv') != -1:
-        irc.send(messages.replace('PING', 'PONG'))
+        pong = 'PONG tmi.twitch.tv\r\n'
+        irc.send(pong)
         print 'Pong\'d'
 
     if messages.find('!wr') != -1:
