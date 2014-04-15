@@ -140,17 +140,14 @@ port = 6667
 
 limiter()
 
+if channel[0] == '#':
+    channel = channel[1:]
+irc_channel = '#' + channel
+print irc_channel, channel
+
 while not channel_check(channel):
     channel = raw_input('Enter a Valid Channel: ')
     channel_check(channel)
-
-if '#' not in channel:
-    irc_channel = '#'+channel
-
-if '#' in channel:
-    channel = channel[1:]
-
-
 
 raw_input('Hit Enter to Connect to IRC\n')
 irc_connect(host,port,nick, password,irc_channel)
