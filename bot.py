@@ -21,7 +21,7 @@ if "b" in sys.argv:
 #This code exicutes a bot type command
 
 ##Functions
-def FILE_IO():#I moved your file stuff into a function to make it loop nicer
+def login_io():#I moved your file stuff into a function to make it loop nicer
     if os.path.exists('login.txt') == True:
         fo = open('login.txt', 'r')
         nick = fo.readline()
@@ -69,7 +69,6 @@ def channel_check(channel):
     if 'error' in data_decode:
         print 'Channel not found'
         return False
-
     else:
         data_stream = data_decode['stream']
         if data_stream == None:
@@ -130,9 +129,9 @@ def pun_retrieve():
 
 
 ##Main Program
-nick, password = FILE_IO()
+nick, password = login_io()
 
-channel = raw_input('Enter Channel to Gather Info From and Join: ')#Channel you want the bot on
+channel = raw_input('Enter Channel to Gather Info From and Join: ') #Channel you want the bot on
 
 irc = socket.socket()
 host = 'irc.twitch.tv'
@@ -143,7 +142,6 @@ limiter()
 if channel[0] == '#':
     channel = channel[1:]
 irc_channel = '#' + channel
-print irc_channel, channel
 
 while not channel_check(channel):
     channel = raw_input('Enter a Valid Channel: ')
@@ -165,24 +163,17 @@ if initial_messages.find('Login unsuccessful') != -1:
 
 while loop == 1 and not destroy_loop:
 
-
-
-            
     messages = irc.recv(4096)
     messages = messages.split('\r\n')[0]
     messages = messages.lower()
-
-
-    
-
     try:
         sender = messages.split(":")[1].split("!")[0]
     except IndexError:
-        sender = 'server'
+        pass
     try:
         message_body = ":".join(messages.split(":")[2:])
     except IndexError:
-        message_body = 'PING'
+        pass
     print sender + ': ' + message_body
 
     if messages.find('jtv MODE #'+channel+' +o') != -1:
