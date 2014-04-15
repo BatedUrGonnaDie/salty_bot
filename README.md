@@ -6,4 +6,4 @@ Aim of this bot is to be able to retrieve game playing for speedrunners to have 
 
 If you do not like a command that I had added simply remove the `if` block for it and any variables that are exclusive to that block.
 
-More documentation to come as it is needed.  Also yes, I realize some of this code is duct taped together but it works for me and that's all that counts.
+More documentation to come as it is needed.  Also yes, I realize some of this code is duct taped together but it works for me and that's all that counts.   

@@ -14,13 +14,15 @@ import os
 #File IO librarys
 import xml.etree.ElementTree as ET
 
+
 ##this is the bot class
 #create new bot with 
 #<variablename> = bot()
+
 class Bot:
 
 
-    def __init__(self,bot_name = "Salty",channel="",bot_config_number=0,):#This is the first function that is called when you make a class object
+    def __init__(self,bot_config_number=0,):#This is the first function that is called when you make a class object
         pass
 
     def spawn(self):#create starting variables
@@ -41,9 +43,20 @@ class Bot:
     def exec_command(self,command):#Figure out command from IRC chat
         pass
 
+    def parser(self):
+        tree = ET.parse("bot_data.xml")
+        
 
-class BotConfig:
-    pass
+
+class Botcare:
+    def __init__(self):
+    
+    def file_setup(self):
+        if not os.path.exists("bot_data.xml"):
+            tree = ET.ElementTree
+            root = ET.Element("salty")
+            tree._setroot(root)
+
 
 #class botHandler:
 
@@ -57,8 +70,6 @@ def bombmaskMain(args):
     if "config" in args:
         print "config started"
 
-    else:
-        print "thing"
 
     return 0
 
