@@ -140,7 +140,7 @@ port = 6667
 
 limiter()
 
-while channel_check(channel):
+while not channel_check(channel):
     channel = raw_input('Enter a Valid Channel: ')
     channel_check(channel)
 
