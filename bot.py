@@ -171,7 +171,7 @@ while loop == 1 and not destroy_loop:
     messages = irc.recv(4096)
     messages = messages.split('\r\n')[0]
     messages = messages.lower()
-    print messages
+
 
     
 
