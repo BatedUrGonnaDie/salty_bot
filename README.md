@@ -18,8 +18,8 @@ Commands Explanation
 
 `!song` will display the current song you are playing on osu if you have osu!np going and your game is set to Osu!, or it will output the current song you are listening to from a media player if you have something that can read the info from them (I use [SMG](http://obsproject.com/forum/threads/smg-now-playing.12744/) for this)
 
-`!bet` is meant for when you might throw the run away, but can easily be repurposed for a voting system (ie: what champion to play in LoL next)
-`!bets` will simply output what is currently wining.
+`!bet` is meant for when you might throw the run away, but can easily be repurposed for a voting system (ie: what champion to play in LoL next)  
+`!bets` will simply output what is currently wining.  
 `!resetbets` will clear all bets and start over from scratch.
 
 `!recheck` will re-retrieve your game and status from twitch incase you started it when you were offline/something isn't right/changed game/status.
