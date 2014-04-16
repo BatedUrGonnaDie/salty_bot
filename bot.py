@@ -10,7 +10,7 @@ import time
 import sys
 import os
 import xml.etree.ElementTree as ET
-from salty_bot import *
+#from salty_bot import *
 from var import *
 
 #snitch code
