@@ -1,6 +1,4 @@
 *.txt
-
+*.ini
 *.pyc
 *.xml
-
-*.pyc

@@ -16,9 +16,9 @@ Commands Explanation
 
 `!addqoute`/`!addpun` will add the givin quote/pun to a review file so that you can manually move it over later.  In the future you will be able to move them over through twitch chat so you don't have to do it manually.
 
-`!song` will display the current song you are playing on osu if you have osu!np going and your game is set to Osu!, or it will output the current song you are listening to from a media player if you have something that can read the info from them (I use [SMG](http://obsproject.com/forum/threads/smg-now-playing.12744/) for this)
+`!song` will display the current song you are playing on osu if you have osu!np going and your game is set to Osu!, or it will output the current song you are listening to from a media player if you have something that can read the info from them (I use [SMG](http://obsproject.com/forum/threads/smg-now-playing.12744/) for this).
 
-`!bet` is meant for when you might throw the run away, but can easily be repurposed for a voting system (ie: what champion to play in LoL next)  
+`!bet` is meant for when you might throw the run away, but can easily be repurposed for a voting system (ie: what champion to play in LoL next).  
 `!bets` will simply output what is currently wining.  
 `!resetbets` will clear all bets and start over from scratch.
 
