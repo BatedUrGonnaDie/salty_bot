@@ -57,15 +57,15 @@ class Bot:
 class Botcare:
     def __init__(self):
         pass
+        
     def file_setup(self):
         if not os.path.exists("bot_data.xml"):
             tree = ET.ElementTree
             root = ET.Element("salty")
             tree._setroot(root)
 
-
-class BotConfig:
-    def __init__(self):
+class BotLoader:
+    def __init__():
         pass
 
 
@@ -78,13 +78,5 @@ if __name__ == "__main__":
 
 
 def bombmaskMain(args):
-    if "config" in args:
-        print "config started"
-
-
-    else:
-        print "thing"
-
-
-    return 0
+    pass
 

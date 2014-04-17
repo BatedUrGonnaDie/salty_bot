@@ -9,23 +9,26 @@ import random
 import time
 import sys
 import os
+
 import xml.etree.ElementTree as ET
 #from salty_bot import *
 from var import *
 
-#snitch code
-if "b" in sys.argv:
-
-    bombmaskMain(sys.argv)
-    sys.exit(0)
-#This code exicutes a bot type command
-
 ##Functions
-def login_io():#I moved your file stuff into a function to make it loop nicer
+def file_check(name):
+    file_name = name + '.txt'
+    if not os.path.exists(file_name):
+        fo = open(file_name, 'w')
+        fo.close()
+        print file_name + ' created.'
+
+def login_io():
     if os.path.exists('login.txt') == True:
         fo = open('login.txt', 'r')
         nick = fo.readline()
+        nick = nick.split('\n')[0]
         password = fo.readline()
+        password = password.split('\n')[0]
         fo.close()
     else:
         fo = open('login.txt', 'w+')
@@ -99,10 +102,13 @@ def send_message(response):
         to_send = u'PRIVMSG ' + irc_channel + u' :' + response + u'\r\n'
         to_send = to_send.encode('utf-8')
         irc.send(to_send)
+        print nick + ': ' + response
     else:
         print 'Sending to quckly'
 
 def quote_retrieve():
+    file_name = 'quotes'
+    file_check(file_name)
     global quote
     quote_lines = sum(1 for line in open('quotes.txt', 'r'))
     if quote_lines == 0:
@@ -115,6 +121,8 @@ def quote_retrieve():
         quote = quote[select_quote]
 
 def pun_retrieve():
+    file_name = 'puns'
+    file_check(file_name)
     global pun
     pun_lines = sum(1 for line in open('puns.txt', 'r'))
     if pun_lines == 0:
@@ -131,7 +139,7 @@ def pun_retrieve():
 ##Main Program
 nick, password = login_io()
 
-channel = raw_input('Enter Channel to Gather Info From and Join: ') #Channel you want the bot on
+channel = raw_input('Enter Channel to Join: ')
 
 irc = socket.socket()
 host = 'irc.twitch.tv'
@@ -155,7 +163,7 @@ initial_messages = irc.recv(1024)
 print initial_messages
 
 if initial_messages.find('Login unsuccessful') != -1:
-    remove('login.txt')
+    os.remove('login.txt')
     irc.close()
     print 'Login was un successful, deleting login file, please try again.'
     raw_input('Hit enter to close this program.\n')
