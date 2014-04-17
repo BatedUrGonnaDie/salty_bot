@@ -9,6 +9,7 @@ import random
 import time
 import sys
 import os
+import ConfigParser
 from var import *
 
 ##Functions
@@ -18,6 +19,49 @@ def file_check(name):
         fo = open(file_name, 'w')
         fo.close()
         print file_name + ' created.'
+
+def configure():
+    if os.path.exists('config.ini'):
+        config.read('config.ini')
+        twitch_api = config.getboolean("API's", 'Twitch')
+        league_api = config.getboolean("API's", 'League')
+        osu_api = config.getboolean("API's", 'Osu')
+    else:
+        print "You will need API keys for each API you wish to use."
+        print "Note the basic Twitch info grab does not require an API key."
+        twitch_api = raw_input('Use twitch api? y/n: ')
+        twitch_api.lower()
+        while twitch_api != 'y' and twitch_api != 'n':
+            print "Please enter 'y' or 'n'."
+            twitch_api = raw_input('Use twitch api? y/n: ')
+            twitch_api.lower()
+        league_api = raw_input('Use league api? y/n :')
+        league_api.lower()
+        while league_api != 'y' and league_api != 'n':
+            print "Please enter 'y' or 'n'."
+            league_api = raw_input('Use league api? y/n: ')
+            league_api.lower()
+        osu_api = raw_input('Use osu api? y/n: ')
+        osu_api.lower()
+        while osu_api != 'y' and osu_api != 'n':
+            print "Please enter 'y' or 'n'."
+            osu_api = raw_input('Use osu api? y/n: ')
+            osu_api.lower()
+        def boolify(api):
+            if api == 'y':
+                return True
+            elif api == 'n':
+                return False
+        twitch_api = boolify(twitch_api)
+        league_api = boolify(league_api)
+        osu_api = boolify(osu_api)
+        config.add_section("API's")
+        config.add_section('Logins')
+        config.set("API's", 'Twitch', twitch_api)
+        config.set("API's", 'League', league_api)
+        config.set("API's", 'Osu', osu_api)
+        with open('config.ini', 'w') as configfile:
+            config.write(configfile)
 
 def login_io():
     if os.path.exists('login.txt') == True:
@@ -40,7 +84,7 @@ def login_io():
 
 def irc_connect(host,port,nick,password,channel):
 
-    print "Connecting to channel: {channel}\nOn IRC server {server}\nOn port {port}\nWith Name {name}"\
+    print "Connecting to channel: {channel}\nOn IRC server: {server}\nOn port: {port}\nWith Name: {name}"\
     .format(channel=channel,server=host,port=port,name=nick)
 
     irc.connect((host, port))
@@ -143,6 +187,8 @@ host = 'irc.twitch.tv'
 port = 6667
 
 limiter()
+config = ConfigParser.RawConfigParser()
+configure()
 
 if channel[0] == '#':
     channel = channel[1:]
