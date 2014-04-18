@@ -221,7 +221,7 @@ while loop == 1 and not destroy_loop:
     try:
         sender = messages.split(":")[1].split("!")[0]
     except IndexError:
-        sender = 'server'
+        print messages
     try:
         message_body = ":".join(messages.split(":")[2:])
     except IndexError:
