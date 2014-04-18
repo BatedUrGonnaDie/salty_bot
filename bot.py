@@ -9,11 +9,13 @@ import random
 import time
 import sys
 import os
+import ConfigParser
+from var import *
 
 import xml.etree.ElementTree as ET
 #from salty_bot import *
-import ConfigParser
-from var import *
+
+
 
 ##Functions
 def file_check(name):
@@ -215,12 +217,16 @@ if initial_messages.find('Login unsuccessful') != -1:
     raw_input('Hit enter to close this program.\n')
     destroy_loop = 1
 
+
+
 while loop == 1 and not destroy_loop:
 
     messages = irc.recv(4096)
+    print(messages)
     messages = messages.split('\r\n')[0]
     messages = messages.lower()
 
+    
     try:
         sender = messages.split(":")[1].split("!")[0]
     except IndexError:
@@ -248,9 +254,7 @@ while loop == 1 and not destroy_loop:
                 fo = open('admins.txt', 'a')
                 fo.write(admin_extract)
                 fo.close()
-            
-    if messages.find('PING tmi.twitch.tv') != -1:
-        pong = 'PONG tmi.twitch.tv\r\n'
+                    pong = 'PONG tmi.twitch.tv\r\n'
         irc.send(pong)
         print 'Pong\'d'
 
@@ -381,6 +385,10 @@ while loop == 1 and not destroy_loop:
         raw_input('Closing down.  Hit enter to conitnue.\n')
         loop = 2
         sys.exit()
+    if '!raid' in messages:
+        for i in range(15):
+            send_message("I AM RAIDING YOUUUUUU BECAUSE BOMBMASK WAS UNHAPPY WITH YOU BEING UPHAPPY RAID MESSAGE NUMBER {}".format(i))
+            time.sleep(1.5)
     
 
 #ideas to add: imgur album, osu skin 
