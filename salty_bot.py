@@ -21,18 +21,14 @@ import xml.etree.ElementTree as ET
 #<variablename> = bot()
 
 class Bot:
-    def __init__(self,bot_config_number=0,):#This is the first function that is called when you make a class object
-        pass
-
-##this is the bot class
-#create new bot with 
-#<variablename> = bot()
-class Bot:
-
-
-    def __init__(self,bot_name = "Salty",channel="",bot_config_number=0,):#This is the first function that is called when you make a class object
-
-        pass
+    def __init__(self,bot_config_number=-1):#This is the first function that is called when you make a class object
+        
+        if bot_config_number == -1:
+            return 
+            
+        spawnID = self.readConfig(bot_config_number)
+        self.spawn(spawnID)
+        self.start()
 
     def spawn(self):#create starting variables
         pass
@@ -61,15 +57,15 @@ class Bot:
 class Botcare:
     def __init__(self):
         pass
+        
     def file_setup(self):
         if not os.path.exists("bot_data.xml"):
             tree = ET.ElementTree
             root = ET.Element("salty")
             tree._setroot(root)
 
-
-class BotConfig:
-    def __init__(self):
+class BotLoader:
+    def __init__():
         pass
 
 
@@ -82,13 +78,5 @@ if __name__ == "__main__":
 
 
 def bombmaskMain(args):
-    if "config" in args:
-        print "config started"
-
-
-    else:
-        print "thing"
-
-
-    return 0
+    pass
 
