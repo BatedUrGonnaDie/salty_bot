@@ -9,9 +9,6 @@ import random
 import time
 import sys
 import os
-
-import xml.etree.ElementTree as ET
-#from salty_bot import *
 import ConfigParser
 from var import *
 
