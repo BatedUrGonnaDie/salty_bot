@@ -385,11 +385,7 @@ while loop == 1 and not destroy_loop:
         raw_input('Closing down.  Hit enter to conitnue.\n')
         loop = 2
         sys.exit()
-    if '!raid' in messages:
-        for i in range(15):
-            send_message("I AM RAIDING YOUUUUUU BECAUSE BOMBMASK WAS UNHAPPY WITH YOU BEING UPHAPPY RAID MESSAGE NUMBER {}".format(i))
-            time.sleep(1.5)
-    
+
 
 #ideas to add: imgur album, osu skin 
 #riot: masteries, runes, kda
