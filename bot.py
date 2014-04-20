@@ -12,12 +12,7 @@ import os
 import ConfigParser
 from var import *
 
-import xml.etree.ElementTree as ET
-#from salty_bot import *
-
-
-
-##Functions
+#Functions
 def file_check(name):
     file_name = name + '.txt'
     if not os.path.exists(file_name):
@@ -182,7 +177,7 @@ def pun_retrieve():
 
 
 
-##Main Program
+#Main Program
 nick, password = login_io()
 
 channel = raw_input('Enter Channel to Join: ')
