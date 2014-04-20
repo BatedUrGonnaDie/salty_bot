@@ -217,26 +217,20 @@ if initial_messages.find('Login unsuccessful') != -1:
 while loop == 1 and not destroy_loop:
 
     messages = irc.recv(4096)
-    print(messages)
     messages = messages.split('\r\n')[0]
     messages = messages.lower()
+    print messages
+    action = messages.split(' ')[1]
+    print action
+    if messages.startswith('ping'):
+        if action == 'privmsg':
+            sender = messages.split(":")[1].split("!")[0]
+            message_body = ":".join(messages.split(":")[2:])
 
-    
-    try:
-        sender = messages.split(":")[1].split("!")[0]
-    except IndexError:
-        sender = 'server'
-    try:
-        message_body = ":".join(messages.split(":")[2:])
-    except IndexError:
-        pass
-    print sender + ': ' + message_body
-
-    if messages.find('jtv MODE #'+channel+' +o') != -1:
+    if action == 'mode':
         print 'Mode change found.'
-        jtv_sender = messages.startswith(':jtv')
-        if jtv_sender == True:
-            admin_extract = messages.rsplit('+o ')[-1]
+        if '+o ' in messages:
+            admin_extract = messages.split('+o ')[-1]
             print 'Admin to be added: ' + admin_extract
             fo = open('admins.txt', 'a+')
             admin_file = fo.read()
@@ -250,7 +244,7 @@ while loop == 1 and not destroy_loop:
                 fo.write(admin_extract)
                 fo.close()
 
-    if messages.find('PING') != -1:
+    if messages.startswith('PING'):
         pong = 'PONG tmi.twitch.tv\r\n'
         irc.send(pong)
         print 'Pong\'d'
@@ -386,4 +380,4 @@ while loop == 1 and not destroy_loop:
 
 #ideas to add: imgur album, osu skin 
 #riot: masteries, runes, kda
-#osu: rank, 
+#osu: rank
