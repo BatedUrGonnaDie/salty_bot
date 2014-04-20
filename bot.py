@@ -249,7 +249,9 @@ while loop == 1 and not destroy_loop:
                 fo = open('admins.txt', 'a')
                 fo.write(admin_extract)
                 fo.close()
-                    pong = 'PONG tmi.twitch.tv\r\n'
+
+    if messages.find('PING') != -1:
+        pong = 'PONG tmi.twitch.tv\r\n'
         irc.send(pong)
         print 'Pong\'d'
 
