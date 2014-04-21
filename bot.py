@@ -15,7 +15,7 @@ from var import *
 #Functions
 def file_check(name):
     file_name = name + '.txt'
-    if not os.path.exists(file_name):
+    if os.path.exists(file_name) != True:
         fo = open(file_name, 'w')
         fo.close()
         print file_name + ' created.'
@@ -121,10 +121,16 @@ def channel_check(channel):
         else:
             data_channel = data_stream['channel']
             global game
-            game = data_stream['game'].lower()
+            try:
+                game = data_stream['game'].lower()
+            except AttributeError:
+                game = data_stream['game']
             global title
-            title = data_channel['status'].lower()
-            print channel + '\n' + game + '\n' + title
+            try:
+                title = data_channel['status'].lower()
+            except AttributeError:
+                title = data_channel['status']
+            print str(channel) + '\n' + str(game) + '\n' + str(title)
             global category
             if title.find('any%') != -1:
                 category = 'any%'
@@ -143,7 +149,7 @@ def send_message(response):
         to_send = u'PRIVMSG ' + irc_channel + u' :' + response + u'\r\n'
         to_send = to_send.encode('utf-8')
         irc.send(to_send)
-        print nick + ': ' + response
+        print nick + u': ' + response
     else:
         print 'Sending to quckly'
 
@@ -220,13 +226,14 @@ while loop == 1 and not destroy_loop:
     messages = messages.split('\r\n')[0]
     messages = messages.lower()
     print messages
-    action = messages.split(' ')[1]
-    print action
-    if messages.startswith('ping'):
-        if action == 'privmsg':
-            sender = messages.split(":")[1].split("!")[0]
-            message_body = ":".join(messages.split(":")[2:])
-
+    try:
+        action = messages.split(' ')[1]
+    except IndexError:
+        action = ''
+    if action == 'privmsg':
+        sender = messages.split(":")[1].split("!")[0]
+        message_body = ":".join(messages.split(":")[2:])
+        print sender + ': ' + message_body
     if action == 'mode':
         print 'Mode change found.'
         if '+o ' in messages:
@@ -240,9 +247,13 @@ while loop == 1 and not destroy_loop:
                 print 'Admin already in file.'
             else:
                 print 'Added to the file.'
-                fo = open('admins.txt', 'a')
+                fo = open('admins.txt', 'a+')
                 fo.write(admin_extract)
                 fo.close()
+    if action == 'join':
+        pass
+    if action == 'part':
+        pass
 
     if messages.startswith('PING'):
         pong = 'PONG tmi.twitch.tv\r\n'
@@ -351,14 +362,14 @@ while loop == 1 and not destroy_loop:
         
     if messages.find('!bets') != -1:
         if bool(bets) == False:
-            response = "No one thinks I'm going to throw this run away yet."
+            response = "No one has bet yet."
             send_message(response)
         else:
             winning_key = max(bets, key=bets.get)
             winning_value = bets[winning_key]
             winning_key = str(winning_key)
             winning_value = str(winning_value)
-            response = winning_value + " people think I'm going to throw the run away at " + winning_key + '.'
+            response = winning_value + " people have bet on  " + winning_key + '.'
             send_message(response)
 
     if messages.find('!resetbets') != -1 and sender == channel:
@@ -378,6 +389,6 @@ while loop == 1 and not destroy_loop:
         sys.exit()
 
 
-#ideas to add: imgur album, osu skin 
+#ideas to add: imgur album, osu skin, response after x time or x messages
 #riot: masteries, runes, kda
 #osu: rank
