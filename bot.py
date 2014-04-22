@@ -239,12 +239,15 @@ while loop == 1 and not destroy_loop:
     messages = irc.recv(4096)
     messages = messages.split('\r\n')[0]
     messages = messages.lower()
-    #messages_received += 1
-    action = messages.split(' ')[1]
+    try:
+        action = messages.split(' ')[1]
+    except:
+        action = ''
     if action == 'privmsg':
         sender = messages.split(":")[1].split("!")[0]
         message_body = ":".join(messages.split(":")[2:])
         print sender + ': ' + message_body
+        messages_received += 1
     if action == 'mode':
         if '+o ' in messages:
             admin_extract = messages.split('+o ')[-1]
@@ -263,7 +266,7 @@ while loop == 1 and not destroy_loop:
     if action == 'part':
         pass
 
-    if messages.startswith('PING'):
+    if messages.startswith('ping'):
         pong = 'PONG tmi.twitch.tv\r\n'
         irc.send(pong)
         print 'Pong\'d'
