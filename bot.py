@@ -153,6 +153,18 @@ def send_message(response):
     else:
         print 'Sending to quckly'
 
+def send_after_number():
+    while loop == 1:
+        if messages_received == 20:
+            send_message(timed_response)
+            messages_received = 0
+
+def send_after_time():
+    send_message(timed_response)
+    t3 = threading.Timer(300, send_after_time)
+    t3.daemon = True
+    t3.start()
+
 def quote_retrieve():
     file_name = 'quotes'
     file_check(file_name)
@@ -219,13 +231,13 @@ if initial_messages.find('Login unsuccessful') != -1:
     destroy_loop = 1
 
 
-
+#send_after_time()
 while loop == 1 and not destroy_loop:
 
     messages = irc.recv(4096)
     messages = messages.split('\r\n')[0]
     messages = messages.lower()
-    print messages
+    messages_received += 1
     try:
         action = messages.split(' ')[1]
     except IndexError:
