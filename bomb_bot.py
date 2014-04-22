@@ -49,27 +49,26 @@ class Bot:
             ircin = self.irc.recv(4096)
             self.messagesRecv += 1
             toformat = ircin.split('\r\n')[0] + '\r'
+            
             print("Messages recived: {mr}\tMessages sent: {ms}\t\tCommands sent: {cs}\tWelcome messages: {wm}\r"\
                 .format(mr = self.messagesRecv,ms=self.messagesSent,cs=self.commandsSent,wm=self.welcomeMesgs))
+
             if send and self.limit < 20:
                 data = self.read(toformat)
                 if data != self.PONG:
 
 
-                    if data['message'] == ':!hello':
+                    if data['message'] == ':!hello' and data["user"] == ":bomb_mask":
                         self.send("Hello {}!".format(data['user'][1:]))
                         self.commandsSent += 1
-                    if data["message"] == ":!commands":
-                        self.send("!hello and !info")
-                        self.commandsSent += 1
-                    if data["message"] == ":!info":
-                        self.send("Hey Happy I got the bot working just for your stream, please don't break it :\ its not finished")
-                        self.commandsSent += 1
 
-                    if data['JL'] == 'JOIN':
-                        self.welcomeMesgs += 1
-                        self.send("Welcome to the stream {user}!!".format(user=data['user'][1:]))
-                    
+                    if ":!spam" in data["message"] and data["user"] == ":bomb_mask":
+                        for i in range(10):
+                            self.send("{message} -{user} {count}/9".format(message=data["message"][6:],user=data["user"][1:],count=i))
+                            time.sleep(1.4)
+
+                    if data["message"] == ":!checkBan":
+                        self.send("*Am I banned :(*")
             elif not send:
                 if 'HISTORYEND' in ircin:
                     send = True
@@ -111,53 +110,59 @@ class Bot:
         irc.send('JOIN ' + self.channel + '\r\n')
 
     def read(self,message):
-        data = {}
-        if 'PING :' in message:
+        data = {} #Python dictionary
+        if 'PING :' in message: #if there is a PING message then we don't parse the string
             self.send(self.PONG)
-
-            return self.PONG
+ 
+            return self.PONG #end the function and return our data
         else:
-
-            tmp = ''
-            mode = 'user'
-            types = ['user','mail','JL','channel','message']
-
-            for i in types:
-                data[i] = ''
-
+ 
+            tmp = ''  #Umm I don't know why this is here, I stopped using it
+            mode = 'user' #My parser uses a weird mode-ing system, I think there is a better way to do this then a 'mode'
+            types = ['user','mail','JL','channel','message'] #the parts I am parseing for JL is the join leave privmesg
+ 
+            for i in types: #this loop populates the dictionary
+                data[i] = '' #populate with empty strings
+ 
             for l in message:
-                if l == '\r':
+                if l == '\r': #if it looks like we are at the end of the string end the loop and return the data(which is a dictionary)
                     return data
-                if mode == 'user':
-                    if l == '!':
+               
+                #the format is
+                #if we are in mode'Mode'
+                        #check if we are at the end of the string (you know like how the message has different things that show what data is what (like the message comes after the  ':'))
+                        #else add the current character to the dict string
+ 
+                if mode == 'user':#looking for the data that is the user part of the string
+                    if l == '!':#Signal that we found all of the data that we are calling user
                         mode = 'mail'
-
+ 
                     else:
                         data[mode] += l
-
+ 
                 elif mode == 'mail':
                     if l == " ":
                         mode = "JL"
                     else:
                         data[mode] += l
-
+ 
                 elif mode == 'JL':
                     if l == ' ':
                         mode = 'channel'
                     else:
                         data[mode] += l
-
+ 
                 elif mode == 'channel':
                     if l == ' ':
                         mode = 'message'
                     else:
                         data[mode] += l
-
+ 
                 elif mode == 'message':
                     if l == '\r':
                         break
                     data[mode] += l
-                
+               
             return data
 
 
