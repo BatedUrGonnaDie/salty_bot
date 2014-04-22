@@ -274,7 +274,7 @@ while loop == 1 and not destroy_loop:
                 wr_time = u'1:19:34 by トーボウ'
             if category == '100%' or category == '120 shines':
                 wr_time = u'3:25:27 by stelzig'
-        send_message(wr_time)
+            send_message(wr_time)
         
     if messages.find('!leaderboards') != -1:
         if game == 'super mario sunshine':
