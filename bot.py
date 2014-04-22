@@ -149,7 +149,9 @@ def send_message(response):
         to_send = u'PRIVMSG ' + irc_channel + u' :' + response + u'\r\n'
         to_send = to_send.encode('utf-8')
         irc.send(to_send)
-        print nick + u': ' + response
+        salty_says = nick + ': ' + response
+        salty_says = salty_says.encode('utf-8')
+        print salty_says
     else:
         print 'Sending to quckly'
 
@@ -237,28 +239,22 @@ while loop == 1 and not destroy_loop:
     messages = irc.recv(4096)
     messages = messages.split('\r\n')[0]
     messages = messages.lower()
-    messages_received += 1
-    try:
-        action = messages.split(' ')[1]
-    except IndexError:
-        action = ''
+    #messages_received += 1
+    action = messages.split(' ')[1]
     if action == 'privmsg':
         sender = messages.split(":")[1].split("!")[0]
         message_body = ":".join(messages.split(":")[2:])
         print sender + ': ' + message_body
     if action == 'mode':
-        print 'Mode change found.'
         if '+o ' in messages:
             admin_extract = messages.split('+o ')[-1]
-            print 'Admin to be added: ' + admin_extract
             fo = open('admins.txt', 'a+')
             admin_file = fo.read()
             fo.close()
-            print 'Admins currently on file: ' + admin_file
             if admin_extract in admin_file:
-                print 'Admin already in file.'
+                pass
             else:
-                print 'Added to the file.'
+                print admin_extract + ' added to admins.txt.'
                 fo = open('admins.txt', 'a+')
                 fo.write(admin_extract)
                 fo.close()
