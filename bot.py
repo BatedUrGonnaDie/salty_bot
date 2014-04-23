@@ -20,13 +20,31 @@ def file_check(name):
         fo.close()
         print file_name + ' created.'
 
+def boolify(api):
+    if api == 'y':
+        return True
+    elif api == 'n':
+        return False
+    
 def configure():
     if os.path.exists('config.ini'):
         config.read('config.ini')
-        twitch_api = config.getboolean("API's", 'Twitch')
-        league_api = config.getboolean("API's", 'League')
-        osu_api = config.getboolean("API's", 'Osu')
+        nick = config.get('Login', 'username')
+        password = config.get('Login', 'oauth')
+        message_after_number = config.getint('Twitch Messaging', 'Message After Amount')
+        message_number_timer = config.getfloat('Twitch Messaging', 'Message Amount Timer')
+        automated_message = config.get('Twitch Messaging', 'Automated Message')
+        twitch_api = config.getboolean("API's", 'twitch')
+        league_api = config.getboolean("API's", 'league')
+        osu_api = config.getboolean("API's", 'osu')
     else:
+        nick = raw_input('Twitch Username: ')
+        password = raw_input('Twitch Oauth: ')
+        if 'oauth:' not in password:
+            password = 'oauth:' + password
+        message_after_number = raw_input('How many messages passed until automated message: ')
+        message_number_timer = raw_input('Minimum time before # of lines will trigger (in seconds): ')
+        automated_message = raw_input('Automated message: ')
         print "You will need API keys for each API you wish to use."
         print "Note the basic Twitch info grab does not require an API key."
         twitch_api = raw_input('Use twitch api? y/n: ')
@@ -47,40 +65,23 @@ def configure():
             print "Please enter 'y' or 'n'."
             osu_api = raw_input('Use osu api? y/n: ')
             osu_api.lower()
-        def boolify(api):
-            if api == 'y':
-                return True
-            elif api == 'n':
-                return False
         twitch_api = boolify(twitch_api)
         league_api = boolify(league_api)
         osu_api = boolify(osu_api)
+        config.add_section('Login')
+        config.set('Login', 'Username', nick)
+        config.set('Login', 'Oauth', password)
+        config.add_section('Twitch Messaging')
+        config.set('Twitch Messaging', 'Message After Amount', message_after_number)
+        config.set('Twitch Messaging', 'Message Amount Timer', message_number_timer)
+        config.set('Twitch Messaging', 'Automated Message', automated_message)
         config.add_section("API's")
-        config.add_section('Logins')
         config.set("API's", 'Twitch', twitch_api)
         config.set("API's", 'League', league_api)
         config.set("API's", 'Osu', osu_api)
         with open('config.ini', 'w') as configfile:
             config.write(configfile)
-
-def login_io():
-    if os.path.exists('login.txt') == True:
-        fo = open('login.txt', 'r')
-        nick = fo.readline()
-        nick = nick.split('\n')[0]
-        password = fo.readline()
-        password = password.split('\n')[0]
-        fo.close()
-    else:
-        fo = open('login.txt', 'w+')
-        nick = raw_input('Bot Nick: ')
-        print 'Get oauth here (http://www.twitchapps.com/tmi/) if you don\'t have one'
-        password = raw_input('Bot Password (Format:"oauth:xxxxx": ')
-        fo.write(nick)
-        fo.write('\n')
-        fo.write(password)
-        fo.close()
-    return nick,password
+    return nick, password, message_after_number, message_number_timer, automated_message
 
 def irc_connect(host,port,nick,password,channel):
 
@@ -155,17 +156,13 @@ def send_message(response):
     else:
         print 'Sending to quckly'
 
-def send_after_number():
+def send_after_number_time():
     while loop == 1:
-        if messages_received == 20:
-            send_message(timed_response)
-            messages_received = 0
-
-def send_after_time():
-    send_message(timed_response)
-    t3 = threading.Timer(300, send_after_time)
-    t3.daemon = True
-    t3.start()
+        global messages_received
+        time.sleep(message_number_timer)
+        if messages_received > message_after_number:
+            send_message(automated_message)
+            messages_reveived = 0
 
 def quote_retrieve():
     file_name = 'quotes'
@@ -198,7 +195,8 @@ def pun_retrieve():
 
 
 #Main Program
-nick, password = login_io()
+config = ConfigParser.RawConfigParser()
+nick, password, message_after_number, message_number_timer, automated_message = configure()
 
 channel = raw_input('Enter Channel to Join: ')
 
@@ -207,8 +205,6 @@ host = 'irc.twitch.tv'
 port = 6667
 
 limiter()
-config = ConfigParser.RawConfigParser()
-configure()
 
 if channel[0] == '#':
     channel = channel[1:]
@@ -234,6 +230,9 @@ if initial_messages.find('Login unsuccessful') != -1:
 
 
 #send_after_time()
+t4 = threading.Thread(target = send_after_number_time)
+t4.daemon = True
+t4.start()
 while loop == 1 and not destroy_loop:
 
     messages = irc.recv(4096)
@@ -262,9 +261,11 @@ while loop == 1 and not destroy_loop:
                 fo.write(admin_extract)
                 fo.close()
     if action == 'join':
-        pass
+        sender = messages.split(":")[1].split("!")[0]
+        print sender + ' has joined the room!'
     if action == 'part':
-        pass
+        sender = messages.split(":")[1].split("!")[0]
+        print sender + ' has left the room.'
 
     if messages.startswith('ping'):
         pong = 'PONG tmi.twitch.tv\r\n'
