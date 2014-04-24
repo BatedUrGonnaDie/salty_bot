@@ -157,12 +157,13 @@ def send_message(response):
         print 'Sending to quckly'
 
 def send_after_number_time():
-    while loop == 1:
-        global messages_received
-        time.sleep(message_number_timer)
-        if messages_received > message_after_number:
-            send_message(automated_message)
-            messages_reveived = 0
+    global messages_received
+    if messages_received > message_after_number:
+        send_message(automated_message)
+        messages_reveived = 0
+    t3 = threading.Timer(message_number_timer,send_after_number_time)
+    t3.daemon = True
+    t3.start()
 
 def quote_retrieve():
     file_name = 'quotes'
@@ -222,17 +223,15 @@ initial_messages = irc.recv(1024)
 print initial_messages
 
 if initial_messages.find('Login unsuccessful') != -1:
-    os.remove('login.txt')
+    os.remove('config.ini')
     irc.close()
-    print 'Login was un successful, deleting login file, please try again.'
+    print 'Login was un successful, deleting config file, please try again.'
     raw_input('Hit enter to close this program.\n')
     destroy_loop = 1
 
 
 #send_after_time()
-t4 = threading.Thread(target = send_after_number_time)
-t4.daemon = True
-t4.start()
+send_after_number_time()
 while loop == 1 and not destroy_loop:
 
     messages = irc.recv(4096)
@@ -401,6 +400,6 @@ while loop == 1 and not destroy_loop:
         sys.exit()
 
 
-#ideas to add: imgur album, osu skin, response after x time or x messages
+#ideas to add: pb, imgur album, osu skin
 #riot: masteries, runes, kda
 #osu: rank
