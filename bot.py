@@ -9,79 +9,23 @@ import random
 import time
 import sys
 import os
-import ConfigParser
 from var import *
+from configure import *
 
 #Functions
 def file_check(name):
     file_name = name + '.txt'
-    if not os.path.exists(file_name):
+    if os.path.exists(file_name) != True:
         fo = open(file_name, 'w')
         fo.close()
         print file_name + ' created.'
 
-def configure():
-    if os.path.exists('config.ini'):
-        config.read('config.ini')
-        twitch_api = config.getboolean("API's", 'Twitch')
-        league_api = config.getboolean("API's", 'League')
-        osu_api = config.getboolean("API's", 'Osu')
-    else:
-        print "You will need API keys for each API you wish to use."
-        print "Note the basic Twitch info grab does not require an API key."
-        twitch_api = raw_input('Use twitch api? y/n: ')
-        twitch_api.lower()
-        while twitch_api != 'y' and twitch_api != 'n':
-            print "Please enter 'y' or 'n'."
-            twitch_api = raw_input('Use twitch api? y/n: ')
-            twitch_api.lower()
-        league_api = raw_input('Use league api? y/n :')
-        league_api.lower()
-        while league_api != 'y' and league_api != 'n':
-            print "Please enter 'y' or 'n'."
-            league_api = raw_input('Use league api? y/n: ')
-            league_api.lower()
-        osu_api = raw_input('Use osu api? y/n: ')
-        osu_api.lower()
-        while osu_api != 'y' and osu_api != 'n':
-            print "Please enter 'y' or 'n'."
-            osu_api = raw_input('Use osu api? y/n: ')
-            osu_api.lower()
-        def boolify(api):
-            if api == 'y':
-                return True
-            elif api == 'n':
-                return False
-        twitch_api = boolify(twitch_api)
-        league_api = boolify(league_api)
-        osu_api = boolify(osu_api)
-        config.add_section("API's")
-        config.add_section('Logins')
-        config.set("API's", 'Twitch', twitch_api)
-        config.set("API's", 'League', league_api)
-        config.set("API's", 'Osu', osu_api)
-        with open('config.ini', 'w') as configfile:
-            config.write(configfile)
-
-def login_io():
-    if os.path.exists('login.txt') == True:
-        fo = open('login.txt', 'r')
-        nick = fo.readline()
-        nick = nick.split('\n')[0]
-        password = fo.readline()
-        password = password.split('\n')[0]
-        fo.close()
-    else:
-        fo = open('login.txt', 'w+')
-        nick = raw_input('Bot Nick: ')
-        print 'Get oauth here (http://www.twitchapps.com/tmi/) if you don\'t have one'
-        password = raw_input('Bot Password (Format:"oauth:xxxxx": ')
-        fo.write(nick)
-        fo.write('\n')
-        fo.write(password)
-        fo.close()
-    return nick,password
-
+def boolify(api):
+    if api == 'y':
+        return True
+    elif api == 'n':
+        return False
+    
 def irc_connect(host,port,nick,password,channel):
 
     print "Connecting to channel: {channel}\nOn IRC server: {server}\nOn port: {port}\nWith Name: {name}"\
@@ -121,10 +65,16 @@ def channel_check(channel):
         else:
             data_channel = data_stream['channel']
             global game
-            game = data_stream['game'].lower()
+            try:
+                game = data_stream['game'].lower()
+            except AttributeError:
+                game = data_stream['game']
             global title
-            title = data_channel['status'].lower()
-            print channel + '\n' + game + '\n' + title
+            try:
+                title = data_channel['status'].lower()
+            except AttributeError:
+                title = data_channel['status']
+            print str(channel) + '\n' + str(game) + '\n' + str(title)
             global category
             if title.find('any%') != -1:
                 category = 'any%'
@@ -143,14 +93,24 @@ def send_message(response):
         to_send = u'PRIVMSG ' + irc_channel + u' :' + response + u'\r\n'
         to_send = to_send.encode('utf-8')
         irc.send(to_send)
-        print nick + ': ' + response
+        salty_says = nick + ': ' + response
+        salty_says = salty_says.encode('utf-8')
+        print salty_says
     else:
         print 'Sending to quckly'
+
+def send_after_number_time():
+    global messages_received
+    if messages_received > message_after_number:
+        send_message(automated_message)
+        messages_reveived = 0
+    t3 = threading.Timer(message_number_timer,send_after_number_time)
+    t3.daemon = True
+    t3.start()
 
 def quote_retrieve():
     file_name = 'quotes'
     file_check(file_name)
-    global quote
     quote_lines = sum(1 for line in open('quotes.txt', 'r'))
     if quote_lines == 0:
         quote = 'No quotes added.'
@@ -160,11 +120,11 @@ def quote_retrieve():
         select_quote = random.randrange(1, quote_lines, 1)
         quote = open('quotes.txt', 'r').readlines()
         quote = quote[select_quote]
+    return quote
 
 def pun_retrieve():
     file_name = 'puns'
     file_check(file_name)
-    global pun
     pun_lines = sum(1 for line in open('puns.txt', 'r'))
     if pun_lines == 0:
         pun = 'No puns added.'
@@ -174,11 +134,12 @@ def pun_retrieve():
         select_pun = random.randrange(1, pun_lines, 1)
         pun = open('puns.txt', 'r').readlines()
         pun = pun[select_pun]
+    return pun
 
 
 
 #Main Program
-nick, password = login_io()
+nick, password, message_after_number, message_number_timer, automated_message = configure()
 
 channel = raw_input('Enter Channel to Join: ')
 
@@ -187,8 +148,6 @@ host = 'irc.twitch.tv'
 port = 6667
 
 limiter()
-config = ConfigParser.RawConfigParser()
-configure()
 
 if channel[0] == '#':
     channel = channel[1:]
@@ -206,50 +165,51 @@ initial_messages = irc.recv(1024)
 print initial_messages
 
 if initial_messages.find('Login unsuccessful') != -1:
-    os.remove('login.txt')
+    os.remove('config.ini')
     irc.close()
-    print 'Login was un successful, deleting login file, please try again.'
+    print 'Login was un successful, deleting config file, please try again.'
     raw_input('Hit enter to close this program.\n')
     destroy_loop = 1
 
 
-
+#send_after_time()
+send_after_number_time()
 while loop == 1 and not destroy_loop:
 
     messages = irc.recv(4096)
-    print(messages)
     messages = messages.split('\r\n')[0]
     messages = messages.lower()
-
-    
     try:
+        action = messages.split(' ')[1]
+    except:
+        action = ''
+    if action == 'privmsg':
         sender = messages.split(":")[1].split("!")[0]
-    except IndexError:
-        sender = 'server'
-    try:
         message_body = ":".join(messages.split(":")[2:])
-    except IndexError:
-        pass
-    print sender + ': ' + message_body
-
-    if messages.find('jtv MODE #'+channel+' +o') != -1:
-        print 'Mode change found.'
-        jtv_sender = messages.startswith(':jtv')
-        if jtv_sender == True:
-            admin_extract = messages.rsplit('+o ')[-1]
-            print 'Admin to be added: ' + admin_extract
+        print sender + ': ' + message_body
+        messages_received += 1
+    if action == 'mode':
+        if '+o ' in messages:
+            admin_extract = messages.split('+o ')[-1]
             fo = open('admins.txt', 'a+')
             admin_file = fo.read()
             fo.close()
-            print 'Admins currently on file: ' + admin_file
             if admin_extract in admin_file:
-                print 'Admin already in file.'
+                pass
             else:
-                print 'Added to the file.'
-                fo = open('admins.txt', 'a')
+                print admin_extract + ' added to admins.txt.'
+                fo = open('admins.txt', 'a+')
                 fo.write(admin_extract)
                 fo.close()
-                    pong = 'PONG tmi.twitch.tv\r\n'
+    if action == 'join':
+        sender = messages.split(":")[1].split("!")[0]
+        print sender + ' has joined the room!'
+    if action == 'part':
+        sender = messages.split(":")[1].split("!")[0]
+        print sender + ' has left the room.'
+
+    if messages.startswith('ping'):
+        pong = 'PONG tmi.twitch.tv\r\n'
         irc.send(pong)
         print 'Pong\'d'
 
@@ -259,7 +219,7 @@ while loop == 1 and not destroy_loop:
                 wr_time = u'1:19:34 by トーボウ'
             if category == '100%' or category == '120 shines':
                 wr_time = u'3:25:27 by stelzig'
-        send_message(wr_time)
+            send_message(wr_time)
         
     if messages.find('!leaderboards') != -1:
         if game == 'super mario sunshine':
@@ -280,7 +240,7 @@ while loop == 1 and not destroy_loop:
 
     if messages.find('!quote') != -1:
         while previous_quote == quote:
-            quote_retrieve()
+            quote = quote_retrieve()
         send_message(quote)
         previous_quote = quote
 
@@ -295,7 +255,7 @@ while loop == 1 and not destroy_loop:
 
     if messages.find('!pun') != -1:
         while previous_pun == pun:
-            pun_retrieve()
+            pun = pun_retrieve()
         previous_quote = pun
         send_message(pun)
 
@@ -355,14 +315,14 @@ while loop == 1 and not destroy_loop:
         
     if messages.find('!bets') != -1:
         if bool(bets) == False:
-            response = "No one thinks I'm going to throw this run away yet."
+            response = "No one has bet yet."
             send_message(response)
         else:
             winning_key = max(bets, key=bets.get)
             winning_value = bets[winning_key]
             winning_key = str(winning_key)
             winning_value = str(winning_value)
-            response = winning_value + " people think I'm going to throw the run away at " + winning_key + '.'
+            response = winning_value + " people have bet on  " + winning_key + '.'
             send_message(response)
 
     if messages.find('!resetbets') != -1 and sender == channel:
@@ -382,6 +342,6 @@ while loop == 1 and not destroy_loop:
         sys.exit()
 
 
-#ideas to add: imgur album, osu skin 
+#ideas to add: pb, imgur album, osu skin
 #riot: masteries, runes, kda
-#osu: rank, 
+#osu: rank

@@ -30,7 +30,7 @@ class Bot:
     commandsSent = 0
     messagesRecv = 0
     welcomeMesgs = 0
-    pingPongs = 0
+    pingPongs= 0
 
     def __init__(self,data):#This is the first function that is called when you make a class object
         self.data = data
@@ -38,7 +38,6 @@ class Bot:
         self.irc = socket.socket()
         self.parse(self.data)
         self.limit = 0
-
 
     def run(self):
         self.connect()
@@ -76,8 +75,6 @@ class Bot:
             if not(self.limit < 15):
                 time.sleep(20)
 
-
-
     def parse(self,fio,level=1):
         if level == 1:
             print("configuring")
@@ -101,8 +98,8 @@ class Bot:
 
     def connect(self):
         irc = self.irc
-        print "Connecting to channel: {channel}\nOn IRC server: {server}\nOn port: {port}\nWith Name: {name}\n\n"\
-        .format(channel=self.channel,server=self.host,port=self.port,name=self.nick)
+        print("Connecting to channel: {channel}\nOn IRC server: {server}\nOn port: {port}\nWith Name: {name}\n\n"\
+        .format(channel=self.channel,server=self.host,port=self.port,name=self.nick))
 
         irc.connect((self.host, self.port))
         irc.send('PASS ' + self.password + '\r\n')
@@ -176,22 +173,22 @@ class Bot:
             self.irc.send(to)
             self.limit += 1
 
-    def hello(self,data):
-        pass
-    def goodbye(self,data):
-        pass
+
 def bombmaskMain(**args):
-    tree = ET.parse("bot_data.xml")
-    root = tree.getroot()
-    bots = root.find("bots")
-    xGlob = root.find("botGlobals")
-    config = root.find("builder")
+    #This section is just setup for reading an xml file
+    tree = ET.parse("bot_data.xml") #THis opens the file with the xml parser
+    root = tree.getroot()           #THis opens the data of the file, XML stuff
+    bots = root.find("bots")        #this finds the xml tag 'bots' and stores that tag in the var bots
+    xGlob = root.find("botGlobals") #THis finds the xml tag botGlobals. Ill use this later for when I have data I need to share with other bots
+    config = root.find("builder")   #Also Unused so far, this will provide information about what the bot should do
 
 
-    spawnedBots = []
-    for i in bots:
-        if i.attrib['on'] == 'y':
-            spawnedBots.append(Bot(i))
+    spawnedBots = [] #array(I guess its called a list really) so that I can keep track of bots, this helps because I don't know how many bots I will have when it runs
+    #so I need to make sure that it can be modular
+
+    for i in bots:#this opens the tags in the bots tags, IE bot>bot1, then bot>bot2 and it will loop over all the bot configs
+        if i.attrib['on'] == 'y':#check if the bot is set to turn on
+            spawnedBots.append(Bot(i))#create bot and add it to the list if we want to use it. it takes 'i' like a config
 
 
     for i in spawnedBots:
