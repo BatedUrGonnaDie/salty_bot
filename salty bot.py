@@ -32,23 +32,32 @@ class SaltyBot:
             print message
 
 def main():
+    #Config reader
     config = ConfigParser.SafeConfigParser()
     config.read('channels.ini')
+    
+    #Handling arrays
     channels = []
     irc_channels = []
+    
     for section_name in config.sections():
         channels.append(section_name)
+        
     for channel in channels:
         irc_channels.append('#'+channel)
+        
     config.read('config.ini')
     base_configure = {}
+    
     base_configure['twitch_nick'] = config.get('Login', 'twitch_nick')
     base_configure['twitch_oauth'] = config.get('Login', 'oauth')
+    
     base_configure['osu_nick'] = config.get('Login', 'osu_nick')
     base_configure['osu_pass'] = config.get('Login', 'osu_pass')
 
     for channel in irc_channels:
-        SaltyBot.twitch_run
+        SaltyBot.twitch_run()#OKAY HERE WAS YOUR PROBLEM, YOU DIDN'T CALL THE COMMAND, YOU NEEDED THE '()' ALSO 
+
     
 if __name__ == '__main__':
     main()
