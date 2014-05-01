@@ -1,8 +1,9 @@
 import os
 import ConfigParser
-config = ConfigParser.RawConfigParser()
 
 def configure():
+    config = ConfigParser.RawConfigParser()
+
     if os.path.exists('config.ini'):
         config.read('config.ini')
         nick = config.get('Login', 'username')
