@@ -1,4 +1,4 @@
-F#! /usr/bin/python2.7
+#! /usr/bin/python2.7
 # -*- coding: utf8 -*-
 
 import requests    #required install module

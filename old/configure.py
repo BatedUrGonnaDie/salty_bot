@@ -6,14 +6,14 @@ def configure():
 
     if os.path.exists('config.ini'):
         config.read('config.ini')
-        nick = config.get('Login', 'username')
+        nick = config.get('Login', 'twitch_nick')
         password = config.get('Login', 'oauth')
         message_after_number = config.getint('Twitch Messaging', 'Message After Amount')
         message_number_timer = config.getfloat('Twitch Messaging', 'Message Amount Timer')
         automated_message = config.get('Twitch Messaging', 'Automated Message')
-        twitch_api = config.getboolean("API's", 'twitch')
-        league_api = config.getboolean("API's", 'league')
-        osu_api = config.getboolean("API's", 'osu')
+##        twitch_api = config.getboolean("API's", 'twitch')
+##        league_api = config.getboolean("API's", 'league')
+##        osu_api = config.getboolean("API's", 'osu')
     else:
         nick = raw_input('Twitch Username: ')
         password = raw_input('Twitch Oauth: ')
