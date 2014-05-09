@@ -13,20 +13,21 @@ class SaltyBot:
 
     def __init__(self, config_data):
         self.irc = socket.socket()
-        self.config_data = config_data
+        self.host = 'irc.twitch.tv'
+        self.port = 6667
+        self.twitch_nick = config_data['twitch_nick']
+        self.twitch_oauth = config_data['twitch_oauth']
+        print self.host
 
     def twitch_connect(self):
+        print self.host
+        print self.port
         self.irc.connect((self.host, self.port))
-        self.irc.send('PASS {password}\r\n'.format(password = self.password))
-        self.irc.send('NICK {nick}\r\n'.format(nick = self.nick))
-
-    def twitch_channels(self):
-        for i in self.irc_channels:
-            irc.send('JOIN {irc}\r\n'.format(irc = self.irc_channels))
+        self.irc.send('PASS {}\r\n'.format(self.twitch_password))
+        self.irc.send('NICK {}\r\n'.format(self.twitch_nick))
 
     def twitch_run(self):
         self.twitch_connect()
-        self.twitch_channels()
 
         while True:
             message = self.irc.recv(4096)
@@ -39,7 +40,7 @@ def main():
     
     #Handling arrays
     channels = {}
-    irc_channels = []
+    bots = []
     
     for section_name in config.sections():
         channels[section_name] = {}
@@ -47,9 +48,16 @@ def main():
             channels[section_name][name] = value
             channels[section_name]['channel'] = section_name
         
-    for i in channels.values():
-        SaltyBot(channels[i])
-    
-    
+    for channels in channels.values():
+        bots.append(SaltyBot(channels))
+        
+    for bot in bots:
+        tmp = threading.Thread(target=bot.twitch_run)
+        tmp.daemon = True
+        tmp.start()
+
+    while True:
+        time.sleep(1)
+
 if __name__ == '__main__':
     main()
