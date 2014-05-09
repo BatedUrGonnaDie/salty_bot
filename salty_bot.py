@@ -34,7 +34,7 @@ class SaltyBot:
 def main():
     #Config reader
     config = ConfigParser.SafeConfigParser()
-    config.read('channels.ini')
+    print config.read('channels.ini')
     
     #Handling arrays
     channels = []
@@ -42,8 +42,9 @@ def main():
     
     for section_name in config.sections():
         channels.append(section_name)
-        print(type(section_name))
-        print(section_name)
+        print section_name
+        for name, value in config.items(section_name):
+            print '{} = {}'.format(name,value)
         
     for channel in channels:
         irc_channels.append('#'+channel)
