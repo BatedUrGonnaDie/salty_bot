@@ -42,10 +42,12 @@ def main():
     
     for section_name in config.sections():
         channels.append(section_name)
+        print(type(section_name))
+        print(section_name)
         
     for channel in channels:
         irc_channels.append('#'+channel)
-        
+    '''
     config.read('config.ini')
     base_configure = {}
     
@@ -57,7 +59,7 @@ def main():
 
     for channel in irc_channels:
         SaltyBot.twitch_run()#OKAY HERE WAS YOUR PROBLEM, YOU DIDN'T CALL THE COMMAND, YOU NEEDED THE '()' ALSO 
-
+    '''
     
 if __name__ == '__main__':
     main()
