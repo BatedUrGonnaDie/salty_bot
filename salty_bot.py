@@ -68,7 +68,7 @@ def main():
             channel_configs[section_name]['channel'] = section_name
 
     for channels in channel_configs.values():
-        bots.append(SaltyBot(channel_configs))
+        bots.append(SaltyBot(channels))
 
     for bot in bots:
         tmp = threading.Thread(target=bot.twitch_run)
