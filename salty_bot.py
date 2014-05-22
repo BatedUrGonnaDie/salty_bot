@@ -43,7 +43,7 @@ class SaltyBot:
             self.title = self.data_channel['status']
             return self.game, self.title
 
-    def osu_api_user(self):
+    def osu_api_user(self): #Currently need a way to check if the streamer's name is different on osu, currently will only work if twitch nick and osu nick are the same
         self.url = 'https://osu.ppy.sh/api/get_user?k={}&u={}'.format(self.osu_api_key, self.channel)
         self.data = requests.get(self.url)
         
