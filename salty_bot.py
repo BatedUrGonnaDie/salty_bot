@@ -116,6 +116,7 @@ class SaltyBot:
                     self.messages_received += 1
 
                     if self.message_body.find('http://osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
+                        self.osu_nick = self.config_data['osu_nick']
                         osu_send_message(self.osu_irc_pass, self.osu_nick, self.message_body)
                         
                     if self.message_body.startswith('!'):
