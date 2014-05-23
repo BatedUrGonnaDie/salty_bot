@@ -1,4 +1,4 @@
-*.txt
-*.ini
 *.pyc
-*.xml
+*.json
+*.ini
+*.txt
