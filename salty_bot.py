@@ -18,6 +18,7 @@ class SaltyBot:
         self.port = 6667
         self.twitch_nick = config_data['twitch_nick']
         self.twitch_oauth = config_data['twitch_oauth']
+        self.osu_nick = config_data['osu_nick']
         self.osu_api_key = config_data['osu_api_key']
         self.channel = config_data['channel']
         self.fo = open('{}_admins.txt'.format(self.channel), 'a+')
@@ -43,8 +44,8 @@ class SaltyBot:
             self.title = self.data_channel['status']
             return self.game, self.title
 
-    def osu_api_user(self): #Currently need a way to check if the streamer's name is different on osu, currently will only work if twitch nick and osu nick are the same
-        self.url = 'https://osu.ppy.sh/api/get_user?k={}&u={}'.format(self.osu_api_key, self.channel)
+    def osu_api_user(self):
+        self.url = 'https://osu.ppy.sh/api/get_user?k={}&u={}'.format(self.osu_api_key, self.osu_nick)
         self.data = requests.get(self.url)
         
         self.data_decode = self.data.json()
@@ -116,23 +117,15 @@ class SaltyBot:
 
 
 
-def osu_main(osu_nick, osu_irc_pass):
+def osu_main(osu_nick, message):
+    osu_irc_pass = config.get('General', 'osu_irc_pass')
     irc = socket.socket()
     osu_host = 'irc.ppy.sh'
     osu_port = 6667
     irc.connect((osu_host, osu_port))
     irc.send('PASS {}\r\n'.format(osu_irc_pass))
-    irc.send('NICK {}\r\n'.format(osu_nick))
-    while True:
-        
-        def osu_send_message(channel, response):
-            irc.send('PRIVMSG {} :{}\r\n'.format(channel, response))
-        
-        messages = irc.recv(4096)
-        messages.split('\r\n')[0]
-        
-        if messages.startswith('PING'):
-            irc.send('PONG irc.ppy.sh')
+    irc.send('NICK batedurgonnadie\r\n')
+    irc.send('PRIVMSG {}: {}'.format(osu_nick, message))
         
                   
 def main():
@@ -159,12 +152,6 @@ def main():
         tmp = threading.Thread(target=bot.twitch_run)
         tmp.daemon = True
         tmp.start()
-
-    osu_irc_pass = config.get('General', 'osu_irc_pass')
-    osu_nick = config.get('General', 'osu_nick')
-    t1 = threading.Thread(target = osu_main, args = (osu_nick, osu_irc_pass))
-    t1.daemon = True
-    t1.start()
     
     while True:
         time.sleep(1)
