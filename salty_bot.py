@@ -1,3 +1,6 @@
+#! /usr/bin/python2.7
+# -*- coding: utf-8 -*-
+
 import os
 import sys
 import time
@@ -5,7 +8,7 @@ import random
 import threading
 import socket
 import requests
-import ConfigParser
+import json
 
 class SaltyBot:
     messages_received = 0
@@ -13,13 +16,12 @@ class SaltyBot:
     def __init__(self, config_data):
         self.config_data = config_data
         self.irc = socket.socket()
-        self.config_data = config_data
         self.twitch_host = 'irc.twitch.tv'
         self.port = 6667
         self.twitch_nick = config_data['twitch_nick']
         self.twitch_oauth = config_data['twitch_oauth']
-        self.osu_api_key = config_data['osu_api_key']
-        self.osu_irc_pass = config_data['osu_irc_pass']
+        self.osu_api_key = config_data['osu']['osu_api_key']
+        self.osu_irc_pass = config_data['osu']['osu_irc_pass']
         self.channel = config_data['channel']
 
     def twitch_check(self):
@@ -115,9 +117,10 @@ class SaltyBot:
                     self.message_body = ':'.join(self.message.split(':')[2:])
                     self.messages_received += 1
 
-                    if self.message_body.find('http://osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
-                        self.osu_nick = self.config_data['osu_nick']
-                        osu_send_message(self.osu_irc_pass, self.osu_nick, self.message_body)
+                    if self.game.lower() == 'osu!':
+                        if self.message_body.find('http://osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
+                            self.osu_nick = self.config_data['osu_nick']
+                            osu_send_message(self.osu_irc_pass, self.osu_nick, self.message_body)
                         
                     if self.message_body.startswith('!'):
                         self.message_body = self.message_body.split('!')[-1]
@@ -133,9 +136,10 @@ class SaltyBot:
 
                         if self.message_body == 'pun':
                             self.text_retrieve('pun')
-                        
-                        if self.message_body == 'rank':
-                            self.osu_api_user()
+
+                        if self.game.lower() == 'osu!':
+                            if self.message_body == 'rank':
+                                self.osu_api_user()
 
                         if self.message_body == 'recheck':
                             self.game, self.title = self.twitch_check()
@@ -146,9 +150,8 @@ class SaltyBot:
                 elif self.action == 'MODE':
                     if '+o ' in self.message:
                         self.admin = self.message.split('+o ')[-1]
-                        self.fo = open('{}_admins.txt'.format(self.channel), 'r')
-                        self.admin_file = self.fo.read()
-                        self.fo.close()
+                        with open('{}_admins.txt'.format(self.channel), 'a') as data_file:
+                            self.admin_file = data_file.read()
                         
                         if self.admin not in self.admin_file:
                             self.fo = open('{}_admins.txt'.format(self.channel), 'a+')
@@ -162,27 +165,15 @@ def osu_send_message(osu_irc_pass, osu_nick, request_url):
     irc.connect((osu_host, osu_port))
     irc.send('PASS {}\r\n'.format(osu_irc_pass))
     irc.send('NICK batedurgonnadie\r\n')
-    irc.send('PRIVMSG {}: {}'.format(osu_nick, request_url))
+    irc.send('PRIVMSG {} :{}\r\n'.format(osu_nick, request_url))
     irc.close()
     
 def main():
-    #Config reader
-    config = ConfigParser.SafeConfigParser()
-    config.read('channels.ini')
-    
-    #Handling arrays
     channel_configs = {}
-    bots = []
-    
-    for section_name in config.sections():
-        channel_configs[section_name] = {}
-        for name, value in config.items(section_name):
-            channel_configs[section_name][name] = value
-            channel_configs[section_name]['channel'] = section_name
-            config.read('config.ini')
-            channel_configs[section_name]['osu_api_key'] = config.get('General', 'osu_api_key')
-            channel_configs[section_name]['osu_irc_pass'] = config.get('General', 'osu_irc_pass')
+    with open('config.json', 'r') as data_file:
+        channel_configs = json.load(data_file, encoding = 'utf-8')
 
+    bots = []
     for channels in channel_configs.values():
         bots.append(SaltyBot(channels))
 
