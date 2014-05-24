@@ -23,6 +23,8 @@ class SaltyBot:
         self.osu_api_key = config_data['osu']['osu_api_key']
         self.osu_irc_pass = config_data['osu']['osu_irc_pass']
         self.channel = config_data['channel']
+        with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
+            self.admin_file = data_file.read()
 
     def twitch_check(self):
         self.url = 'https://api.twitch.tv/kraken/streams/'+self.channel
@@ -49,8 +51,9 @@ class SaltyBot:
         self.irc.send('JOIN #{}\r\n'.format(self.config_data['channel']))
 
     def twitch_send_message(self, response):
+        response = response.encode('utf-8')
         self.to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
-        self.to_send = self.to_send.encode('utf-8')
+        #self.to_send = self.to_send.encode('utf-8')
         self.irc.send(self.to_send)
         time.sleep(1.5)
 
@@ -72,6 +75,31 @@ class SaltyBot:
         
         self.response = '{} is level {} with {}% accuracy and ranked {}.'.format(self.username, self.level, self.accuracy, self.pp_rank)
         self.twitch_send_message(self.response)
+
+    def wr_retrieve(self):
+        try:
+            self.title = self.title.lower()
+            self.title_list = self.title.split(' ')
+            for words in self.title_list:
+                try:
+                    if words in self.config_data['!wr'][self.game.lower()]:
+                        self.category = self.category = words
+                except:
+                    return
+            self.wr = self.config_data['!wr'][self.game.lower()][self.category]
+            self.twitch_send_message(self.wr)
+        except:
+            self.twitch_send_message('No world reocrd found for {}.'.format(self.game))
+
+    def leaderboard_retrieve(self):
+        try:
+            self.game = self.game.lower()
+            if self.game in self.config_data['!leaderboards']:
+                self.leaderboard = self.config_data['!leaderboards'][self.game]
+                self.twitch_send_message(self.leaderboard)
+        except:
+            self.twitch_send_message('No leaderboards found for {}.'.format(self.game))
+            
 
     def add_text(self, text_type, text_add):
         self.text = text_add.split(' ')[-1]
@@ -97,7 +125,7 @@ class SaltyBot:
     def twitch_run(self):
         self.game, self.title = self.twitch_check()
         self.twitch_connect()
-
+            
         while True:
             
             self.message = self.irc.recv(4096)
@@ -125,6 +153,12 @@ class SaltyBot:
                     if self.message_body.startswith('!'):
                         self.message_body = self.message_body.split('!')[-1]
 
+                        if self.message_body.startswith('wr'):
+                            self.wer_retrieve()
+
+                        if self.message_body.startswith('leaderboard'):
+                            self.leaderboard_retrieve()
+
                         if self.message_body.startswith('addquote'):
                             self.add_text('quote', self.message_body)
 
@@ -141,17 +175,13 @@ class SaltyBot:
                             if self.message_body == 'rank':
                                 self.osu_api_user()
 
-                        if self.message_body == 'recheck':
+                        if self.message_body == 'recheck' and self.sender in self.admin_file or self.sender == self.channel:
                             self.game, self.title = self.twitch_check()
-
-
                             
                     
                 elif self.action == 'MODE':
                     if '+o ' in self.message:
                         self.admin = self.message.split('+o ')[-1]
-                        with open('{}_admins.txt'.format(self.channel), 'a') as data_file:
-                            self.admin_file = data_file.read()
                         
                         if self.admin not in self.admin_file:
                             self.fo = open('{}_admins.txt'.format(self.channel), 'a+')
