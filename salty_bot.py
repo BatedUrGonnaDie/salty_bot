@@ -20,29 +20,25 @@ class SaltyBot:
         self.port = 6667
         self.twitch_nick = config_data['twitch_nick']
         self.twitch_oauth = config_data['twitch_oauth']
-        self.osu_api_key = config_data['osu']['osu_api_key']
-        self.osu_irc_pass = config_data['osu']['osu_irc_pass']
         self.channel = config_data['channel']
         with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
             self.admin_file = data_file.read()
 
     def twitch_check(self):
-        self.url = 'https://api.twitch.tv/kraken/streams/'+self.channel
-        self.headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
+        url = 'https://api.twitch.tv/kraken/streams/'+self.channel
+        headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
         
-        self.data = requests.get(self.url, headers = self.headers)
-        self.data_decode = self.data.json()
-        self.data_stream = self.data_decode['stream']
+        data = requests.get(url, headers = headers)
+        data_decode = data.json()
+        data_stream = data_decode['stream']
         
-        if self.data_stream == None:
+        if data_stream == None:
             self.game = ''
             self.title = ''
-            return self.game, self.title
         else:
             self.data_channel = self.data_stream['channel']
             self.game = self.data_stream['game']
             self.title = self.data_channel['status']
-            return self.game, self.title
 
     def twitch_connect(self):
         self.irc.connect((self.twitch_host, self.port))
@@ -52,78 +48,76 @@ class SaltyBot:
 
     def twitch_send_message(self, response):
         response = response.encode('utf-8')
-        self.to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
+        to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
         #self.to_send = self.to_send.encode('utf-8')
-        self.irc.send(self.to_send)
+        self.irc.send(to_send)
         time.sleep(1.5)
 
     def osu_api_user(self):
-        self.osu_nick = self.config_data['osu_nick']
-        self.url = 'https://osu.ppy.sh/api/get_user?k={}&u={}'.format(self.osu_api_key, self.osu_nick)
-        self.data = requests.get(self.url)
+        osu_nick = self.config_data['osu_nick']
+        osu_api_key = self.config_data['osu']['osu_api_key']
+        url = 'https://osu.ppy.sh/api/get_user?k={}&u={}'.format(osu_api_key, osu_nick)
+        data = requests.get(url)
         
-        self.data_decode = self.data.json()
-        self.data_decode = self.data_decode[0]
+        data_decode = data.json()
+        data_decode = data_decode[0]
         
-        self.username = self.data_decode['username']
-        self.level = self.data_decode['level']
-        self.level = round(float(self.level))
-        self.level = int(self.level)
-        self.accuracy = self.data_decode['accuracy']
-        self.accuracy = round(float(self.accuracy), 2)
-        self.pp_rank = self.data_decode['pp_rank']
+        username = data_decode['username']
+        level = data_decode['level']
+        level = round(float(level))
+        level = int(level)
+        accuracy = data_decode['accuracy']
+        accuracy = round(float(accuracy), 2)
+        pp_rank = data_decode['pp_rank']
         
-        self.response = '{} is level {} with {}% accuracy and ranked {}.'.format(self.username, self.level, self.accuracy, self.pp_rank)
-        self.twitch_send_message(self.response)
+        response = '{} is level {} with {}% accuracy and ranked {}.'.format(username, level, accuracy, pp_rank)
+        self.twitch_send_message(response)
 
     def wr_retrieve(self):
-        try:
-            self.title = self.title.lower()
-            self.title_list = self.title.split(' ')
-            for words in self.title_list:
-                try:
-                    if words in self.config_data['!wr'][self.game.lower()]:
-                        self.category = self.category = words
-                except:
-                    return
-            self.wr = self.config_data['!wr'][self.game.lower()][self.category]
-            self.twitch_send_message(self.wr)
-        except:
-            self.twitch_send_message('No world reocrd found for {}.'.format(self.game))
+        if self.game in self.config_data['!wr']:
+            for keys in self.config_data['!wr'][self.game].keys():
+                if keys in self.title.lower():
+                    wr = self.config_data['!wr'][self.game][keys]
+                    self.twitch_send_message(wr)
 
     def leaderboard_retrieve(self):
         try:
             self.game = self.game.lower()
             if self.game in self.config_data['!leaderboards']:
-                self.leaderboard = self.config_data['!leaderboards'][self.game]
-                self.twitch_send_message(self.leaderboard)
+                leaderboard = self.config_data['!leaderboards'][self.game.lower()]
+                self.twitch_send_message(leaderboard)
         except:
-            self.twitch_send_message('No leaderboards found for {}.'.format(self.game))
+            self.twitch_send_message('Something went wrong BibleThump')
             
 
     def add_text(self, text_type, text_add):
-        self.text = text_add.split(' ')[-1]
-        self.fo = open('{}_{}.txt'.format(self.channel, text_type), 'a+')
-        self.fo.write(self.text)
-        self.fo.close()
-        self.response = 'You {} has been added for review.'.format(text_type)
-        self.twitch_send_message(self.response)
+        text = text_add.split('{} '.format(text_type))[-1]
+        if self.text == 'addquote':
+            self.twitch_send_message('Please input a {}.'.format(text_type))
+        else:
+            with open('{}_{}.txt'.format(self.channel, text_type), 'a+') as data_file:
+                data_file.write('{}\n'.format(text))
+            response = 'Your {} has been added for review.'.format(text_type)
+            self.twitch_send_message(response)
 
     def text_retrieve(self, text_type):
-        self.lines = sum(1 for line in open('{}_{}.txt'.format(self.channel, text_type), 'w+'))
-        with open('{}_{}.txt'.format(self.channel, text_type), 'r') as self.data_file:
-            self.lines_read = self.data_file.readlines()
-        if self.lines == 0:
-            self.response = 'No {}s have been added.'.format(text_type)
-        elif self.lines == 1:
-            self.response = self.lines_read
+        lines = sum(1 for line in open('{}_{}.txt'.format(self.channel, text_type), 'w+'))
+        with open('{}_{}.txt'.format(self.channel, text_type), 'r') as data_file:
+            lines_read = data_file.readlines()
+        if lines == 0:
+            response = 'No {}s have been added.'.format(text_type)
+        elif lines == 1:
+            response = lines_read
         else:
-            self.select_line = random.randrange(1, self.lines, 1)
-            self.response = self.lines_read[self.select_line]
-        self.twitch_send_message(self.response)
+            select_line = random.randrange(1, lines, 1)
+            response = lines_read[select_line]
+        self.twitch_send_message(response)
+
+    def pb_hype(self):
+        pass
 
     def twitch_run(self):
-        self.game, self.title = self.twitch_check()
+        self.twitch_check()
         self.twitch_connect()
             
         while True:
@@ -145,35 +139,44 @@ class SaltyBot:
                     self.message_body = ':'.join(self.message.split(':')[2:])
                     self.messages_received += 1
 
-                    if self.game.lower() == 'osu!':
-                        if self.message_body.find('http://osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
-                            self.osu_nick = self.config_data['osu_nick']
-                            osu_send_message(self.osu_irc_pass, self.osu_nick, self.message_body)
+                    if self.message_body.find('http://osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
+                        if self.game.lower() == 'osu!':
+                            if self.config_data['osu'] != 'False':
+                                self.osu_nick = self.config_data['osu_nick']
+                                self.osu_irc_pass = self.config_data['osu']['osu_irc_pass']
+                                osu_send_message(self.osu_irc_pass, self.osu_nick, self.message_body)
                         
                     if self.message_body.startswith('!'):
                         self.message_body = self.message_body.split('!')[-1]
 
                         if self.message_body.startswith('wr'):
-                            self.wer_retrieve()
+                            if self.config_data['!wr'] != 'False':
+                                self.wr_retrieve()
 
                         if self.message_body.startswith('leaderboard'):
-                            self.leaderboard_retrieve()
+                            if self.config_data['!leaderboards'] != 'False':
+                                self.leaderboard_retrieve()
 
                         if self.message_body.startswith('addquote'):
-                            self.add_text('quote', self.message_body)
+                            if self.config_data['!quote'] == 'True':
+                                self.add_text('quote', self.message_body)
 
                         if self.message_body == 'quote':
-                            self.text_retrieve('quote')
+                            if self.config_data['!quote'] == 'True':
+                                self.text_retrieve('quote')
 
                         if self.message_body.startswith('addpun'):
-                            self.add_text('pun', self.message_body)
+                            if self.config_data['!pun'] == 'True':
+                                self.add_text('pun', self.message_body)
 
                         if self.message_body == 'pun':
-                            self.text_retrieve('pun')
+                            if self.config_data['!pun'] == 'True':
+                                self.text_retrieve('pun')
 
                         if self.game.lower() == 'osu!':
-                            if self.message_body == 'rank':
-                                self.osu_api_user()
+                            if self.config_data['osu'] != 'False':
+                                if self.message_body == 'rank':
+                                    self.osu_api_user()
 
                         if self.message_body == 'recheck' and self.sender in self.admin_file or self.sender == self.channel:
                             self.game, self.title = self.twitch_check()
@@ -184,7 +187,7 @@ class SaltyBot:
                         self.admin = self.message.split('+o ')[-1]
                         
                         if self.admin not in self.admin_file:
-                            self.fo = open('{}_admins.txt'.format(self.channel), 'a+')
+                            self.fo = open('{}_admins.txt\n'.format(self.channel), 'a+')
                             self.fo.write(self.admin)
                             self.fo.close()
 
