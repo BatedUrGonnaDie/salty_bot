@@ -54,11 +54,10 @@ class SaltyBot:
         time.sleep(1.5)
 
     def osu_api_user(self):
-        osu_nick = self.config_data['osu_nick']
+        osu_nick = self.config_data['osu']['osu_nick']
         osu_api_key = self.config_data['osu']['osu_api_key']
         url = 'https://osu.ppy.sh/api/get_user?k={}&u={}'.format(osu_api_key, osu_nick)
         data = requests.get(url)
-        
         data_decode = data.json()
         data_decode = data_decode[0]
         
@@ -72,6 +71,25 @@ class SaltyBot:
         
         response = '{} is level {} with {}% accuracy and ranked {}.'.format(username, level, accuracy, pp_rank)
         self.twitch_send_message(response)
+
+    def osu_link(self):
+        osu_nick = self.config_data['osu']['osu_nick']
+        osu_irc_pass = self.config_data['osu']['osu_irc_pass']
+        osu_api_key = self.config_data['osu']['osu_api_key']
+        
+        if self.message_body.find('osu.ppy.sh/s/') != -1:
+            osu_number = 's=' + self.message_body.split('osu.ppy.sh/s/')[-1].split(' ')[0]
+        elif self.message_body.find('osu.ppy.sh/b/') != -1:
+            osu_number = 'b=' + self.message_body.split('osu.ppy.sh/b/')[-1].split(' ')[0]
+
+        url = 'https://osu.ppy.sh/api/get_beatmaps?k={}&{}'.format(osu_api_key, osu_number)
+        data = requests.get(url)
+        data_decode = data.json()
+        data_decode = data_decode[0]
+        response = '{} - {}, mapped by {}'.format(data_decode['artist'], data_decode['title'], data_decode['creator'])
+
+        self.twitch_send_message(response)
+        osu_send_message(osu_irc_pass, osu_nick, self.message_body)
 
     def wr_retrieve(self):
         if self.game in self.config_data['!wr']:
@@ -142,9 +160,7 @@ class SaltyBot:
                     if self.message_body.find('http://osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
                         if self.game.lower() == 'osu!':
                             if self.config_data['osu'] != 'False':
-                                self.osu_nick = self.config_data['osu_nick']
-                                self.osu_irc_pass = self.config_data['osu']['osu_irc_pass']
-                                osu_send_message(self.osu_irc_pass, self.osu_nick, self.message_body)
+                                self.osu_link()
                         
                     if self.message_body.startswith('!'):
                         self.message_body = self.message_body.split('!')[-1]
@@ -179,7 +195,7 @@ class SaltyBot:
                                     self.osu_api_user()
 
                         if self.message_body == 'recheck' and self.sender in self.admin_file or self.sender == self.channel:
-                            self.game, self.title = self.twitch_check()
+                            self.twitch_check()
                             
                     
                 elif self.action == 'MODE':
@@ -187,8 +203,8 @@ class SaltyBot:
                         self.admin = self.message.split('+o ')[-1]
                         
                         if self.admin not in self.admin_file:
-                            self.fo = open('{}_admins.txt\n'.format(self.channel), 'a+')
-                            self.fo.write(self.admin)
+                            self.fo = open('{}_admins.txt'.format(self.channel), 'a+')
+                            self.fo.write(self.admin+'\n')
                             self.fo.close()
 
 def osu_send_message(osu_irc_pass, osu_nick, request_url):
