@@ -110,22 +110,22 @@ class SaltyBot:
 
     def add_text(self, text_type, text_add):
         text = text_add.split('{} '.format(text_type))[-1]
-        if self.text == 'addquote':
+        if text == 'addquote' or text == 'addpun':
             self.twitch_send_message('Please input a {}.'.format(text_type))
         else:
-            with open('{}_{}.txt'.format(self.channel, text_type), 'a+') as data_file:
+            with open('{}_{}_review.txt'.format(self.channel, text_type), 'a+') as data_file:
                 data_file.write('{}\n'.format(text))
             response = 'Your {} has been added for review.'.format(text_type)
             self.twitch_send_message(response)
 
     def text_retrieve(self, text_type):
-        lines = sum(1 for line in open('{}_{}.txt'.format(self.channel, text_type), 'w+'))
+        lines = sum(1 for line in open('{}_{}.txt'.format(self.channel, text_type), 'a+'))
         with open('{}_{}.txt'.format(self.channel, text_type), 'r') as data_file:
             lines_read = data_file.readlines()
         if lines == 0:
             response = 'No {}s have been added.'.format(text_type)
         elif lines == 1:
-            response = lines_read
+            response = lines_read[0]
         else:
             select_line = random.randrange(1, lines, 1)
             response = lines_read[select_line]
@@ -237,3 +237,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
+#voting, social, toobou rate limiting, quote/pun duplicate, runes/masteries, review quotes/puns
