@@ -36,9 +36,9 @@ class SaltyBot:
             self.game = ''
             self.title = ''
         else:
-            self.data_channel = self.data_stream['channel']
-            self.game = self.data_stream['game']
-            self.title = self.data_channel['status']
+            data_channel = data_stream['channel']
+            self.game = data_stream['game']
+            self.title = data_channel['status']
 
     def twitch_connect(self):
         self.irc.connect((self.twitch_host, self.port))
