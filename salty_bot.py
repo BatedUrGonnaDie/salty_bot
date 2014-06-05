@@ -92,10 +92,11 @@ class SaltyBot:
         osu_send_message(osu_irc_pass, osu_nick, self.message_body)
 
     def wr_retrieve(self):
-        if self.game in self.config_data['!wr']:
-            for keys in self.config_data['!wr'][self.game].keys():
+        game = self.game.lower()
+        if game in self.config_data['!wr']:
+            for keys in self.config_data['!wr'][game].keys():
                 if keys in self.title.lower():
-                    wr = self.config_data['!wr'][self.game][keys]
+                    wr = self.config_data['!wr'][game][keys]
                     self.twitch_send_message(wr)
 
     def leaderboard_retrieve(self):
