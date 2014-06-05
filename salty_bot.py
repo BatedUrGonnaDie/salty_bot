@@ -139,14 +139,8 @@ class SaltyBot:
         self.twitch_connect()
             
         while True:
-            
+                
             self.message = self.irc.recv(4096)
-            if self.message == '':
-                try:
-                    self.irc.send('PONG twmi.twitch.tv\r\n')
-                except:
-                    self.twitch_connect()
-            
             self.message = self.message.split('\r\n')[0]
             
             if self.message.startswith('PING'):
