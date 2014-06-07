@@ -239,4 +239,7 @@ def main():
 if __name__ == '__main__':
     main()
     
-#voting, social, toobou rate limiting, quote/pun duplicate, runes/masteries, review quotes/puns
+#voting, social, toobou rate limiting, review quotes/puns from chat
+#make info check automatic, add admin checking for each command, quote/pun duplicate
+#runes/masteries
+#make web page that doesn't suck
