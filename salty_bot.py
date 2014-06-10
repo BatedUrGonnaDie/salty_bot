@@ -24,21 +24,9 @@ class SaltyBot:
         with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
             self.admin_file = data_file.read()
 
-    def twitch_check(self):
-        url = 'https://api.twitch.tv/kraken/streams/'+self.channel
-        headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
-        
-        data = requests.get(url, headers = headers)
-        data_decode = data.json()
-        data_stream = data_decode['stream']
-        
-        if data_stream == None:
-            self.game = ''
-            self.title = ''
-        else:
-            data_channel = data_stream['channel']
-            self.game = data_stream['game']
-            self.title = data_channel['status']
+    def twitch_info(self, info):
+        self.game = info[self.channel]['game']
+        self.title = info[self.channel]['title']
 
     def twitch_connect(self):
         self.irc.connect((self.twitch_host, self.port))
@@ -136,7 +124,6 @@ class SaltyBot:
         pass
 
     def twitch_run(self):
-        self.twitch_check()
         self.twitch_connect()
             
         while True:
@@ -194,9 +181,6 @@ class SaltyBot:
                             if self.config_data['osu'] != 'False':
                                 if self.message_body == 'rank':
                                     self.osu_api_user()
-
-                        if self.message_body == 'recheck' and self.sender in self.admin_file or self.sender == self.channel:
-                            self.twitch_check()
                             
                     
                 elif self.action == 'MODE':
@@ -217,7 +201,37 @@ def osu_send_message(osu_irc_pass, osu_nick, request_url):
     irc.send('NICK batedurgonnadie\r\n')
     irc.send('PRIVMSG {} :{}\r\n'.format(osu_nick, request_url))
     irc.close()
+
+def twitch_info_grab(bots):
+    with open('config.json', 'r') as data_file:
+        channel_configs = json.load(data_file, encoding = 'utf-8')
+    channels = channel_configs.keys()
+    channel_game_title = {}
+    for channel in channels:
+        url = 'https://api.twitch.tv/kraken/streams/'+channel
+        headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
+        
+        data = requests.get(url, headers = headers)
+        data_decode = data.json()
+        data_stream = data_decode['stream']
     
+        if data_stream == None:
+            game = ''
+            title = ''
+        else:
+            data_channel = data_stream['channel']
+            game = data_stream['game']
+            title = data_channel['status']
+        channel_game_title.update({'{}'.format(channel) : {'game' : '{}'.format(game), 'title' : '{}'.format(title)}})
+    bots_update = []
+    for bot in bots:
+        bot.twitch_info(channel_game_title)
+        bots_update.append(bot)
+    
+    t_check = threading.Timer(60, twitch_info_grab, args = [bots_update])
+    t_check.daemon = True
+    t_check.start()
+
 def main():
     channel_configs = {}
     with open('config.json', 'r') as data_file:
@@ -231,6 +245,8 @@ def main():
         tmp = threading.Thread(target=bot.twitch_run)
         tmp.daemon = True
         tmp.start()
+
+    twitch_info_grab(bots)
     
     while True:
         time.sleep(1)
@@ -240,6 +256,6 @@ if __name__ == '__main__':
     main()
     
 #voting, social, toobou rate limiting, review quotes/puns from chat
-#make info check automatic, add admin checking for each command, quote/pun duplicate
+#add admin checking for each command, quote/pun duplicate
 #runes/masteries
 #make web page that doesn't suck
