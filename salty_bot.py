@@ -11,8 +11,7 @@ import requests
 import json
 
 class SaltyBot:
-    messages_received = 0
-
+    
     def __init__(self, config_data):
         self.config_data = config_data
         self.irc = socket.socket()
@@ -21,6 +20,7 @@ class SaltyBot:
         self.twitch_nick = config_data['twitch_nick']
         self.twitch_oauth = config_data['twitch_oauth']
         self.channel = config_data['channel']
+        self.commands = ''
         with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
             self.admin_file = data_file.read()
 
@@ -34,7 +34,20 @@ class SaltyBot:
         self.irc.send('NICK {}\r\n'.format(self.twitch_nick))
         self.irc.send('JOIN #{}\r\n'.format(self.config_data['channel']))
 
+    def twitch_commands(self):
+        if self.config_data['!leaderboards'] != 'False':
+            self.commands += '!leaderboard, '
+        if self.config_data['!wr'] != 'False':
+            self.commands += '!wr, '
+        if self.config_data['!quote'] != 'False':
+            self.commands += '!quote, '
+        if self.config_data['!pun'] != 'False':
+            self.commands += '!pun, '
+        if self.config_data['osu'] != 'False':
+            pass
+        
     def twitch_send_message(self, response):
+        self.last_response = response
         response = response.encode('utf-8')
         to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
         #self.to_send = self.to_send.encode('utf-8')
@@ -89,18 +102,22 @@ class SaltyBot:
 
     def leaderboard_retrieve(self):
         try:
-            self.game = self.game.lower()
-            if self.game in self.config_data['!leaderboards']:
-                leaderboard = self.config_data['!leaderboards'][self.game.lower()]
+            game = self.game.lower() 
+            if game in self.config_data['!leaderboards']:
+                leaderboard = self.config_data['!leaderboards'][game]
                 self.twitch_send_message(leaderboard)
         except:
             self.twitch_send_message('Something went wrong BibleThump')
             
-
     def add_text(self, text_type, text_add):
         text = text_add.split('{} '.format(text_type))[-1]
         if text == 'addquote' or text == 'addpun':
             self.twitch_send_message('Please input a {}.'.format(text_type))
+        elif self.sender == self.channel:
+            with open('{}_{}.txt'.format(self.channel, text_type), 'a+') as data_file:
+                data_file.write('{}\n'.format(text))
+            response = 'Your {} has been added.'.format(text_type)
+            self.twitch_send_message(response)
         else:
             with open('{}_{}_review.txt'.format(self.channel, text_type), 'a+') as data_file:
                 data_file.write('{}\n'.format(text))
@@ -116,16 +133,25 @@ class SaltyBot:
         elif lines == 1:
             response = lines_read[0]
         else:
-            select_line = random.randrange(1, lines, 1)
-            response = lines_read[select_line]
+            try:
+                while self.this_retrieve == self.last_retrieve:
+                    select_line = random.randrange(1, lines, 1)
+                    response = lines_read[select_line]
+                    self.this_retrieve = response
+            except:
+                select_line = random.randrange(1, lines, 1)
+                response = lines_read[select_line]
+                self.this_retrieve = response
         self.twitch_send_message(response)
+        self.last_retrieve = self.this_retrieve
 
     def pb_hype(self):
         pass
 
     def twitch_run(self):
         self.twitch_connect()
-            
+        self.twitch_commands()
+        
         while True:
                 
             self.message = self.irc.recv(4096)
@@ -143,7 +169,6 @@ class SaltyBot:
                 if self.action == 'PRIVMSG':
                     self.sender = self.message.split(':')[1].split('!')[0]
                     self.message_body = ':'.join(self.message.split(':')[2:])
-                    self.messages_received += 1
 
                     if self.message_body.find('http://osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
                         if self.game.lower() == 'osu!':
@@ -181,6 +206,9 @@ class SaltyBot:
                             if self.config_data['osu'] != 'False':
                                 if self.message_body == 'rank':
                                     self.osu_api_user()
+
+                        if self.message_body == 'commands':
+                            self.twitch_send_message(self.commands[:-2])
                             
                     
                 elif self.action == 'MODE':
@@ -189,8 +217,10 @@ class SaltyBot:
                         
                         if self.admin not in self.admin_file:
                             self.fo = open('{}_admins.txt'.format(self.channel), 'a+')
-                            self.fo.write(self.admin+'\n')
+                            self.fo.write('{}\n'.format(self.admin))
                             self.fo.close()
+                            with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
+                                self.admin_file = data_file.read()
 
 def osu_send_message(osu_irc_pass, osu_nick, request_url):
     irc = socket.socket()
@@ -256,6 +286,6 @@ if __name__ == '__main__':
     main()
     
 #voting, social, toobou rate limiting, review quotes/puns from chat
-#add admin checking for each command, quote/pun duplicate
+#add admin checking for each command
 #runes/masteries
 #make web page that doesn't suck
