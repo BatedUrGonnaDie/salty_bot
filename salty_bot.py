@@ -17,10 +17,10 @@ class SaltyBot:
         self.irc = socket.socket()
         self.twitch_host = 'irc.twitch.tv'
         self.port = 6667
-        self.twitch_nick = config_data['twitch_nick']
-        self.twitch_oauth = config_data['twitch_oauth']
-        self.channel = config_data['channel']
-        self.commands = ''
+        self.twitch_nick = config_data['general']['twitch_nick']
+        self.twitch_oauth = config_data['general']['twitch_oauth']
+        self.channel = config_data['general']['channel']
+        self.commands = []
         with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
             self.admin_file = data_file.read()
 
@@ -32,19 +32,14 @@ class SaltyBot:
         self.irc.connect((self.twitch_host, self.port))
         self.irc.send('PASS {}\r\n'.format(self.twitch_oauth))
         self.irc.send('NICK {}\r\n'.format(self.twitch_nick))
-        self.irc.send('JOIN #{}\r\n'.format(self.config_data['channel']))
+        self.irc.send('JOIN #{}\r\n'.format(self.channel))
 
     def twitch_commands(self):
-        if self.config_data['!leaderboards'] != 'False':
-            self.commands += '!leaderboard, '
-        if self.config_data['!wr'] != 'False':
-            self.commands += '!wr, '
-        if self.config_data['!quote'] != 'False':
-            self.commands += '!quote, '
-        if self.config_data['!pun'] != 'False':
-            self.commands += '!pun, '
-        if self.config_data['osu'] != 'False':
-            pass
+        for keys in self.config_data['commands']:
+            if self.config_data['commands'][keys] != 'False':
+                self.commands.append(keys)
+        self.commands_string = ', '.join(self.commands)
+
         
     def twitch_send_message(self, response):
         self.last_response = response
@@ -55,8 +50,8 @@ class SaltyBot:
         time.sleep(1.5)
 
     def osu_api_user(self):
-        osu_nick = self.config_data['osu']['osu_nick']
-        osu_api_key = self.config_data['osu']['osu_api_key']
+        osu_nick = self.config_data['general']['osu']['osu_nick']
+        osu_api_key = self.config_data['general']['osu']['osu_api_key']
         url = 'https://osu.ppy.sh/api/get_user?k={}&u={}'.format(osu_api_key, osu_nick)
         data = requests.get(url)
         data_decode = data.json()
@@ -74,9 +69,9 @@ class SaltyBot:
         self.twitch_send_message(response)
 
     def osu_link(self):
-        osu_nick = self.config_data['osu']['osu_nick']
-        osu_irc_pass = self.config_data['osu']['osu_irc_pass']
-        osu_api_key = self.config_data['osu']['osu_api_key']
+        osu_nick = self.config_data['general']['osu']['osu_nick']
+        osu_irc_pass = self.config_data['general']['osu']['osu_irc_pass']
+        osu_api_key = self.config_data['general']['osu']['osu_api_key']
         
         if self.message_body.find('osu.ppy.sh/s/') != -1:
             osu_number = 's=' + self.message_body.split('osu.ppy.sh/s/')[-1].split(' ')[0]
@@ -94,17 +89,17 @@ class SaltyBot:
 
     def wr_retrieve(self):
         game = self.game.lower()
-        if game in self.config_data['!wr']:
-            for keys in self.config_data['!wr'][game].keys():
+        if game in self.config_data['commands']['!wr']:
+            for keys in self.config_data['commands']['!wr'][game].keys():
                 if keys in self.title.lower():
-                    wr = self.config_data['!wr'][game][keys]
+                    wr = self.config_data['commands']['!wr'][game][keys]
                     self.twitch_send_message(wr)
 
     def leaderboard_retrieve(self):
         try:
             game = self.game.lower() 
-            if game in self.config_data['!leaderboards']:
-                leaderboard = self.config_data['!leaderboards'][game]
+            if game in self.config_data['commands']['!leaderboards']:
+                leaderboard = self.config_data['commands']['!leaderboards'][game]
                 self.twitch_send_message(leaderboard)
         except:
             self.twitch_send_message('Something went wrong BibleThump')
@@ -172,43 +167,43 @@ class SaltyBot:
 
                     if self.message_body.find('http://osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
                         if self.game.lower() == 'osu!':
-                            if self.config_data['osu'] != 'False':
+                            if self.config_data['general']['song_link'] != 'False':
                                 self.osu_link()
                         
                     if self.message_body.startswith('!'):
                         self.message_body = self.message_body.split('!')[-1]
 
                         if self.message_body.startswith('wr'):
-                            if self.config_data['!wr'] != 'False':
+                            if '!wr' in self.commands:
                                 self.wr_retrieve()
 
                         if self.message_body.startswith('leaderboard'):
-                            if self.config_data['!leaderboards'] != 'False':
+                            if '!leaderboards' in self.commands:
                                 self.leaderboard_retrieve()
 
                         if self.message_body.startswith('addquote'):
-                            if self.config_data['!quote'] == 'True':
+                            if '!quote' in self.commands:
                                 self.add_text('quote', self.message_body)
 
                         if self.message_body == 'quote':
-                            if self.config_data['!quote'] == 'True':
+                            if '!quote'in self.commands:
                                 self.text_retrieve('quote')
 
                         if self.message_body.startswith('addpun'):
-                            if self.config_data['!pun'] == 'True':
+                            if '!pun' in self.commands:
                                 self.add_text('pun', self.message_body)
 
                         if self.message_body == 'pun':
-                            if self.config_data['!pun'] == 'True':
+                            if '!pun' in self.commands:
                                 self.text_retrieve('pun')
 
-                        if self.game.lower() == 'osu!':
-                            if self.config_data['osu'] != 'False':
-                                if self.message_body == 'rank':
+                        if self.message_body == 'rank':
+                            if self.game.lower() == 'osu!':
+                                if '!rank' in self.commands:
                                     self.osu_api_user()
 
                         if self.message_body == 'commands':
-                            self.twitch_send_message(self.commands[:-2])
+                            self.twitch_send_message(self.commands_string)
                             
                     
                 elif self.action == 'MODE':
