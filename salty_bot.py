@@ -157,7 +157,7 @@ class SaltyBot:
                 if self.srl_nick in races:
                     race_channel = i
                     for racers in race_channel['entrants']:
-                        srl_race_entrants.append(racers)
+                        srl_race_entrants.append(racers['twitch'])
                     user = i['entrants'][self.srl_nick]
                     srl_race_game = race_channel['game']['name']
                     srl_race_category = race_channel['goal']
