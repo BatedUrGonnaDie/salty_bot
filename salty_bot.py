@@ -170,7 +170,21 @@ class SaltyBot:
                         self.twitch_send_message('{} is racing {} in {}.\n{}'.format(user, srl_race_category, srl_race_game, multitwitch_link))
                     else:
                         self.twitch_send_message('{} is racing {} in {}.\n{}'.format(user, srl_race_category, srl_race_game, srl_race_link))
-                    
+
+    def youtube_video_check(self, message):
+        self.youtube_api_key = self.config_data['general']['youtube_api_key']
+        youtube_video_id = message.split('youtube.com/watch?v=')[-1]
+        if ' ' in youtube_video_id:
+            youtube_video_id.split(' ')[0]
+        url = 'https://www.googleapis.com/youtube/v3/videos?id={}&key={}&part=snippet,contentDetails,statistics,status'.format(youtube_video_id, self.youtube_api_key)
+        data = requests.get(url)
+        data_decode = data.json()
+        print data_decode
+        data_items = data_decode['items']
+        youtube_title = data_items[0]['snippet']['title']
+        youtube_uploader = data_items[0]['snippet']['channelTitle']
+        response = '{} uploaded by {}'.format(youtube_title, youtube_uploader)
+        self.twitch_send_message(response)
 
     def twitch_run(self):
         self.twitch_connect()
@@ -198,6 +212,9 @@ class SaltyBot:
                         if self.game.lower() == 'osu!':
                             if self.config_data['general']['song_link'] != 'False':
                                 self.osu_link()
+
+                    if self.message_body.find('youtube.com/watch?v=') != -1:
+                            self.youtube_video_check(self.message_body)
                         
                     if self.message_body.startswith('!'):
                         self.message_body = self.message_body.split('!')[-1]
@@ -238,7 +255,7 @@ class SaltyBot:
 
                         if self.message_body == 'commands':
                             self.twitch_send_message(self.commands_string)
-                            
+
                     
                 elif self.action == 'MODE':
                     if '+o ' in self.message:
