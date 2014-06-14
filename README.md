@@ -14,6 +14,8 @@ Commands Explanation
 
 `!leaderboards` will simply output the leaderboard for the game.
 
+`!race` will check to see if a variant of race is in your title to prevent spamming, and if it is it will check the SRL API to see if you are in a race.  If you are listed in the race it will generate the game, category, and SRL nick racing, as well as output a mutltwitch link if the race has less than 6 races, and a SRL race page link if it has more to keep the link size down.
+
 `!quote`/`!pun` will display a randomly selected quote/pun from a file.
 
 `!addqoute`/`!addpun` will add the givin quote/pun to a review file so that you can manually move it over later.  If the broadcaster uses this command the quote/pun will go straight into the live file (that means be careful).  In the future you will be able to move them over through twitch chat so you don't have to do it manually.
