@@ -1,10 +1,8 @@
-Somewhat basic twitch chat bot with Twitch API and soon LoL/Osu API integration.
+Somewhat basic twitch chat bot with Twitch,Osu, Youtube, and SRL API's and soon LoL API integration.
 
-Coded with Python 2.7.6.  Required module install Requests due to "core" integration with the script and how it automates stuff.  More features in the future will be using the Requests module.
+Coded with Python 2.7.6.  Required module install Requests due to how many API calls it has now.
 
-Aim of this bot is to be able to retrieve game playing for speedrunners to have rotating commands for different games.  Out of box commands are specific for myself but can be easily modified for any game by simply changing a few lines.
-
-Game and Title are retrieved passively once per minute from the Twitch API, so you no longer have to use a command to retrieve it.  This also means you can leave the bot running and start streaming whenever and be good to go.
+Aim of this bot is to be able to retrieve game playing for speedrunners to have rotating commands for different games.
 
 Commands Explanation
 ====================
@@ -28,3 +26,15 @@ Commands Explanation
 `!bets` will simply output what is currently wining.  
 `!resetbets` will clear all bets and start over from scratch.
 (All bet commands will be re-written as vote, but currently none are implemented yet.
+
+Passive Features
+================
+Passively retrieves game and title from the Twitch API so you can just set it and go.
+
+Ability to send you the maps posted in chat for osu directly in game.
+
+Post the title and uploader of a youtube video posted in chat (can detect spam this way).
+
+Usage
+=====
+You can either download the bot (1 file) and make your own config file for the channels you want it to join and commands to use, or for the time being shoot me an email at batedurgonnadie@yahoo.com and I can add you to my config file.  In the future I hope to have a webpage up that will allow you to authenticate through twitch and customize the commands from there.  If you're interested I will ask you all the necessary info needed.
