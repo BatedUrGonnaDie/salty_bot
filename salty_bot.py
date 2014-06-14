@@ -106,18 +106,20 @@ class SaltyBot:
             
     def add_text(self, text_type, text_add):
         text = text_add.split('{} '.format(text_type))[-1]
-        if text == 'addquote' or text == 'addpun':
-            self.twitch_send_message('Please input a {}.'.format(text_type))
-        elif self.sender == self.channel:
-            with open('{}_{}.txt'.format(self.channel, text_type), 'a+') as data_file:
-                data_file.write('{}\n'.format(text))
-            response = 'Your {} has been added.'.format(text_type)
-            self.twitch_send_message(response)
+        
+        if text == 'add{}'.format(text_type) or text == 'add{} '.format(text_type):
+            self.twitch_send_message('Please input a {}.'.format(text_type))    
         else:
-            with open('{}_{}_review.txt'.format(self.channel, text_type), 'a+') as data_file:
-                data_file.write('{}\n'.format(text))
-            response = 'Your {} has been added for review.'.format(text_type)
-            self.twitch_send_message(response)
+            if self.sender == self.channel:
+                with open('{}_{}.txt'.format(self.channel, text_type), 'a+') as data_file:
+                    data_file.write('{}\n'.format(text))
+                response = 'Your {} has been added.'.format(text_type)
+                self.twitch_send_message(response)
+            else:
+                with open('{}_{}_review.txt'.format(self.channel, text_type), 'a+') as data_file:
+                    data_file.write('{}\n'.format(text))
+                response = 'Your {} has been added for review.'.format(text_type)
+                self.twitch_send_message(response)
 
     def text_retrieve(self, text_type):
         lines = sum(1 for line in open('{}_{}.txt'.format(self.channel, text_type), 'a+'))
