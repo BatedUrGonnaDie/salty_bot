@@ -40,7 +40,6 @@ class SaltyBot:
                 self.commands.append(keys)
         self.commands_string = ', '.join(self.commands)
 
-        
     def twitch_send_message(self, response):
         self.last_response = response
         response = response.encode('utf-8')
@@ -96,13 +95,10 @@ class SaltyBot:
                     self.twitch_send_message(wr)
 
     def leaderboard_retrieve(self):
-        try:
-            game = self.game.lower() 
-            if game in self.config_data['commands']['!leaderboards']:
-                leaderboard = self.config_data['commands']['!leaderboards'][game]
-                self.twitch_send_message(leaderboard)
-        except:
-            self.twitch_send_message('Something went wrong BibleThump')
+        game = self.game.lower() 
+        if game in self.config_data['commands']['!leaderboards']:
+            leaderboard = self.config_data['commands']['!leaderboards'][game]
+            self.twitch_send_message(leaderboard)
             
     def add_text(self, text_type, text_add):
         text = text_add.split('{} '.format(text_type))[-1]
@@ -142,7 +138,7 @@ class SaltyBot:
         self.twitch_send_message(response)
         self.last_retrieve = self.this_retrieve
 
-    def pb_hype(self):
+    def counter(self):
         pass
 
     def srl_race_retrieve(self):
