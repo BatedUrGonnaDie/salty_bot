@@ -143,6 +143,33 @@ class SaltyBot:
     def pb_hype(self):
         pass
 
+    def srl_race_retrieve(self):
+        self.srl_nick = config_data['general']['srl_nick']
+        url = 'http://api.speedrunslive.com/races'
+        data = requests.get(url)
+        data_decode = data.json()
+        data_races = data_decode['races']
+        srl_race_entrants = []
+        for i in data_races:
+            for races in i['entrants']:
+                if self.srl_nick in races:
+                    race_channel = i
+                    for racers in race_channel['entrants']:
+                        srl_race_entrants.append(racers)
+                    user = i['entrants'][self.srl_nick]
+                    srl_race_game = race_channel['game']['name']
+                    srl_race_category = race_channel['goal']
+                    srl_race_id = race_channel['id']
+                    srl_race_link = 'http://www.speedrunslive.com/race/?id={}'.format(srl_race_id)
+                    multitwitch_link = 'www.multitwitch.tv/'
+                    if len(srl_race_entrants) <= 6:
+                        for i in srl_race_entrants:
+                            multitwitch_link += i + '/'
+                        self.twitch_send_message('{} is racing {} in {}.\n{}'.format(user, srl_race_category, srl_race_game, multitwitch_link))
+                    else:
+                        self.twitch_send_message('{} is racing {} in {}.\n{}'.format(user, srl_race_category, srl_race_game, srl_race_link))
+                    
+
     def twitch_run(self):
         self.twitch_connect()
         self.twitch_commands()
@@ -201,6 +228,11 @@ class SaltyBot:
                             if self.game.lower() == 'osu!':
                                 if '!rank' in self.commands:
                                     self.osu_api_user()
+
+                        if self.message_body == 'race':
+                            if '!race' in self.commands:
+                                if 'race' in self.title or 'races' in self.title or 'racing' in self.title:
+                                    self.srl_race_retrieve()
 
                         if self.message_body == 'commands':
                             self.twitch_send_message(self.commands_string)
