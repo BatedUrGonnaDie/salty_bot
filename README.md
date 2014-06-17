@@ -10,7 +10,7 @@ Commands Explanation
 
 `!wr` will simply output the world record for the game and category.  Game is retrieved from Twitch API, and category is found by matching the title against categories in the config file.  If one matches then it will print out that time.
 
-`!leaderboards` will simply output the leaderboard for the game.
+`!leaderboards` will simply output the leaderboard for the game as specified in the config file.
 
 `!race` will check to see if a variant of race is in your title to prevent spamming, and if it is it will check the SRL API to see if you are in a race.  If you are listed in the race it will generate the game, category, and SRL nick racing, as well as output a mutltwitch link if the race has less than 6 races, and a SRL race page link if it has more to keep the link size down.
 
@@ -22,19 +22,22 @@ Commands Explanation
 
 `!rank` will retrieve the accuracy, pp ranking, level, and username of the streamer.
 
-`!bet` is meant for when you might throw the run away, but can easily be repurposed for a voting system (ie: what champion to play in LoL next).  
-`!bets` will simply output what is currently wining.  
-`!resetbets` will clear all bets and start over from scratch.
-(All bet commands will be re-written as vote, but currently none are implemented yet.
+`!vote <vote_book> <your_vote>` will allow you to do much more than before.  If you are mod or broadcaster you can use `<vote_book>` as createvote or removevote, which will create or remove the specified vote book respectively.  For normal users you must put in both of these to enter your vote.
+`!votes <optional vote_book>` will output all of the winning votes for each vote category you input.  If category is specified it will only output the one supplied.
+
 
 Passive Features
 ================
-Passively retrieves game and title from the Twitch API so you can just set it and go.
-
 Ability to send you the maps posted in chat for osu directly in game.
 
 Post the title and uploader of a youtube video posted in chat (can detect spam this way).
 
+Under The Hood Stuff
+====================
+Passively retrieves game and title once per minute.  No more typing a command to retrieve it.  SHould always be good to go now.
+
+Passively watches for op messages, and when it sees one it adds the user to an admin file.  This allows you to restrict commands to being moderator only if you are so inclined.
+
 Usage
 =====
-You can either download the bot (1 file) and make your own config file for the channels you want it to join and commands to use, or for the time being shoot me an email at batedurgonnadie@yahoo.com and I can add you to my config file.  In the future I hope to have a webpage up that will allow you to authenticate through twitch and customize the commands from there.  If you're interested I will ask you all the necessary info needed.
+You can either download the bot (1 file) and make your own config file for the channels you want it to join and commands to use, or shoot me an email at batedurgonnadie@yahoo.com and I can add you to my config file.  In the future I hope to have a webpage up that will allow you to authenticate through twitch and customize the commands from there.  If you're interested I will ask you all the necessary info needed to set you up and then all you have to do is keep me updated with leaderboard/wr times.
