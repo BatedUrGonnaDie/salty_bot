@@ -39,6 +39,8 @@ class SaltyBot:
             if self.config_data['commands'][keys] != 'False':
                 self.commands.append(keys)
         self.commands_string = ', '.join(self.commands)
+        if '!vote' in self.commands:
+            self.votes = {}
 
     def twitch_send_message(self, response):
         self.last_response = response
@@ -171,15 +173,81 @@ class SaltyBot:
         self.youtube_api_key = self.config_data['general']['youtube_api_key']
         youtube_video_id = message.split('youtube.com/watch?v=')[-1]
         if ' ' in youtube_video_id:
-            youtube_video_id.split(' ')[0]
+            youtube_video_id = youtube_video_id.split(' ')[0]
         url = 'https://www.googleapis.com/youtube/v3/videos?id={}&key={}&part=snippet,contentDetails,statistics,status'.format(youtube_video_id, self.youtube_api_key)
         data = requests.get(url)
         data_decode = data.json()
-        print data_decode
         data_items = data_decode['items']
         youtube_title = data_items[0]['snippet']['title']
         youtube_uploader = data_items[0]['snippet']['channelTitle']
         response = '{} uploaded by {}'.format(youtube_title, youtube_uploader)
+        self.twitch_send_message(response)
+
+    def vote(self, message, sender):
+        vote_category = message.split(' ')[1]
+        print vote_category
+        if vote_category == 'createvote' and self.sender == self.channel or self.sender in self.admin_file:
+            vote_section = message.split('createvote ')[-1]
+            self.votes[vote_section] = {}
+            self.votes[vote_section]['votes'] = {}
+            self.votes[vote_section]['voters'] = {}
+            response = 'You can now vote for {}.'.format(vote_section)
+        elif vote_category == 'removevote' and self.sender == self.channel or self.sender in self.admin_file:
+            vote_section = message.split('removevote ')[-1]
+            if vote_section in self.votes:
+                try:
+                    winning_key = max(self.votes[vote_section]['votes'], key = self.votes[vote_section].get)
+                    winning_value = self.votes[vote_section]['votes'][winning_key]
+                    del self.votes[vote_section]
+                    response = '{} can no longer be voted on anymore.  {} has won with {} votes.'.format(vote_section, winning_key, str(winning_value))
+                except ValueError:
+                    del self.votes[vote_section]
+                    response = ''
+        else:
+            if vote_category in self.votes:
+                sender_bet = message.split(vote_category)[-1]
+                sender_bet = sender_bet[1:]
+                if sender in self.votes[vote_category]['voters'] and sender_bet == self.votes[vote_category]['voters'][sender]:
+                    pass
+                elif sender in self.votes[vote_category]['voters'] and sender_bet != self.votes[vote_category]['voters'][sender]:
+                    previous_bet = self.votes[vote_category]['voters'][sender]
+                    self.votes[vote_category]['votes'][previous_bet] -= 1
+                    if self.votes[vote_category]['votes'][previous_bet] == 0:
+                        del self.votes[vote_category]['votes'][previous_bet]
+                    if sender_bet in self.votes[vote_category]['votes']:
+                        self.votes[vote_category]['votes'][sender_bet] += 1
+                    else:
+                        self.votes[vote_category]['votes'][sender_bet] = 1
+                    self.votes[vote_category]['voters'][sender] = sender_bet
+                    response = 'Your vote has been recorded.'
+                else:
+                    if sender_bet in self.votes[vote_category]['votes']:
+                        self.votes[vote_category]['votes'][sender_bet] += 1
+                    else:
+                        self.votes[vote_category]['votes'][sender_bet] = 1
+                    self.votes[vote_category]['voters'][sender] = sender_bet
+                    response = 'Your vote has been recorded.'
+            else:
+                response = 'You did not put an open vote category.'
+        self.twitch_send_message(response)
+
+    def check_votes(self, message):
+        try:
+            vote_category = message.split(' ')[1]
+            if bool(self.votes[vote_category]['votes']) == False:
+                response = 'No one has bet in {} yet.'.format(vote_category)
+            else:
+                winning_key = max(self.votes[vote_category]['votes'], key = self.votes[vote_category].get)
+                winning_value = self.votes[vote_category]['votes'][winning_key]
+                response = '{} is winning with {} votes for it.'.format(winning_key, winning_value)
+        except IndexError:
+            response_list = []
+            for categories in self.votes:
+                if bool(self.votes[categories]['votes']) != False:
+                    winning_key = max(self.votes[categories]['votes'], key = self.votes[categories].get)
+                    winning_value = self.votes[categories]['votes'][winning_key]
+                    response_list.append('{}: {} is winning with {} votes.'.format(categories, winning_key, winning_value))
+            response = '.  '.join(response_list)
         self.twitch_send_message(response)
 
     def twitch_run(self):
@@ -194,75 +262,83 @@ class SaltyBot:
             if self.message.startswith('PING'):
                 self.irc.send('PONG tmi.twitch.tv\r\n')
                 
-            else:
-                try:
-                    self.action = self.message.split(' ')[1]
-                except:
-                    self.action = ''
+            try:
+                self.action = self.message.split(' ')[1]
+            except:
+                self.action = ''
                     
-                if self.action == 'PRIVMSG':
-                    self.sender = self.message.split(':')[1].split('!')[0]
-                    self.message_body = ':'.join(self.message.split(':')[2:])
+            if self.action == 'PRIVMSG':
+                self.sender = self.message.split(':')[1].split('!')[0]
+                self.message_body = ':'.join(self.message.split(':')[2:])
 
-                    if self.message_body.find('http://osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
-                        if self.game.lower() == 'osu!':
-                            if self.config_data['general']['song_link'] != 'False':
-                                self.osu_link()
+                if self.message_body.find('http://osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
+                    if self.game.lower() == 'osu!':
+                        if self.config_data['general']['osu']['song_link'] != 'False':
+                            self.osu_link()
 
-                    if self.message_body.find('youtube.com/watch?v=') != -1:
-                            self.youtube_video_check(self.message_body)
+                if self.message_body.find('youtube.com/watch?v=') != -1:
+                    if self.config_data['general']['youtube_link']:
+                        self.youtube_video_check(self.message_body)
                         
-                    if self.message_body.startswith('!'):
-                        self.message_body = self.message_body.split('!')[-1]
+                if self.message_body.startswith('!'):
+                    self.message_body = self.message_body.split('!')[-1]
 
-                        if self.message_body.startswith('wr'):
-                            if '!wr' in self.commands:
-                                self.wr_retrieve()
+                    if self.message_body.startswith('wr'):
+                        if '!wr' in self.commands:
+                            self.wr_retrieve()
 
-                        if self.message_body.startswith('leaderboard'):
-                            if '!leaderboards' in self.commands:
-                                self.leaderboard_retrieve()
+                    if self.message_body.startswith('leaderboard'):
+                        if '!leaderboards' in self.commands:
+                            self.leaderboard_retrieve()
 
-                        if self.message_body.startswith('addquote'):
-                            if '!quote' in self.commands:
-                                self.add_text('quote', self.message_body)
+                    if self.message_body.startswith('addquote'):
+                        if '!quote' in self.commands:
+                            self.add_text('quote', self.message_body)
 
-                        if self.message_body == 'quote':
-                            if '!quote'in self.commands:
-                                self.text_retrieve('quote')
+                    if self.message_body == 'quote':
+                        if '!quote'in self.commands:
+                            self.text_retrieve('quote')
 
-                        if self.message_body.startswith('addpun'):
-                            if '!pun' in self.commands:
-                                self.add_text('pun', self.message_body)
+                    if self.message_body.startswith('addpun'):
+                        if '!pun' in self.commands:
+                            self.add_text('pun', self.message_body)
 
-                        if self.message_body == 'pun':
-                            if '!pun' in self.commands:
-                                self.text_retrieve('pun')
+                    if self.message_body == 'pun':
+                        if '!pun' in self.commands:
+                            self.text_retrieve('pun')
 
-                        if self.message_body == 'rank':
-                            if self.game.lower() == 'osu!':
-                                if '!rank' in self.commands:
-                                    self.osu_api_user()
+                    if self.message_body == 'rank':
+                        if self.game.lower() == 'osu!':
+                            if '!rank' in self.commands:
+                                self.osu_api_user()
 
-                        if self.message_body == 'race':
-                            if '!race' in self.commands:
-                                if 'race' in self.title or 'races' in self.title or 'racing' in self.title:
-                                    self.srl_race_retrieve()
+                    if self.message_body == 'race':
+                        if '!race' in self.commands:
+                            if 'race' in self.title or 'races' in self.title or 'racing' in self.title:
+                                self.srl_race_retrieve()
 
-                        if self.message_body == 'commands':
-                            self.twitch_send_message(self.commands_string)
+                    if self.message_body.startswith('vote '):
+                        if '!vote' in self.commands:
+                            self.vote(self.message_body, self.sender)
+
+                    if self.message_body.startswith('votes'):
+                        if '!vote' in self.commands:
+                            self.check_votes(self.message_body)
+
+                    if self.message_body == 'commands':
+                        self.twitch_send_message(self.commands_string)
 
                     
                 elif self.action == 'MODE':
                     if '+o ' in self.message:
                         self.admin = self.message.split('+o ')[-1]
-                        
                         if self.admin not in self.admin_file:
                             self.fo = open('{}_admins.txt'.format(self.channel), 'a+')
                             self.fo.write('{}\n'.format(self.admin))
                             self.fo.close()
                             with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
                                 self.admin_file = data_file.read()
+
 
 def osu_send_message(osu_irc_pass, osu_nick, request_url):
     irc = socket.socket()
@@ -281,12 +357,10 @@ def twitch_info_grab(bots):
     channel_game_title = {}
     for channel in channels:
         url = 'https://api.twitch.tv/kraken/streams/'+channel
-        headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
-        
+        headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}        
         data = requests.get(url, headers = headers)
         data_decode = data.json()
-        data_stream = data_decode['stream']
-    
+        data_stream = data_decode['stream']  
         if data_stream == None:
             game = ''
             title = ''
@@ -294,7 +368,7 @@ def twitch_info_grab(bots):
             data_channel = data_stream['channel']
             game = data_stream['game']
             title = data_channel['status']
-        channel_game_title.update({'{}'.format(channel) : {'game' : '{}'.format(game), 'title' : '{}'.format(title)}})
+        channel_game_title.update({channel : {'game' : game, 'title' : title}})
     bots_update = []
     for bot in bots:
         bot.twitch_info(channel_game_title)
@@ -323,11 +397,10 @@ def main():
     while True:
         time.sleep(1)
         
-
 if __name__ == '__main__':
     main()
     
-#voting, social, toobou rate limiting, review quotes/puns from chat
-#add admin checking for each command
+#social aka static text every x amount of time, toobou rate limiting, review quotes/puns from chat
+#add admin checking for each command, pass time to twitch send and check if it has been x amount of time since last sending of that command
 #runes/masteries
 #make web page that doesn't suck
