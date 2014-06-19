@@ -36,7 +36,7 @@ class SaltyBot:
 
     def twitch_commands(self):
         for keys in self.config_data['commands']:
-            if self.config_data['commands'][keys] != 'False':
+            if self.config_data['commands'][keys] == 'True':
                 self.commands.append(keys)
         self.commands_string = ', '.join(self.commands)
         if '!vote' in self.commands:
@@ -125,8 +125,10 @@ class SaltyBot:
             lines_read = data_file.readlines()
         if lines == 0:
             response = 'No {}s have been added.'.format(text_type)
+            self.this_retrieve = response
         elif lines == 1:
             response = lines_read[0]
+            self.this_retrieve = response
         else:
             try:
                 while self.this_retrieve == self.last_retrieve:
@@ -185,24 +187,29 @@ class SaltyBot:
 
     def vote(self, message, sender):
         vote_category = message.split(' ')[1]
-        print vote_category
-        if vote_category == 'createvote' and self.sender == self.channel or self.sender in self.admin_file:
-            vote_section = message.split('createvote ')[-1]
-            self.votes[vote_section] = {}
-            self.votes[vote_section]['votes'] = {}
-            self.votes[vote_section]['voters'] = {}
-            response = 'You can now vote for {}.'.format(vote_section)
-        elif vote_category == 'removevote' and self.sender == self.channel or self.sender in self.admin_file:
-            vote_section = message.split('removevote ')[-1]
-            if vote_section in self.votes:
-                try:
-                    winning_key = max(self.votes[vote_section]['votes'], key = self.votes[vote_section].get)
-                    winning_value = self.votes[vote_section]['votes'][winning_key]
-                    del self.votes[vote_section]
-                    response = '{} can no longer be voted on anymore.  {} has won with {} votes.'.format(vote_section, winning_key, str(winning_value))
-                except ValueError:
-                    del self.votes[vote_section]
-                    response = ''
+        if vote_category == 'createvote':
+            if self.sender == self.channel or self.sender in self.admin_file:
+                vote_section = message.split('createvote ')[-1]
+                self.votes[vote_section] = {}
+                self.votes[vote_section]['votes'] = {}
+                self.votes[vote_section]['voters'] = {}
+                response = 'You can now vote for {}.'.format(vote_section)
+            else:
+                response = 'You do not have permission to do that.'
+        elif vote_category == 'removevote':
+            if self.sender == self.channel or self.sender in self.admin_file:
+                vote_section = message.split('removevote ')[-1]
+                if vote_section in self.votes:
+                    try:
+                        winning_key = max(self.votes[vote_section]['votes'], key = self.votes[vote_section].get)
+                        winning_value = self.votes[vote_section]['votes'][winning_key]
+                        del self.votes[vote_section]
+                        response = '{} can no longer be voted on anymore.  {} has won with {} votes.'.format(vote_section, winning_key, str(winning_value))
+                    except ValueError:
+                        del self.votes[vote_section]
+                        response = ''
+            else:
+                response = 'You do not have permission to do that.'
         else:
             if vote_category in self.votes:
                 sender_bet = message.split(vote_category)[-1]
@@ -271,7 +278,7 @@ class SaltyBot:
                 self.sender = self.message.split(':')[1].split('!')[0]
                 self.message_body = ':'.join(self.message.split(':')[2:])
 
-                if self.message_body.find('http://osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
+                if self.message_body.find('osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
                     if self.game.lower() == 'osu!':
                         if self.config_data['general']['osu']['song_link'] != 'False':
                             self.osu_link()
