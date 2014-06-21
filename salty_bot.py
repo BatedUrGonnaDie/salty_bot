@@ -10,13 +10,20 @@ import socket
 import requests
 import json
 
+from actions import *
+
 class SaltyBot:
     
-    def __init__(self, config_data):
+    running = True
+
+    def __init__(self, config_data,debug = False):
+        self.__DB = debug
+
         self.config_data = config_data
         self.irc = socket.socket()
         self.twitch_host = 'irc.twitch.tv'
         self.port = 6667
+
         self.twitch_nick = config_data['general']['twitch_nick']
         self.twitch_oauth = config_data['general']['twitch_oauth']
         self.channel = config_data['general']['channel']
@@ -24,11 +31,22 @@ class SaltyBot:
         with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
             self.admin_file = data_file.read()
 
+    def start(self):
+        self.thread = threading.Thread(target=self.twitch_run)
+        self.thread.daemon = True
+        self.thread.start()
+
+        return self.thread
+
+
+
     def twitch_info(self, info):
         self.game = info[self.channel]['game']
         self.title = info[self.channel]['title']
 
     def twitch_connect(self):
+        if self.__DB: print("joining {} as {}".format(self.channel,self.twitch_nick))
+
         self.irc.connect((self.twitch_host, self.port))
         self.irc.send('PASS {}\r\n'.format(self.twitch_oauth))
         self.irc.send('NICK {}\r\n'.format(self.twitch_nick))
@@ -47,7 +65,7 @@ class SaltyBot:
         response = response.encode('utf-8')
         to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
         #self.to_send = self.to_send.encode('utf-8')
-        self.irc.send(to_send)
+        self.irc.sendall(to_send)
         time.sleep(1.5)
 
     def osu_api_user(self):
@@ -261,7 +279,7 @@ class SaltyBot:
         self.twitch_connect()
         self.twitch_commands()
         
-        while True:
+        while self.running:
                 
             self.message = self.irc.recv(4096)
             self.message = self.message.split('\r\n')[0]
@@ -335,6 +353,25 @@ class SaltyBot:
                     if self.message_body == 'commands':
                         self.twitch_send_message(self.commands_string)
 
+                    if "restart" in self.message_body:
+                        if self.__DB: print("{} is restarting, called by {}".format(self.channel+' '+self.twitch_nick,self.sender))
+                        self.admin(RESTART)
+                        self.twitch_send_message("PSUDO RESTARTING!")
+
+                        break
+
+                    if "stop" in self.message_body and self.sender == "bomb_mask":
+                        if self.__DB: print("SHUTDOWN CALLED BY {}".format(self.sender.upper()))
+                        self.admin(STOP)
+
+                    if "check" in self.message_body:
+                        self.admin(CHECK)
+
+
+                if self.__DB :print("message body: "+self.message_body)
+
+
+
                     
                 elif self.action == 'MODE':
                     if '+o ' in self.message:
@@ -345,7 +382,18 @@ class SaltyBot:
                             self.fo.close()
                             with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
                                 self.admin_file = data_file.read()
+        print("thread stoped")
+    #@@ ADMIN FUNCTIONS @@#
 
+    def admin(self,call="<test>"):
+        pass
+        if call == RESTART:
+            addQue(RESTART,self.channel)
+            print("bot id {}".format(self))
+        else:
+            addQue(call,self)
+
+#@@BOT END@@#
 
 def osu_send_message(osu_irc_pass, osu_nick, request_url):
     irc = socket.socket()
@@ -360,23 +408,30 @@ def osu_send_message(osu_irc_pass, osu_nick, request_url):
 def twitch_info_grab(bots):
     with open('config.json', 'r') as data_file:
         channel_configs = json.load(data_file, encoding = 'utf-8')
+
     channels = channel_configs.keys()
     channel_game_title = {}
+
     for channel in channels:
         url = 'https://api.twitch.tv/kraken/streams/'+channel
         headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}        
         data = requests.get(url, headers = headers)
         data_decode = data.json()
         data_stream = data_decode['stream']  
+
         if data_stream == None:
             game = ''
             title = ''
+
         else:
             data_channel = data_stream['channel']
             game = data_stream['game']
             title = data_channel['status']
+
         channel_game_title.update({channel : {'game' : game, 'title' : title}})
+
     bots_update = []
+
     for bot in bots:
         bot.twitch_info(channel_game_title)
         bots_update.append(bot)
@@ -385,24 +440,98 @@ def twitch_info_grab(bots):
     t_check.daemon = True
     t_check.start()
 
+def restartBot(botChannel,blist):
+    
+    with open('config.json', 'r') as data_file:
+        botConfig = json.load(data_file, encoding = 'utf-8')[botChannel]
+
+    newBot = SaltyBot(botConfig,True)
+
+    #@@ START NEW THREAD
+    newBot.start()
+    #@@ END @@#
+
+    print("\n\n")
+    print(blist)
+    oldBot = blist[0]
+    blist[0] =  newBot
+    del oldBot
+    print(blist)
+
+#@@ BOT MAIN THREAD STRING COMMUNICATION SECTION @@#
+def addQue(command="",bot=None):
+    while True:
+    
+        try:
+            if command == "GET" and bot == None:
+                try:
+                    return addQue.commands.pop(0)
+                except IndexError:
+                    return None
+
+            if bot != None and command != "":
+                addQue.commands += [[command,bot]]
+
+        except AttributeError:
+            addQue.commands = []
+            continue
+
+        break
+
+def checkQue():
+    todo =  addQue("GET")
+    if todo == [] or todo == None:
+        return None
+    return todo
+
 def main():
+    debuging = True
+    running = True
+
     channel_configs = {}
     with open('config.json', 'r') as data_file:
         channel_configs = json.load(data_file, encoding = 'utf-8')
 
-    bots = []
-    for channels in channel_configs.values():
-        bots.append(SaltyBot(channels))
 
+    
+    bots = []
+
+    for channels in channel_configs.values():
+
+        bots.append(SaltyBot(channels,debuging))
+
+    threads_t = []
     for bot in bots:
-        tmp = threading.Thread(target=bot.twitch_run)
-        tmp.daemon = True
-        tmp.start()
+        threads_t.append(bot.start())
 
     twitch_info_grab(bots)
-    
-    while True:
-        time.sleep(1)
+
+    while running:
+
+        todo = checkQue()
+        
+        if todo == None and running:
+            time.sleep(1)
+            continue #by the way bated continue starts the loop over again, skype call?
+
+        if debuging: print(todo)
+
+        if todo[0] == RESTART:
+            
+            if debuging:print("{} on {}".format(todo[0],todo[1]))
+            
+            restartBot(todo[1],bots)
+        
+        if todo[0] == STOP:
+            running = False
+            if debuging:print("in stop")
+        
+        if todo[0] == CHECK:
+            for i in threads_t:
+                print(i.isAlive())
+
+
+
         
 if __name__ == '__main__':
     main()
