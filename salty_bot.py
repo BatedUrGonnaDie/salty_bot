@@ -73,16 +73,17 @@ class SaltyBot:
             self.social_text = self.config_data['general']['social']['text']
 
     def twitch_send_message(self, response, command = ''):
-        if command != '':
-            if (int(time.time()) - self.command_times[command]['last']) >= self.command_times[command]['limit']:
-                response = response.encode('utf-8')
-                to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
-                self.irc.sendall(to_send)
-                self.command_times[command]['last'] = int(time.time())
-        else:
             response = response.encode('utf-8')
             to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
             self.irc.sendall(to_send)
+            if command != '':
+                self.command_times[command]['last'] = int(time.time())
+
+    def time_check(self, command):
+        if (int(time.time()) - self.command_times[command]['last']) >= self.command_times[command]['limit']:
+            return True
+        else:
+            return False
 
     def osu_api_user(self):
         osu_nick = self.config_data['general']['osu']['osu_nick']
@@ -333,7 +334,8 @@ class SaltyBot:
                                 if self.sender in self.admin_file:
                                     self.wr_retrieve()
                             else:
-                                self.wr_retrieve()
+                                if self.time_check('!wr') == True:
+                                    self.wr_retrieve()
 
                     elif self.message_body.startswith('leaderboard'):
                         if '!leaderboards' in self.commands:
@@ -341,7 +343,8 @@ class SaltyBot:
                                 if self.sender in self.admin_file:
                                     self.leaderboard_retrieve()
                             else:
-                                self.leaderboard_retrieve()
+                                if self.time_check('!leaderboards') == True:
+                                    self.leaderboard_retrieve()
 
                     elif self.message_body.startswith('addquote'):
                         if '!quote' in self.commands:
@@ -357,7 +360,8 @@ class SaltyBot:
                                 if self.sender in self.admin_file:
                                     self.text_retrieve('quote')
                             else:
-                                self.text_retrieve('quote')
+                                if self.time_check('!quote') == True:
+                                    self.text_retrieve('quote')
 
                     elif self.message_body.startswith('addpun'):
                         if '!pun' in self.commands:
@@ -373,7 +377,8 @@ class SaltyBot:
                                 if self.sender in self.admin_file:
                                     self.text_retrieve('pun')
                             else:
-                                self.text_retrieve('pun')
+                                if self.time_check('!pun') == True:
+                                    self.text_retrieve('pun')
 
                     elif self.message_body == 'rank':
                         if self.game == 'osu!':
@@ -382,7 +387,8 @@ class SaltyBot:
                                     if self.sender in self.admin_file:
                                         self.osu_api_user()
                                 else:
-                                    self.osu_api_user()
+                                    if self.time_check('!rank') == True:
+                                        self.osu_api_user()
 
                     elif self.message_body == 'race':
                         if '!race' in self.commands:
@@ -392,7 +398,8 @@ class SaltyBot:
                                         self.srl_race_retrieve()
                             else:
                                 if 'race' in self.title or 'races' in self.title or 'racing' in self.title:
-                                    self.srl_race_retrieve()
+                                    if self.time_check('!race') == True:
+                                        self.srl_race_retrieve()
 
                     elif self.message_body.startswith('vote '):
                         if '!vote' in self.commands:
@@ -400,7 +407,8 @@ class SaltyBot:
                                 if self.sender in self.admin_file:
                                     self.vote(self.message_body, self.sender)
                             else:
-                                self.vote(self.message_body, self.sender)
+                                if self.time_check('!vote') == True:
+                                    self.vote(self.message_body, self.sender)
 
                     elif self.message_body.startswith('votes'):
                         if '!vote' in self.commands:
@@ -411,11 +419,12 @@ class SaltyBot:
                                 self.check_votes(self.message_body)
 
                     elif self.message_body == 'commands':
-                        self.twitch_send_message(self.commands_string, '!commands')
+                        if self.time_check('!vote') == True:
+                            self.twitch_send_message(self.commands_string, '!commands')
 
                     elif self.message_body == 'restart' and self.sender == self.channel:
                         if self.__DB:
-                            print('{} is restarting, called by {}'.format(self.channel+' '+self.twitch_nick,self.sender))
+                            print('{} is restarting, called by {}'.format(self.channel + ' ' + self.twitch_nick, self.sender))
                         self.admin(RESTART)
                         self.twitch_send_message('Restarting the bot.')
 
