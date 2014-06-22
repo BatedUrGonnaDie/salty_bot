@@ -30,6 +30,8 @@ class SaltyBot:
         self.twitch_oauth = config_data['general']['twitch_oauth']
         self.channel = config_data['general']['channel']
         self.commands = []
+        self.admin_commands = []
+        self.command_times = {}
         with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
             self.admin_file = data_file.read()
 
@@ -43,8 +45,6 @@ class SaltyBot:
     def twitch_info(self, info):
         self.game = info[self.channel]['game']
         self.title = info[self.channel]['title']
-        print self.game
-        print self.title
 
     def twitch_connect(self):
         if self.__DB:
@@ -56,19 +56,30 @@ class SaltyBot:
 
     def twitch_commands(self):
         for keys in self.config_data['commands']:
-            if self.config_data['commands'][keys] != 'False':
+            if self.config_data['commands'][keys]['on'] == 'True':
                 self.commands.append(keys)
+            if self.config_data['commands'][keys]['admin'] == 'True':
+                self.admin_commands.append(keys)
+            self.command_times[keys] = {'last' : self.config_data['commands'][keys]['last'], 'limit' : self.config_data['commands'][keys]['limit']}
         self.commands_string = ', '.join(self.commands)
         if '!vote' in self.commands:
             self.votes = {}
 
-    def twitch_send_message(self, response):
-        self.last_response = response
-        response = response.encode('utf-8')
-        to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
-        #self.to_send = self.to_send.encode('utf-8')
-        self.irc.sendall(to_send)
-        time.sleep(1.5)
+    def twitch_send_message(self, response, command = ''):
+        if command != '':
+            if (int(time.time()) - self.command_times[command]['last']) >= self.command_times[command]['limit']:
+                self.last_response = response
+                response = response.encode('utf-8')
+                to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
+                #self.to_send = self.to_send.encode('utf-8')
+                self.irc.sendall(to_send)
+                self.command_times[command]['last'] = int(time.time())
+        else:
+            self.last_response = response
+            response = response.encode('utf-8')
+            to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
+            #self.to_send = self.to_send.encode('utf-8')
+            self.irc.sendall(to_send)
 
     def osu_api_user(self):
         osu_nick = self.config_data['general']['osu']['osu_nick']
@@ -109,17 +120,16 @@ class SaltyBot:
         osu_send_message(osu_irc_pass, osu_nick, self.message_body)
 
     def wr_retrieve(self):
-        if self.game in self.config_data['commands']['!wr']:
-            print 'yes'
-            for keys in self.config_data['commands']['!wr'][self.game].keys():
+        if self.game in self.config_data['commands']['!wr']['games']:
+            for keys in self.config_data['commands']['!wr']['games'][self.game].keys():
                 if keys in self.title:
-                    wr = self.config_data['commands']['!wr'][self.game][keys]
-                    self.twitch_send_message(wr)
+                    wr = self.config_data['commands']['!wr']['games'][self.game][keys]
+                    self.twitch_send_message(wr, '!wr')
 
     def leaderboard_retrieve(self):
-        if game in self.config_data['commands']['!leaderboards']:
-            leaderboard = self.config_data['commands']['!leaderboards'][self.game]
-            self.twitch_send_message(leaderboard)
+        if self.game in self.config_data['commands']['!leaderboards']['games']:
+            leaderboard = self.config_data['commands']['!leaderboards']['games'][self.game]
+            self.twitch_send_message(leaderboard, '!leaderboards')
             
     def add_text(self, text_type, text_add):
         text = text_add.split('{} '.format(text_type))[-1]
@@ -159,7 +169,7 @@ class SaltyBot:
                 except: 
                     self.this_retrieve = ''
                     continue
-        self.twitch_send_message(response)
+        self.twitch_send_message(response, '!' + text_type)
         self.last_retrieve = self.this_retrieve
 
     def counter(self):
@@ -187,9 +197,9 @@ class SaltyBot:
                     if len(srl_race_entrants) <= 6:
                         for i in srl_race_entrants:
                             multitwitch_link += i + '/'
-                        self.twitch_send_message('{} is racing {} in {}.\n{}'.format(user, srl_race_category, srl_race_game, multitwitch_link))
+                        self.twitch_send_message('{} is racing {} in {}.\n{}'.format(user, srl_race_category, srl_race_game, multitwitch_link), '!race')
                     else:
-                        self.twitch_send_message('{} is racing {} in {}.\n{}'.format(user, srl_race_category, srl_race_game, srl_race_link))
+                        self.twitch_send_message('{} is racing {} in {}.\n{}'.format(user, srl_race_category, srl_race_game, srl_race_link), '!race')
 
     def youtube_video_check(self, message):
         self.youtube_api_key = self.config_data['general']['youtube_api_key']
@@ -256,7 +266,7 @@ class SaltyBot:
                     response = 'Your vote has been recorded.'
             else:
                 response = 'You did not put an open vote category.'
-        self.twitch_send_message(response)
+        self.twitch_send_message(response, '!vote')
 
     def check_votes(self, message):
         try:
@@ -275,7 +285,7 @@ class SaltyBot:
                     winning_value = self.votes[categories]['votes'][winning_key]
                     response_list.append('{}: {} is winning with {} votes.'.format(categories, winning_key, winning_value))
             response = '.  '.join(response_list)
-        self.twitch_send_message(response)
+        self.twitch_send_message(response, '!vote')
 
     def twitch_run(self):
         self.twitch_connect()
@@ -299,7 +309,7 @@ class SaltyBot:
                 self.message_body = ':'.join(self.message.split(':')[2:])
 
                 if self.message_body.find('osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
-                    if self.game.lower() == 'osu!':
+                    if self.game == 'osu!':
                         if self.config_data['general']['osu']['song_link'] != 'False':
                             self.osu_link()
 
@@ -308,55 +318,96 @@ class SaltyBot:
                         self.youtube_video_check(self.message_body)
 
                 if self.__DB:
-                    print("message body: "+self.message_body)
+                    print("message body: " + self.message_body)
                 
                 if self.message_body.startswith('!'):
                     self.message_body = self.message_body.split('!')[-1]
 
                     if self.message_body.startswith('wr'):
                         if '!wr' in self.commands:
-                            self.wr_retrieve()
+                            if '!wr' in self.admin_commands:
+                                if self.sender in self.admin_file:
+                                    self.wr_retrieve()
+                            else:
+                                self.wr_retrieve()
 
                     elif self.message_body.startswith('leaderboard'):
                         if '!leaderboards' in self.commands:
-                            self.leaderboard_retrieve()
+                            if '!leaderboards' in self.admin_commands:
+                                if self.sender in self.admin_file:
+                                    self.leaderboard_retrieve()
+                            else:
+                                self.leaderboard_retrieve()
 
                     elif self.message_body.startswith('addquote'):
                         if '!quote' in self.commands:
-                            self.add_text('quote', self.message_body)
+                            if '!qoute' in self.admin_commands:
+                                if self.sender in self.admin_file:
+                                    self.add_text('quote', self.message_body)
+                            else:
+                                self.add_text('quote', self.message_body)
 
                     elif self.message_body == 'quote':
                         if '!quote'in self.commands:
-                            self.text_retrieve('quote')
+                            if '!quote' in self.admin_commands:
+                                if self.sender in self.admin_file:
+                                    self.text_retrieve('quote')
+                            else:
+                                self.text_retrieve('quote')
 
                     elif self.message_body.startswith('addpun'):
                         if '!pun' in self.commands:
-                            self.add_text('pun', self.message_body)
+                            if '!pun' in self.admin_commands:
+                                if self.sender in self.admin_file:
+                                    self.add_text('pun', self.message_body)
+                            else:
+                                self.add_text('pun', self.message_body)
 
                     elif self.message_body == 'pun':
                         if '!pun' in self.commands:
-                            self.text_retrieve('pun')
+                            if '!pun' in self.admin_commands:
+                                if self.sender in self.admin_file:
+                                    self.text_retrieve('pun')
+                            else:
+                                self.text_retrieve('pun')
 
                     elif self.message_body == 'rank':
-                        if self.game.lower() == 'osu!':
+                        if self.game == 'osu!':
                             if '!rank' in self.commands:
-                                self.osu_api_user()
+                                if '!rank' in self.admin_commands:
+                                    if self.sender in self.admin_file:
+                                        self.osu_api_user()
+                                else:
+                                    self.osu_api_user()
 
                     elif self.message_body == 'race':
                         if '!race' in self.commands:
-                            if 'race' in self.title or 'races' in self.title or 'racing' in self.title:
-                                self.srl_race_retrieve()
+                            if '!race' in self.admin_commands:
+                                if self.sender in self.admin_file:
+                                    if 'race' in self.title or 'races' in self.title or 'racing' in self.title:
+                                        self.srl_race_retrieve()
+                            else:
+                                if 'race' in self.title or 'races' in self.title or 'racing' in self.title:
+                                    self.srl_race_retrieve()
 
                     elif self.message_body.startswith('vote '):
                         if '!vote' in self.commands:
-                            self.vote(self.message_body, self.sender)
+                            if '!vote' in self.admin_commands:
+                                if self.sender in self.admin_file:
+                                    self.vote(self.message_body, self.sender)
+                            else:
+                                self.vote(self.message_body, self.sender)
 
                     elif self.message_body.startswith('votes'):
                         if '!vote' in self.commands:
-                            self.check_votes(self.message_body)
+                            if '!vote' in self.admin_commands:
+                                if self.sender in self.admin_file:
+                                    self.check_votes(self.message_body)
+                            else:
+                                self.check_votes(self.message_body)
 
                     elif self.message_body == 'commands':
-                        self.twitch_send_message(self.commands_string)
+                        self.twitch_send_message(self.commands_string, '!commands')
 
                     elif self.message_body == 'restart' and self.sender == self.channel:
                         if self.__DB:
@@ -448,7 +499,7 @@ def restartBot(botChannel,blist):
     with open('config.json', 'r') as data_file:
         botConfig = json.load(data_file, encoding = 'utf-8')[botChannel]
 
-    newBot = SaltyBot(botConfig,True)
+    newBot = SaltyBot(botConfig, False)
 
     #@@ START NEW THREAD
     newBot.start()
@@ -484,7 +535,7 @@ def checkQue():
     return todo
 
 def main():
-    debuging = True
+    debuging = False
     running = True
 
     channel_configs = {}
@@ -493,7 +544,7 @@ def main():
         
     bots = []
     for channels in channel_configs.values():
-        bots.append(SaltyBot(channels,debuging))
+        bots.append(SaltyBot(channels, debuging))
 
     threads_t = []
     for bot in bots:
@@ -527,6 +578,5 @@ if __name__ == '__main__':
     main()
     
 #social aka static text every x amount of time, toobou rate limiting, review quotes/puns from chat
-#add admin checking for each command, pass time to twitch send and check if it has been x amount of time since last sending of that command
 #runes/masteries
 #make web page that doesn't suck
