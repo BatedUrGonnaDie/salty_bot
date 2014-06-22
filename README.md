@@ -32,11 +32,19 @@ Ability to send you the maps posted in chat for osu directly in game.
 
 Post the title and uploader of a youtube video posted in chat (can detect spam this way).
 
+Ability to set all commands as admin only.  This means that only your moderators will be able to use that command.  This can be useful to cut down on flood.
+
+Ability to set flood limits on all commands.  Each command has its own flood limit, so you can use some more than others.
+
 Under The Hood Stuff
 ====================
-Passively retrieves game and title once per minute.  No more typing a command to retrieve it.  SHould always be good to go now.
+Passively retrieves game and title once per minute.  No more typing a command to retrieve it.  Should always be good to go now.
 
 Passively watches for op messages, and when it sees one it adds the user to an admin file.  This allows you to restrict commands to being moderator only if you are so inclined.
+
+Config File
+===========
+As soon as I decide on a config file I will be posing an example one to model after, but at the moment it is changing quite a bit.
 
 Usage
 =====
