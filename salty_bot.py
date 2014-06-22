@@ -10,13 +10,15 @@ import socket
 import requests
 import json
 
-from actions import *
+RESTART = "<restart>"
+STOP = "<stop program>"
+CHECK = "<check threads>"
 
 class SaltyBot:
     
     running = True
 
-    def __init__(self, config_data,debug = False):
+    def __init__(self, config_data, debug = False):
         self.__DB = debug
 
         self.config_data = config_data
@@ -37,16 +39,16 @@ class SaltyBot:
         self.thread.start()
 
         return self.thread
-
-
-
+    
     def twitch_info(self, info):
         self.game = info[self.channel]['game']
         self.title = info[self.channel]['title']
+        print self.game
+        print self.title
 
     def twitch_connect(self):
-        if self.__DB: print("joining {} as {}".format(self.channel,self.twitch_nick))
-
+        if self.__DB:
+            print("joining {} as {}".format(self.channel,self.twitch_nick))
         self.irc.connect((self.twitch_host, self.port))
         self.irc.send('PASS {}\r\n'.format(self.twitch_oauth))
         self.irc.send('NICK {}\r\n'.format(self.twitch_nick))
@@ -54,7 +56,7 @@ class SaltyBot:
 
     def twitch_commands(self):
         for keys in self.config_data['commands']:
-            if self.config_data['commands'][keys] == 'True':
+            if self.config_data['commands'][keys] != 'False':
                 self.commands.append(keys)
         self.commands_string = ', '.join(self.commands)
         if '!vote' in self.commands:
@@ -107,17 +109,16 @@ class SaltyBot:
         osu_send_message(osu_irc_pass, osu_nick, self.message_body)
 
     def wr_retrieve(self):
-        game = self.game.lower()
-        if game in self.config_data['commands']['!wr']:
-            for keys in self.config_data['commands']['!wr'][game].keys():
-                if keys in self.title.lower():
-                    wr = self.config_data['commands']['!wr'][game][keys]
+        if self.game in self.config_data['commands']['!wr']:
+            print 'yes'
+            for keys in self.config_data['commands']['!wr'][self.game].keys():
+                if keys in self.title:
+                    wr = self.config_data['commands']['!wr'][self.game][keys]
                     self.twitch_send_message(wr)
 
     def leaderboard_retrieve(self):
-        game = self.game.lower() 
         if game in self.config_data['commands']['!leaderboards']:
-            leaderboard = self.config_data['commands']['!leaderboards'][game]
+            leaderboard = self.config_data['commands']['!leaderboards'][self.game]
             self.twitch_send_message(leaderboard)
             
     def add_text(self, text_type, text_add):
@@ -148,15 +149,16 @@ class SaltyBot:
             response = lines_read[0]
             self.this_retrieve = response
         else:
-            try:
-                while self.this_retrieve == self.last_retrieve:
-                    select_line = random.randrange(1, lines, 1)
-                    response = lines_read[select_line]
-                    self.this_retrieve = response
-            except:
-                select_line = random.randrange(1, lines, 1)
-                response = lines_read[select_line]
-                self.this_retrieve = response
+            while True:
+                try:
+                    while self.this_retrieve == self.last_retrieve:
+                        select_line = random.randrange(1, lines, 1)
+                        response = lines_read[select_line]
+                        self.this_retrieve = response
+                        break
+                except: 
+                    self.this_retrieve = ''
+                    continue
         self.twitch_send_message(response)
         self.last_retrieve = self.this_retrieve
 
@@ -304,7 +306,10 @@ class SaltyBot:
                 if self.message_body.find('youtube.com/watch?v=') != -1:
                     if self.config_data['general']['youtube_link']:
                         self.youtube_video_check(self.message_body)
-                        
+
+                if self.__DB:
+                    print("message body: "+self.message_body)
+                
                 if self.message_body.startswith('!'):
                     self.message_body = self.message_body.split('!')[-1]
 
@@ -312,67 +317,64 @@ class SaltyBot:
                         if '!wr' in self.commands:
                             self.wr_retrieve()
 
-                    if self.message_body.startswith('leaderboard'):
+                    elif self.message_body.startswith('leaderboard'):
                         if '!leaderboards' in self.commands:
                             self.leaderboard_retrieve()
 
-                    if self.message_body.startswith('addquote'):
+                    elif self.message_body.startswith('addquote'):
                         if '!quote' in self.commands:
                             self.add_text('quote', self.message_body)
 
-                    if self.message_body == 'quote':
+                    elif self.message_body == 'quote':
                         if '!quote'in self.commands:
                             self.text_retrieve('quote')
 
-                    if self.message_body.startswith('addpun'):
+                    elif self.message_body.startswith('addpun'):
                         if '!pun' in self.commands:
                             self.add_text('pun', self.message_body)
 
-                    if self.message_body == 'pun':
+                    elif self.message_body == 'pun':
                         if '!pun' in self.commands:
                             self.text_retrieve('pun')
 
-                    if self.message_body == 'rank':
+                    elif self.message_body == 'rank':
                         if self.game.lower() == 'osu!':
                             if '!rank' in self.commands:
                                 self.osu_api_user()
 
-                    if self.message_body == 'race':
+                    elif self.message_body == 'race':
                         if '!race' in self.commands:
                             if 'race' in self.title or 'races' in self.title or 'racing' in self.title:
                                 self.srl_race_retrieve()
 
-                    if self.message_body.startswith('vote '):
+                    elif self.message_body.startswith('vote '):
                         if '!vote' in self.commands:
                             self.vote(self.message_body, self.sender)
 
-                    if self.message_body.startswith('votes'):
+                    elif self.message_body.startswith('votes'):
                         if '!vote' in self.commands:
                             self.check_votes(self.message_body)
 
-                    if self.message_body == 'commands':
+                    elif self.message_body == 'commands':
                         self.twitch_send_message(self.commands_string)
 
-                    if "restart" in self.message_body:
-                        if self.__DB: print("{} is restarting, called by {}".format(self.channel+' '+self.twitch_nick,self.sender))
+                    elif self.message_body == 'restart' and self.sender == self.channel:
+                        if self.__DB:
+                            print('{} is restarting, called by {}'.format(self.channel+' '+self.twitch_nick,self.sender))
                         self.admin(RESTART)
-                        self.twitch_send_message("PSUDO RESTARTING!")
+                        self.twitch_send_message('Restarting the bot.')
 
                         break
 
-                    if "stop" in self.message_body and self.sender == "bomb_mask":
-                        if self.__DB: print("SHUTDOWN CALLED BY {}".format(self.sender.upper()))
+                    elif 'stop' in self.message_body and self.sender == 'batedurgonnadie' or self.sender == 'bomb_mask':
+                        if self.__DB:
+                            print('SHUTDOWN CALLED BY {}'.format(self.sender.upper()))
                         self.admin(STOP)
 
-                    if "check" in self.message_body:
+                    elif 'check' in self.message_body:
                         self.admin(CHECK)
 
 
-                if self.__DB :print("message body: "+self.message_body)
-
-
-
-                    
                 elif self.action == 'MODE':
                     if '+o ' in self.message:
                         self.admin = self.message.split('+o ')[-1]
@@ -385,11 +387,10 @@ class SaltyBot:
         print("thread stoped")
     #@@ ADMIN FUNCTIONS @@#
 
-    def admin(self,call="<test>"):
-        pass
+    def admin(self,call='<test>'):
         if call == RESTART:
             addQue(RESTART,self.channel)
-            print("bot id {}".format(self))
+            print('bot id {}'.format(self))
         else:
             addQue(call,self)
 
@@ -413,20 +414,23 @@ def twitch_info_grab(bots):
     channel_game_title = {}
 
     for channel in channels:
-        url = 'https://api.twitch.tv/kraken/streams/'+channel
+        url = 'https://api.twitch.tv/kraken/channels/'+channel
         headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}        
         data = requests.get(url, headers = headers)
         data_decode = data.json()
-        data_stream = data_decode['stream']  
+        #data_stream = data_decode['stream']  
 
-        if data_stream == None:
+        game = data_decode['game']
+        title = data_decode['status']
+
+        try:
+            game = game.lower()
+        except:
             game = ''
+        try:
+            title = title.lower()
+        except:
             title = ''
-
-        else:
-            data_channel = data_stream['channel']
-            game = data_stream['game']
-            title = data_channel['status']
 
         channel_game_title.update({channel : {'game' : game, 'title' : title}})
 
@@ -441,7 +445,6 @@ def twitch_info_grab(bots):
     t_check.start()
 
 def restartBot(botChannel,blist):
-    
     with open('config.json', 'r') as data_file:
         botConfig = json.load(data_file, encoding = 'utf-8')[botChannel]
 
@@ -451,7 +454,7 @@ def restartBot(botChannel,blist):
     newBot.start()
     #@@ END @@#
 
-    print("\n\n")
+    print('\n\n')
     print(blist)
     oldBot = blist[0]
     blist[0] =  newBot
@@ -459,27 +462,23 @@ def restartBot(botChannel,blist):
     print(blist)
 
 #@@ BOT MAIN THREAD STRING COMMUNICATION SECTION @@#
-def addQue(command="",bot=None):
+def addQue(command='',bot=None):
     while True:
-    
         try:
-            if command == "GET" and bot == None:
+            if command == 'GET' and bot == None:
                 try:
                     return addQue.commands.pop(0)
                 except IndexError:
                     return None
-
-            if bot != None and command != "":
+            if bot != None and command != '':
                 addQue.commands += [[command,bot]]
-
         except AttributeError:
             addQue.commands = []
             continue
-
         break
 
 def checkQue():
-    todo =  addQue("GET")
+    todo =  addQue('GET')
     if todo == [] or todo == None:
         return None
     return todo
@@ -491,13 +490,9 @@ def main():
     channel_configs = {}
     with open('config.json', 'r') as data_file:
         channel_configs = json.load(data_file, encoding = 'utf-8')
-
-
-    
+        
     bots = []
-
     for channels in channel_configs.values():
-
         bots.append(SaltyBot(channels,debuging))
 
     threads_t = []
@@ -507,32 +502,27 @@ def main():
     twitch_info_grab(bots)
 
     while running:
-
-        todo = checkQue()
-        
+        todo = checkQue()  
         if todo == None and running:
             time.sleep(1)
-            continue #by the way bated continue starts the loop over again, skype call?
-
-        if debuging: print(todo)
+            continue
+        if debuging:
+            print(todo)
 
         if todo[0] == RESTART:
-            
-            if debuging:print("{} on {}".format(todo[0],todo[1]))
-            
+            if debuging:
+                print('{} on {}'.format(todo[0],todo[1]))
             restartBot(todo[1],bots)
         
         if todo[0] == STOP:
             running = False
-            if debuging:print("in stop")
+            if debuging:
+                print('in stop')
         
         if todo[0] == CHECK:
             for i in threads_t:
                 print(i.isAlive())
 
-
-
-        
 if __name__ == '__main__':
     main()
     
