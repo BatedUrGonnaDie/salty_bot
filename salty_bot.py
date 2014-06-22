@@ -17,6 +17,7 @@ CHECK = "<check threads>"
 class SaltyBot:
     
     running = True
+    messages_received = 0
 
     def __init__(self, config_data, debug = False):
         self.__DB = debug
@@ -62,23 +63,25 @@ class SaltyBot:
                 self.admin_commands.append(keys)
             self.command_times[keys] = {'last' : self.config_data['commands'][keys]['last'], 'limit' : self.config_data['commands'][keys]['limit']}
         self.commands_string = ', '.join(self.commands)
+        
         if '!vote' in self.commands:
             self.votes = {}
+
+        if self.config_data['general']['social']['text'] != '':
+            self.command_times['social'] = {'time_last' : int(time.time()), 'messages' : self.config_data['general']['social']['messages'],
+                                            'messages_last' : self.messages_received, 'time' : self.config_data['general']['social']['time']}
+            self.social_text = self.config_data['general']['social']['text']
 
     def twitch_send_message(self, response, command = ''):
         if command != '':
             if (int(time.time()) - self.command_times[command]['last']) >= self.command_times[command]['limit']:
-                self.last_response = response
                 response = response.encode('utf-8')
                 to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
-                #self.to_send = self.to_send.encode('utf-8')
                 self.irc.sendall(to_send)
                 self.command_times[command]['last'] = int(time.time())
         else:
-            self.last_response = response
             response = response.encode('utf-8')
             to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
-            #self.to_send = self.to_send.encode('utf-8')
             self.irc.sendall(to_send)
 
     def osu_api_user(self):
@@ -305,6 +308,7 @@ class SaltyBot:
                 self.action = ''
                     
             if self.action == 'PRIVMSG':
+                self.messages_received += 1
                 self.sender = self.message.split(':')[1].split('!')[0]
                 self.message_body = ':'.join(self.message.split(':')[2:])
 
@@ -316,7 +320,7 @@ class SaltyBot:
                 if self.message_body.find('youtube.com/watch?v=') != -1:
                     if self.config_data['general']['youtube_link']:
                         self.youtube_video_check(self.message_body)
-
+                
                 if self.__DB:
                     print("message body: " + self.message_body)
                 
@@ -435,6 +439,15 @@ class SaltyBot:
                             self.fo.close()
                             with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
                                 self.admin_file = data_file.read()
+                                
+            if self.config_data['general']['social']['text'] != '':
+                if self.messages_received >= (self.command_times['social']['messages'] + self.command_times['social']['messages_last']):
+                    if int(time.time()) >= ((self.command_times['social']['time'] * 60) + self.command_times['social']['time_last']):
+                        time.sleep(random.randrange(1, 20, 1))
+                        self.twitch_send_message(self.social_text)
+                        self.command_times['social']['last_time'] = int(time.time())
+                        self.command_times['social']['last_message'] = self.messages_received
+                        
         print("thread stoped")
     #@@ ADMIN FUNCTIONS @@#
 
@@ -577,6 +590,6 @@ def main():
 if __name__ == '__main__':
     main()
     
-#social aka static text every x amount of time, toobou rate limiting, review quotes/puns from chat
+#toobou rate limiting, review quotes/puns from chat
 #runes/masteries
 #make web page that doesn't suck
