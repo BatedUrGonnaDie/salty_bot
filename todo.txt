@@ -1,2 +1,0 @@
-make generator able to make other user profiles
-time based responses
