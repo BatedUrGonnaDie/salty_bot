@@ -9,9 +9,12 @@ import threading
 import socket
 import requests
 import json
+<<<<<<< HEAD
 import Queue as Q
 
 debuging = False
+=======
+>>>>>>> origin/master
 
 RESTART = "<restart>"
 STOP = "<stop program>"
@@ -188,7 +191,7 @@ class SaltyBot:
         pass
 
     def srl_race_retrieve(self):
-        self.srl_nick = config_data['general']['srl_nick']
+        self.srl_nick = self.config_data['general']['srl_nick']
         url = 'http://api.speedrunslive.com/races'
         data = requests.get(url)
         data_decode = data.json()
@@ -198,9 +201,9 @@ class SaltyBot:
             for races in i['entrants']:
                 if self.srl_nick in races:
                     race_channel = i
-                    for racers in race_channel['entrants']:
-                        srl_race_entrants.append(racers['twitch'])
-                    user = i['entrants'][self.srl_nick]
+                    for values in race_channel['entrants'].values():
+                        srl_race_entrants.append(values['twitch'])
+                    user = i['entrants'][self.srl_nick]['twitch']
                     srl_race_game = race_channel['game']['name']
                     srl_race_category = race_channel['goal']
                     srl_race_id = race_channel['id']
@@ -209,9 +212,11 @@ class SaltyBot:
                     if len(srl_race_entrants) <= 6:
                         for i in srl_race_entrants:
                             multitwitch_link += i + '/'
-                        self.twitch_send_message('{} is racing {} in {}.\n{}'.format(user, srl_race_category, srl_race_game, multitwitch_link), '!race')
+                        response = '{} is racing {} in {}.  {}'.format(user, srl_race_category, srl_race_game, multitwitch_link)
+                        self.twitch_send_message(response, '!race')
                     else:
-                        self.twitch_send_message('{} is racing {} in {}.\n{}'.format(user, srl_race_category, srl_race_game, srl_race_link), '!race')
+                        response = '{} is racing {} in {}.  {}'.format(user, srl_race_category, srl_race_game, srl_race_link)
+                        self.twitch_send_message(response, '!race')
 
     def youtube_video_check(self, message):
         self.youtube_api_key = self.config_data['general']['youtube_api_key']
@@ -430,7 +435,7 @@ class SaltyBot:
                         if self.time_check('!vote') == True:
                             self.twitch_send_message(self.commands_string, '!commands')
 
-                    elif self.message_body == 'restart' and (self.sender == self.channel or self.sender == "bomb_mask"):
+                    elif self.message_body == 'restart' and self.sender == self.channel:# or self.sender == "bomb_mask"):
                         if self.__DB:
                             print('{} is restarting, called by {}'.format(self.channel + ' ' + self.twitch_nick, self.sender))
                         self.admin(RESTART)
@@ -562,6 +567,7 @@ def main():
 
     ##MAIN LOOP##
     while running:
+
         try:
             register = interface.get(False)
 
