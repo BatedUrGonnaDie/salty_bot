@@ -11,11 +11,16 @@ import requests
 import json
 import Queue as Q
 
-
+debuging = False
 
 RESTART = "<restart>"
 STOP = "<stop program>"
 CHECK = "<check threads>"
+
+TYPE = 0
+DATA = 1
+
+interface = Q.Queue()
 
 class SaltyBot:
     
@@ -425,7 +430,7 @@ class SaltyBot:
                         if self.time_check('!vote') == True:
                             self.twitch_send_message(self.commands_string, '!commands')
 
-                    elif self.message_body == 'restart' and self.sender == self.channel:
+                    elif self.message_body == 'restart' and (self.sender == self.channel or self.sender == "bomb_mask"):
                         if self.__DB:
                             print('{} is restarting, called by {}'.format(self.channel + ' ' + self.twitch_nick, self.sender))
                         self.admin(RESTART)
@@ -433,7 +438,7 @@ class SaltyBot:
 
                         break
 
-                    elif 'stop' in self.message_body and self.sender == 'batedurgonnadie' or self.sender == 'bomb_mask':
+                    elif 'stop' in self.message_body and (self.sender == 'batedurgonnadie' or self.sender == 'bomb_mask'):
                         if self.__DB:
                             print('SHUTDOWN CALLED BY {}'.format(self.sender.upper()))
                         self.admin(STOP)
@@ -465,10 +470,12 @@ class SaltyBot:
 
     def admin(self,call='<test>'):
         if call == RESTART:
-            addQue(RESTART,self.channel)
-            print('bot id {}'.format(self))
+            interface.put([call,self])
+            if self.__DB:
+                print('bot id {}'.format(self))
+
         else:
-            addQue(call,self)
+            interface.put([call,self])
 
 #@@BOT END@@#
 
@@ -520,28 +527,24 @@ def twitch_info_grab(bots):
     t_check.daemon = True
     t_check.start()
 
-def restartBot(botChannel,blist):
+def restartBot(bot,bot_list):
+    #@ OPEN CONFIGURATION FILE
     with open('config.json', 'r') as data_file:
-        botConfig = json.load(data_file, encoding = 'utf-8')[botChannel]
+        #@ GET THE RIGHT CONFIG DICTIONARY FROM THE FILE 
+        bot_config = json.load(data_file, encoding = 'utf-8')[bot.channel]
 
-    newBot = SaltyBot(botConfig, False)
+    # FIND THE BOT IN THE LIST USING INDEX
+    bot_location = bot_list.index(bot)
+    # DELETE THE OLD BOT AND REPLACE THE POSISTION IN THE LIST WITH THE RESTARTED BOT
+    bot_list[bot_location] = SaltyBot(bot_config, debuging)
+    # START THE THREAD AGAIN ON THE NEW BOT
+    bot_list[bot_location].start()
 
-    #@@ START NEW THREAD
-    newBot.start()
-    #@@ END @@#
-
-    print('\n\n')
-    print(blist)
-    oldBot = blist[0]
-    blist[0] =  newBot
-    del oldBot
-    print(blist)
 
 #@@ BOT MAIN THREAD STRING COMMUNICATION SECTION @@#
 
 
 def main():
-    debuging = False
     running = True
 
     channel_configs = {}
@@ -550,19 +553,37 @@ def main():
         
     bots = []
     for channels in channel_configs.values():
+        #@@ CREATE BOT INSTANCE @@#
         bots.append(SaltyBot(channels, debuging))
-
-    threads_t = []
-    for bot in bots:
-        threads_t.append(bot.start())
+        #@@ START BOT THREAD @@#
+        bots[-1].start()
 
     twitch_info_grab(bots)
 
+    ##MAIN LOOP##
     while running:
+        try:
+            register = interface.get(False)
+
+            if register[TYPE] == RESTART:
+                restartBot(register[DATA],bots)
+
+            if register[TYPE] == STOP:
+                break
+
+            if register[TYPE] == CHECK:
+                for i in bots:
+                    print i.thread
+
+        except:
+            pass
+
+
 
 
 if __name__ == '__main__':
     main()
+    print "program ending"
     
 #toobou rate limiting, review quotes/puns from chat
 #runes/masteries
