@@ -9,12 +9,11 @@ import threading
 import socket
 import requests
 import json
-<<<<<<< HEAD
+
 import Queue as Q
 
 debuging = False
-=======
->>>>>>> origin/master
+
 
 RESTART = "<restart>"
 STOP = "<stop program>"
