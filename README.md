@@ -12,11 +12,11 @@ Commands Explanation
 
 `!leaderboards` will simply output the leaderboard for the game as specified in the config file.
 
-`!race` will check to see if a variant of race is in your title to prevent spamming, and if it is it will check the SRL API to see if you are in a race.  If you are listed in the race it will generate the game, category, and SRL nick racing, as well as output a mutltwitch link if the race has less than 6 races, and a SRL race page link if it has more to keep the link size down.
+`!race` will check to see if a variant of race is in your title to prevent spamming, and if it is it will check the SRL API to see if you are in a race.  If you are listed in the race it will generate the game, category, and SRL nick racing, as well as output a multitwitch link if the race has fewer than 6 racers, and a SRL race page link if it has more to keep the link size down.
 
 `!quote`/`!pun` will display a randomly selected quote/pun from a file.
 
-`!addqoute`/`!addpun` will add the givin quote/pun to a review file so that you can manually move it over later.  If the broadcaster uses this command the quote/pun will go straight into the live file (that means be careful).  In the future you will be able to move them over through twitch chat so you don't have to do it manually.
+`!addqoute`/`!addpun` will add the given quote/pun to a review file so that you can manually move it over later.  If the broadcaster uses this command the quote/pun will go straight into the live file (that means be careful).  In the future you will be able to move them over through twitch chat so you don't have to do it manually.
 
 `!song` will display the current song you are playing on osu if you have osu!np going and your game is set to Osu!, or it will output the current song you are listening to from a media player if you have something that can read the info from them (I use [SMG](http://obsproject.com/forum/threads/smg-now-playing.12744/) for this).  This command currently does not work due to the way that the bot is run now.  In the future I may set up an ftp server for this to work.
 
@@ -44,7 +44,7 @@ Passively watches for op messages, and when it sees one it adds the user to an a
 
 Config File
 ===========
-As soon as I decide on a config file I will be posing an example one to model after, but at the moment it is changing quite a bit.
+As soon as I decide on a config file I will be posting an example one to model after, but at the moment it is changing quite a bit.
 
 Usage
 =====
