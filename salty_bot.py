@@ -9,9 +9,6 @@ import threading
 import socket
 import requests
 import json
-import Queue as Q
-
-
 
 RESTART = "<restart>"
 STOP = "<stop program>"
@@ -540,7 +537,26 @@ def restartBot(botChannel,blist):
     print(blist)
 
 #@@ BOT MAIN THREAD STRING COMMUNICATION SECTION @@#
+def addQue(command='',bot=None):
+    while True:
+        try:
+            if command == 'GET' and bot == None:
+                try:
+                    return addQue.commands.pop(0)
+                except IndexError:
+                    return None
+            if bot != None and command != '':
+                addQue.commands += [[command,bot]]
+        except AttributeError:
+            addQue.commands = []
+            continue
+        break
 
+def checkQue():
+    todo =  addQue('GET')
+    if todo == [] or todo == None:
+        return None
+    return todo
 
 def main():
     debuging = False
@@ -561,7 +577,26 @@ def main():
     twitch_info_grab(bots)
 
     while running:
+        todo = checkQue()  
+        if todo == None and running:
+            time.sleep(1)
+            continue
+        if debuging:
+            print(todo)
 
+        if todo[0] == RESTART:
+            if debuging:
+                print('{} on {}'.format(todo[0],todo[1]))
+            restartBot(todo[1],bots)
+        
+        if todo[0] == STOP:
+            running = False
+            if debuging:
+                print('in stop')
+        
+        if todo[0] == CHECK:
+            for i in threads_t:
+                print(i.isAlive())
 
 if __name__ == '__main__':
     main()
