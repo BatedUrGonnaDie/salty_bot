@@ -1,4 +1,4 @@
-Somewhat basic twitch chat bot with Twitch,Osu, Youtube, and SRL API's and soon LoL API integration.
+Somewhat basic Twitch chat bot with Twitch, Osu, YouTube, SRL, and soon LoL API integration.
 
 Coded with Python 2.7.6.  Required module install Requests due to how many API calls it has now.
 
@@ -13,10 +13,10 @@ found by matching the title against categories in the config file.  If one match
 
 `!leaderboards` will simply output the leaderboard for the game as specified in the config file.
 
-`!race` will check to see if a variant of race is in your title to prevent spamming, and if it is it will check the SRL
-API to see if you are in a race.  If you are listed in the race it will generate the game, category, and SRL nick
-racing, as well as output a multitwitch link if the race has fewer than 6 racers, and a SRL race page link if it has
-more to keep the link size down.
+`!race` will check to see if a variant of "race" is in your title to prevent spamming, and if it is it will check the
+SRL API to see if you are in a race.  If you are listed in the race it will generate the game, category, and SRL nicks
+racing, as well as output a multitwitch link if the race has 6 or fewer racers, or an SRL race page link if it has more
+to keep the link size down.
 
 `!quote`/`!pun` will display a randomly selected quote/pun from a file.
 
