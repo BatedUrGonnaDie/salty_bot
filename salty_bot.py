@@ -179,10 +179,11 @@ class SaltyBot:
                         select_line = random.randrange(1, lines, 1)
                         response = lines_read[select_line]
                         self.this_retrieve = response
-                        break
-                except: 
+                except:
+                    self.last_retrieve = ''
                     self.this_retrieve = ''
                     continue
+                break
         self.twitch_send_message(response, '!' + text_type)
         self.last_retrieve = self.this_retrieve
 
@@ -206,16 +207,22 @@ class SaltyBot:
                     srl_race_game = race_channel['game']['name']
                     srl_race_category = race_channel['goal']
                     srl_race_id = race_channel['id']
+                    srl_race_status = race_channel['statetext']
+                    srl_race_time = race_channel['time']
                     srl_race_link = 'http://www.speedrunslive.com/race/?id={}'.format(srl_race_id)
                     multitwitch_link = 'www.multitwitch.tv/'
+                    response = 'Game: {}, Category: {}, Status: {}'.format(srl_race_game, srl_race_category, srl_race_status)
+                    if srl_race_time > 0:
+                        real_time = (int(time.time()) - srl_race_time)
+                        real_time = str(datetime.timedelta(seconds=real_time))
+                        response += ', Race Time: {}'.format(real_time)
                     if len(srl_race_entrants) <= 6:
                         for i in srl_race_entrants:
                             multitwitch_link += i + '/'
-                        response = '{} is racing {} in {}.  {}'.format(user, srl_race_category, srl_race_game, multitwitch_link)
-                        self.twitch_send_message(response, '!race')
+                        response += '.  {}'.format(multitwitch_link)
                     else:
-                        response = '{} is racing {} in {}.  {}'.format(user, srl_race_category, srl_race_game, srl_race_link)
-                        self.twitch_send_message(response, '!race')
+                        response += '.  {}'.format(srl_race_id)
+                    self.twitch_send_message(response, '!race')
 
     def youtube_video_check(self, message):
         self.youtube_api_key = self.config_data['general']['youtube_api_key']
