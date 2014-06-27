@@ -71,7 +71,7 @@ class SaltyBot:
                 self.commands.append(keys)
             if self.config_data['commands'][keys]['admin']:
                 self.admin_commands.append(keys)
-            self.command_times[keys] = {'last' : self.config_data['commands'][keys]['last'], 'limit' : self.config_data['commands'][keys]['limit']}
+            self.command_times[keys] = {'last' : 0, 'limit' : self.config_data['commands'][keys]['limit']}
         self.commands_string = ', '.join(self.commands)
 
         if '!vote' in self.commands:
