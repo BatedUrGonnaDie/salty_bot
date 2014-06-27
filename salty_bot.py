@@ -25,7 +25,7 @@ DATA = 1
 interface = Q.Queue()
 
 class SaltyBot:
-    
+
     running = True
     messages_received = 0
 
@@ -52,7 +52,7 @@ class SaltyBot:
         self.thread.start()
 
         return self.thread
-    
+
     def twitch_info(self, info):
         self.game = info[self.channel]['game']
         self.title = info[self.channel]['title']
@@ -73,7 +73,7 @@ class SaltyBot:
                 self.admin_commands.append(keys)
             self.command_times[keys] = {'last' : self.config_data['commands'][keys]['last'], 'limit' : self.config_data['commands'][keys]['limit']}
         self.commands_string = ', '.join(self.commands)
-        
+
         if '!vote' in self.commands:
             self.votes = {}
 
@@ -99,7 +99,7 @@ class SaltyBot:
         data = requests.get(url)
         data_decode = data.json()
         data_decode = data_decode[0]
-        
+
         username = data_decode['username']
         level = data_decode['level']
         level = round(float(level))
@@ -107,7 +107,7 @@ class SaltyBot:
         accuracy = data_decode['accuracy']
         accuracy = round(float(accuracy), 2)
         pp_rank = data_decode['pp_rank']
-        
+
         response = '{} is level {} with {}% accuracy and ranked {}.'.format(username, level, accuracy, pp_rank)
         self.twitch_send_message(response)
 
@@ -115,7 +115,7 @@ class SaltyBot:
         osu_nick = self.config_data['general']['osu']['osu_nick']
         osu_irc_pass = self.config_data['general']['osu']['osu_irc_pass']
         osu_api_key = self.config_data['general']['osu']['osu_api_key']
-        
+
         if self.message_body.find('osu.ppy.sh/s/') != -1:
             osu_number = 's=' + self.message_body.split('osu.ppy.sh/s/')[-1].split(' ')[0]
         elif self.message_body.find('osu.ppy.sh/b/') != -1:
@@ -141,12 +141,12 @@ class SaltyBot:
         if self.game in self.config_data['commands']['!leaderboards']['games']:
             leaderboard = self.config_data['commands']['!leaderboards']['games'][self.game]
             self.twitch_send_message(leaderboard, '!leaderboards')
-            
+
     def add_text(self, text_type, text_add):
         text = text_add.split('{} '.format(text_type))[-1]
-        
+
         if text == 'add{}'.format(text_type) or text == 'add{} '.format(text_type):
-            self.twitch_send_message('Please input a {}.'.format(text_type))    
+            self.twitch_send_message('Please input a {}.'.format(text_type))
         else:
             if self.sender == self.channel:
                 with open('{}_{}.txt'.format(self.channel, text_type), 'a+') as data_file:
@@ -311,20 +311,20 @@ class SaltyBot:
     def twitch_run(self):
         self.twitch_connect()
         self.twitch_commands()
-        
+
         while self.running:
-                
+
             self.message = self.irc.recv(4096)
             self.message = self.message.split('\r\n')[0]
-            
+
             if self.message.startswith('PING'):
                 self.irc.send('PONG tmi.twitch.tv\r\n')
-                
+
             try:
                 self.action = self.message.split(' ')[1]
             except:
                 self.action = ''
-                    
+
             if self.action == 'PRIVMSG':
                 self.messages_received += 1
                 self.sender = self.message.split(':')[1].split('!')[0]
@@ -338,10 +338,10 @@ class SaltyBot:
                 if self.message_body.find('youtube.com/watch?v=') != -1:
                     if self.config_data['general']['youtube_link']:
                         self.youtube_video_check(self.message_body)
-                
+
                 if self.__DB:
                     print("message body: " + self.message_body)
-                
+
                 if self.message_body.startswith('!'):
                     self.message_body = self.message_body.split('!')[-1]
 
@@ -465,14 +465,14 @@ class SaltyBot:
                             self.fo.close()
                             with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
                                 self.admin_file = data_file.read()
-                                
+
             if self.config_data['general']['social']['text'] != '':
                 if self.messages_received >= (self.command_times['social']['messages'] + self.command_times['social']['messages_last']):
                     if int(time.time()) >= ((self.command_times['social']['time'] * 60) + self.command_times['social']['time_last']):
                         self.twitch_send_message(self.social_text)
                         self.command_times['social']['time_last'] = int(time.time())
                         self.command_times['social']['messages_last'] = self.messages_received
-                        
+
         print("thread stoped")
     #@@ ADMIN FUNCTIONS @@#
 
@@ -506,10 +506,10 @@ def twitch_info_grab(bots):
 
     for channel in channels:
         url = 'https://api.twitch.tv/kraken/channels/'+channel
-        headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}        
+        headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
         data = requests.get(url, headers = headers)
         data_decode = data.json()
-        #data_stream = data_decode['stream']  
+        #data_stream = data_decode['stream']
 
         game = data_decode['game']
         title = data_decode['status']
@@ -530,7 +530,7 @@ def twitch_info_grab(bots):
     for bot in bots:
         bot.twitch_info(channel_game_title)
         bots_update.append(bot)
-    
+
     t_check = threading.Timer(60, twitch_info_grab, args = [bots_update])
     t_check.daemon = True
     t_check.start()
@@ -538,7 +538,7 @@ def twitch_info_grab(bots):
 def restartBot(bot,bot_list):
     #@ OPEN CONFIGURATION FILE
     with open('config.json', 'r') as data_file:
-        #@ GET THE RIGHT CONFIG DICTIONARY FROM THE FILE 
+        #@ GET THE RIGHT CONFIG DICTIONARY FROM THE FILE
         bot_config = json.load(data_file, encoding = 'utf-8')[bot.channel]
 
     # FIND THE BOT IN THE LIST USING INDEX
@@ -558,7 +558,7 @@ def main():
     channel_configs = {}
     with open('config.json', 'r') as data_file:
         channel_configs = json.load(data_file, encoding = 'utf-8')
-        
+
     bots = []
     for channels in channel_configs.values():
         #@@ CREATE BOT INSTANCE @@#
@@ -593,7 +593,7 @@ def main():
 if __name__ == '__main__':
     main()
     print "program ending"
-    
+
 #toobou rate limiting, review quotes/puns from chat
 #runes/masteries
 #make web page that doesn't suck
