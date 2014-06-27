@@ -365,7 +365,7 @@ class SaltyBot:
 
                     elif self.message_body.startswith('addquote'):
                         if '!quote' in self.commands:
-                            if '!qoute' in self.admin_commands:
+                            if '!quote' in self.admin_commands:
                                 if self.sender in self.admin_file:
                                     self.add_text('quote', self.message_body)
                             else:
