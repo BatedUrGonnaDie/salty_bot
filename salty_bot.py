@@ -469,10 +469,9 @@ class SaltyBot:
             if self.config_data['general']['social']['text'] != '':
                 if self.messages_received >= (self.command_times['social']['messages'] + self.command_times['social']['messages_last']):
                     if int(time.time()) >= ((self.command_times['social']['time'] * 60) + self.command_times['social']['time_last']):
-                        time.sleep(random.randrange(1, 20, 1))
                         self.twitch_send_message(self.social_text)
-                        self.command_times['social']['last_time'] = int(time.time())
-                        self.command_times['social']['last_message'] = self.messages_received
+                        self.command_times['social']['time_last'] = int(time.time())
+                        self.command_times['social']['messages_last'] = self.messages_received
                         
         print("thread stoped")
     #@@ ADMIN FUNCTIONS @@#
