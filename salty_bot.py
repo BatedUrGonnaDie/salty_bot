@@ -67,9 +67,9 @@ class SaltyBot:
 
     def twitch_commands(self):
         for keys in self.config_data['commands']:
-            if self.config_data['commands'][keys]['on'] == 'True':
+            if self.config_data['commands'][keys]['on']:
                 self.commands.append(keys)
-            if self.config_data['commands'][keys]['admin'] == 'True':
+            if self.config_data['commands'][keys]['admin']:
                 self.admin_commands.append(keys)
             self.command_times[keys] = {'last' : self.config_data['commands'][keys]['last'], 'limit' : self.config_data['commands'][keys]['limit']}
         self.commands_string = ', '.join(self.commands)
@@ -90,10 +90,7 @@ class SaltyBot:
                 self.command_times[command]['last'] = int(time.time())
 
     def time_check(self, command):
-        if (int(time.time()) - self.command_times[command]['last']) >= self.command_times[command]['limit']:
-            return True
-        else:
-            return False
+        return int(time.time()) - self.command_times[command]['last'] >= self.command_times[command]['limit']
 
     def osu_api_user(self):
         osu_nick = self.config_data['general']['osu']['osu_nick']
@@ -295,7 +292,7 @@ class SaltyBot:
     def check_votes(self, message):
         try:
             vote_category = message.split(' ')[1]
-            if bool(self.votes[vote_category]['votes']) == False:
+            if not self.votes[vote_category]['votes']:
                 response = 'No one has bet in {} yet.'.format(vote_category)
             else:
                 winning_key = max(self.votes[vote_category]['votes'], key = self.votes[vote_category].get)
@@ -304,7 +301,7 @@ class SaltyBot:
         except IndexError:
             response_list = []
             for categories in self.votes:
-                if bool(self.votes[categories]['votes']) != False:
+                if self.votes[categories]['votes']:
                     winning_key = max(self.votes[categories]['votes'], key = self.votes[categories].get)
                     winning_value = self.votes[categories]['votes'][winning_key]
                     response_list.append('{}: {} is winning with {} votes.'.format(categories, winning_key, winning_value))
@@ -335,7 +332,7 @@ class SaltyBot:
 
                 if self.message_body.find('osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
                     if self.game == 'osu!':
-                        if self.config_data['general']['osu']['song_link'] != 'False':
+                        if self.config_data['general']['osu']['song_link']:
                             self.osu_link()
 
                 if self.message_body.find('youtube.com/watch?v=') != -1:
@@ -354,7 +351,7 @@ class SaltyBot:
                                 if self.sender in self.admin_file:
                                     self.wr_retrieve()
                             else:
-                                if self.time_check('!wr') == True:
+                                if self.time_check('!wr'):
                                     self.wr_retrieve()
 
                     elif self.message_body.startswith('leaderboard'):
@@ -363,7 +360,7 @@ class SaltyBot:
                                 if self.sender in self.admin_file:
                                     self.leaderboard_retrieve()
                             else:
-                                if self.time_check('!leaderboards') == True:
+                                if self.time_check('!leaderboards'):
                                     self.leaderboard_retrieve()
 
                     elif self.message_body.startswith('addquote'):
@@ -380,7 +377,7 @@ class SaltyBot:
                                 if self.sender in self.admin_file:
                                     self.text_retrieve('quote')
                             else:
-                                if self.time_check('!quote') == True:
+                                if self.time_check('!quote'):
                                     self.text_retrieve('quote')
 
                     elif self.message_body.startswith('addpun'):
@@ -397,7 +394,7 @@ class SaltyBot:
                                 if self.sender in self.admin_file:
                                     self.text_retrieve('pun')
                             else:
-                                if self.time_check('!pun') == True:
+                                if self.time_check('!pun'):
                                     self.text_retrieve('pun')
 
                     elif self.message_body == 'rank':
@@ -407,7 +404,7 @@ class SaltyBot:
                                     if self.sender in self.admin_file:
                                         self.osu_api_user()
                                 else:
-                                    if self.time_check('!rank') == True:
+                                    if self.time_check('!rank'):
                                         self.osu_api_user()
 
                     elif self.message_body == 'race':
@@ -418,7 +415,7 @@ class SaltyBot:
                                         self.srl_race_retrieve()
                             else:
                                 if 'race' in self.title or 'races' in self.title or 'racing' in self.title:
-                                    if self.time_check('!race') == True:
+                                    if self.time_check('!race'):
                                         self.srl_race_retrieve()
 
                     elif self.message_body.startswith('vote '):
@@ -427,7 +424,7 @@ class SaltyBot:
                                 if self.sender in self.admin_file:
                                     self.vote(self.message_body, self.sender)
                             else:
-                                if self.time_check('!vote') == True:
+                                if self.time_check('!vote'):
                                     self.vote(self.message_body, self.sender)
 
                     elif self.message_body.startswith('votes'):
@@ -439,7 +436,7 @@ class SaltyBot:
                                 self.check_votes(self.message_body)
 
                     elif self.message_body == 'commands':
-                        if self.time_check('!vote') == True:
+                        if self.time_check('!vote'):
                             self.twitch_send_message(self.commands_string, '!commands')
 
                     elif self.message_body == 'restart' and self.sender == self.channel:# or self.sender == "bomb_mask"):
