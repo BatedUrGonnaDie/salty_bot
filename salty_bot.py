@@ -350,6 +350,8 @@ class SaltyBot:
                     self.twitch_send_message('There are still more {} to review, please finish reviewing first.'.format(text_type))
                     return
             with open(file_name, 'w') as data_file:
+                pass
+            with open('{}_{}.txt'.format(self.channel, text_type), 'a') as data_file:
                 for line in lines_read:
                     data_file.write(line + '\n')
         else:
