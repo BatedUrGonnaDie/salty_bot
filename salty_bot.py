@@ -77,6 +77,14 @@ class SaltyBot:
         if '!vote' in self.commands:
             self.votes = {}
 
+        if '!quote' in self.commands or '!pun' in self.commands:
+            if '!quote' in self.commands:
+                self.review = {'quote' : []}
+            elif '!pun' in self.commands:
+                self.review = {'pun' : []}
+            else:
+                self.review = {'quote' : [], 'pun' : []}
+
         if self.config_data['general']['social']['text'] != '':
             self.command_times['social'] = {'time_last' : int(time.time()), 'messages' : self.config_data['general']['social']['messages'],
                                             'messages_last' : self.messages_received, 'time' : self.config_data['general']['social']['time']}
@@ -160,9 +168,9 @@ class SaltyBot:
                 self.twitch_send_message(response)
 
     def text_retrieve(self, text_type):
-        lines = sum(1 for line in open('{}_{}.txt'.format(self.channel, text_type), 'a+'))
         with open('{}_{}.txt'.format(self.channel, text_type), 'r') as data_file:
             lines_read = data_file.readlines()
+        lines = sum(1 for line in lines_read)
         if lines == 0:
             response = 'No {}s have been added.'.format(text_type)
             self.this_retrieve = response
@@ -183,9 +191,6 @@ class SaltyBot:
                 break
         self.twitch_send_message(response, '!' + text_type)
         self.last_retrieve = self.this_retrieve
-
-    def counter(self):
-        pass
 
     def srl_race_retrieve(self):
         self.srl_nick = self.config_data['general']['srl_nick']
@@ -307,6 +312,49 @@ class SaltyBot:
                     response_list.append('{}: {} is winning with {} votes.'.format(categories, winning_key, winning_value))
             response = '.  '.join(response_list)
         self.twitch_send_message(response, '!vote')
+
+    def text_review(self, message):
+        try:
+            text_type = message.split(' ')[1]
+        except:
+            self.twitch_send_message('Please specify a type to review.')
+            return
+        try:
+            decision = message.split(' ')[2]
+        except:
+            decision = ''
+        if decision == 'start':
+            if not self.review[text_type]:
+                file_name = '{}_{}_review.txt'.format(self.channel, text_type)
+                with open(file_name, 'a+') as data_file:
+                    lines_read = data_file.readlines()
+                lines = sum(1 for line in lines_read)
+                for line in lines_read:
+                    line = line.split('\n')[0]
+                    self.review[text_type].append([line, 0])
+                self.twitch_send_message(self.review[text_type][0][0])
+        elif decision == 'approve':
+            for text in self.review[text_type]:
+                if text[1] == 0:
+                    text[1] = 1
+                    return
+        elif decision == 'reject':
+            for text in self.review[text_type]:
+                if text[1] == 0:
+                    text[1] = 2
+                    return
+        elif decision == 'commit':
+            pass #move files from dict to live file
+        else:
+            for text in self.review[text_type]:
+                if text[1] == 0:
+                    self.twitch_send_message(text[0])
+                    return
+            if self.review[text_type]:
+                self.twitch_send_message('Please use "!review <text type> commit" to lock the changes in place.')
+            else:
+                self.twitch_send_message('Nothing to review in {}.'.format(text_type))
+                
 
     def twitch_run(self):
         self.twitch_connect()
@@ -434,6 +482,9 @@ class SaltyBot:
                                     self.check_votes(self.message_body)
                             else:
                                 self.check_votes(self.message_body)
+
+                    elif self.message_body.startswith('review') and self.sender == self.channel:
+                        self.text_review(self.message_body)
 
                     elif self.message_body == 'commands':
                         if self.time_check('!vote'):
