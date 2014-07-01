@@ -314,6 +314,7 @@ class SaltyBot:
         self.twitch_send_message(response, '!vote')
 
     def text_review(self, message):
+        print self.review
         try:
             text_type = message.split(' ')[1]
         except:
@@ -344,7 +345,13 @@ class SaltyBot:
                     text[1] = 2
                     return
         elif decision == 'commit':
-            pass #move files from dict to live file
+            for text in self.reveiew[text_type]:
+                if text[1] == 0:
+                    self.twitch_send_message('There are still more {} to review, please finish reviewing first.'.format(text_type))
+                    return
+            with open(file_name, 'w') as data_file:
+                for line in lines_read:
+                    data_file.write(line + '\n')
         else:
             for text in self.review[text_type]:
                 if text[1] == 0:
