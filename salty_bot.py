@@ -206,6 +206,8 @@ class SaltyBot:
                     for values in race_channel['entrants'].values():
                         srl_race_entrants.append(values['twitch'])
                     user = i['entrants'][self.srl_nick]['twitch']
+                    user_place = race_channel['entrants'][self.srl_nick]['place']
+                    user_time = race_channel['entrants'][self.srl_nick]['time']
                     srl_race_game = race_channel['game']['name']
                     srl_race_category = race_channel['goal']
                     srl_race_id = race_channel['id']
@@ -215,13 +217,16 @@ class SaltyBot:
                     multitwitch_link = 'www.multitwitch.tv/'
                     response = 'Game: {}, Category: {}, Status: {}'.format(srl_race_game, srl_race_category, srl_race_status)
                     if srl_race_time > 0:
-                        real_time = (int(time.time()) - srl_race_time)
-                        m, s = divmod(real_time, 60)
-                        h, m = divmod(m, 60)
-                        response += ', Race Time: {}:{}:{}'.format(h, m, s)
+                        if user_time > 0:
+                            response += ', Finished {} with a time of {}'.format(user_place, user_time)
+                        else:
+                            real_time = (int(time.time()) - srl_race_time)
+                            m, s = divmod(real_time, 60)
+                            h, m = divmod(m, 60)
+                        response += ', RaceBot Time: {}:{}:{}'.format(h, m, s)
                     if len(srl_race_entrants) <= 6:
-                        for i in srl_race_entrants:
-                            multitwitch_link += i + '/'
+                        for j in srl_race_entrants:
+                            multitwitch_link += j + '/'
                         response += '.  {}'.format(multitwitch_link)
                     else:
                         response += '.  {}'.format(srl_race_id)
