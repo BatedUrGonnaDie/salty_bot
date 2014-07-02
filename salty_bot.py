@@ -9,7 +9,7 @@ import threading
 import socket
 import requests
 import json
-
+import urlparse
 import Queue as Q
 
 debuging = False
@@ -229,10 +229,11 @@ class SaltyBot:
 
     def youtube_video_check(self, message):
         self.youtube_api_key = self.config_data['general']['youtube_api_key']
-        youtube_video_id = message.split('youtube.com/watch?v=')[-1]
+        url_values = urlparse.parse_qs(urlparse.urlparse(message).query)
+        youtube_video_id = url_values['v'][0]
         if ' ' in youtube_video_id:
             youtube_video_id = youtube_video_id.split(' ')[0]
-        url = 'https://www.googleapis.com/youtube/v3/videos?id={}&key={}&part=snippet,contentDetails,statistics,status'.format(youtube_video_id, self.youtube_api_key)
+        url = 'https://www.googleapis.com/youtube/v3/videos?part=snippet&id={}&key={}'.format(youtube_video_id, self.youtube_api_key)
         data = requests.get(url)
         data_decode = data.json()
         data_items = data_decode['items']
@@ -501,13 +502,14 @@ class SaltyBot:
                                 if self.sender in self.admin_file:
                                     self.check_votes(self.message_body)
                             else:
-                                self.check_votes(self.message_body)
+                                if self.time_check('!vote'):
+                                    self.check_votes(self.message_body)
 
                     elif self.message_body.startswith('review') and self.sender == self.channel:
                         self.text_review(self.message_body)
 
                     elif self.message_body == 'commands':
-                        if self.time_check('!vote'):
+                        if self.time_check('!commands'):
                             self.twitch_send_message(self.commands_string, '!commands')
 
                     elif self.message_body == 'restart' and self.sender == self.channel:# or self.sender == "bomb_mask"):
@@ -529,11 +531,10 @@ class SaltyBot:
 
                 elif self.action == 'MODE':
                     if '+o ' in self.message:
-                        self.admin = self.message.split('+o ')[-1]
-                        if self.admin not in self.admin_file:
-                            self.fo = open('{}_admins.txt'.format(self.channel), 'a+')
-                            self.fo.write('{}\n'.format(self.admin))
-                            self.fo.close()
+                        admin = self.message.split('+o ')[-1]
+                        if admin not in self.admin_file:
+                            with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
+                                data_file.write('{}\n'.format(admin))
                             with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
                                 self.admin_file = data_file.read()
 
