@@ -314,9 +314,10 @@ class SaltyBot:
         self.twitch_send_message(response, '!vote')
 
     def text_review(self, message):
-        print self.review
         try:
             text_type = message.split(' ')[1]
+            if text_type != 'quote' and text_type != 'pun':
+                return
         except:
             self.twitch_send_message('Please specify a type to review.')
             return
@@ -330,30 +331,40 @@ class SaltyBot:
                 with open(file_name, 'a+') as data_file:
                     lines_read = data_file.readlines()
                 lines = sum(1 for line in lines_read)
-                for line in lines_read:
-                    line = line.split('\n')[0]
-                    self.review[text_type].append([line, 0])
-                self.twitch_send_message(self.review[text_type][0][0])
+                if lines > 0:
+                    for line in lines_read:
+                        line = line.split('\n')[0]
+                        self.review[text_type].append([line, 0])
+                    self.twitch_send_message(self.review[text_type][0][0])
+                else:
+                    self.twitch_send_message('Nothing to review.')
         elif decision == 'approve':
             for text in self.review[text_type]:
                 if text[1] == 0:
                     text[1] = 1
                     return
+            self.twitch_send_message('No more to review.  Please use "!review <text type> commit" to lock the changes in place.')
         elif decision == 'reject':
             for text in self.review[text_type]:
                 if text[1] == 0:
                     text[1] = 2
                     return
+            self.twitch_send_message('No more to review.  Please use "!review <text type> commit" to lock the changes in place.')
         elif decision == 'commit':
-            for text in self.reveiew[text_type]:
+            file_name = '{}_{}_review.txt'.format(self.channel, text_type)
+            with open(file_name, 'a+') as data_file:
+                lines_read = data_file.readlines()
+            lines = sum(1 for line in lines_read)
+            for text in self.review[text_type]:
                 if text[1] == 0:
-                    self.twitch_send_message('There are still more {} to review, please finish reviewing first.'.format(text_type))
+                    self.twitch_send_message('There are still more {}s to review, please finish reviewing first.'.format(text_type))
                     return
             with open(file_name, 'w') as data_file:
                 pass
             with open('{}_{}.txt'.format(self.channel, text_type), 'a') as data_file:
                 for line in lines_read:
-                    data_file.write(line + '\n')
+                    data_file.write(line)
+            self.twitch_send_message('{}s moved to the live file.'.format(text_type))
         else:
             for text in self.review[text_type]:
                 if text[1] == 0:
