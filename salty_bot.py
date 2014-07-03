@@ -419,6 +419,7 @@ class SaltyBot:
                     if 'toobou' in self.command_times:
                         if self.time_check('toobou'):
                             self.twitch_send_message(self.config_data['general']['toobou']['insult'])
+                            self.command_times['toobou']['last'] = int(time.time())
                         
 
                 if self.__DB:
