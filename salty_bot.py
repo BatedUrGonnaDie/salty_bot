@@ -208,7 +208,8 @@ class SaltyBot:
                 if self.srl_nick in races:
                     race_channel = i
                     for values in race_channel['entrants'].values():
-                        srl_race_entrants.append(values['twitch'])
+                        if values['statetext'] == 'Ready':
+                            srl_race_entrants.append(values['twitch'])
                     user = i['entrants'][self.srl_nick]['twitch']
                     user_place = race_channel['entrants'][self.srl_nick]['place']
                     user_time = race_channel['entrants'][self.srl_nick]['time']
