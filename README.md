@@ -15,14 +15,18 @@ found by matching the title against categories in the config file.  If one match
 
 `!race` will check to see if a variant of "race" is in your title to prevent spamming, and if it is it will check the
 SRL API to see if you are in a race.  If you are listed in the race it will generate the game, category, and SRL nicks
-racing, as well as output a multitwitch link if the race has 6 or fewer racers, or an SRL race page link if it has more
-to keep the link size down.
+racing, as well as output a multitwitch link if the race has 6 or fewer active racers, or an SRL race page link if it 
+has more to keep the link size down.
 
 `!quote`/`!pun` will display a randomly selected quote/pun from a file.
 
 `!addqoute`/`!addpun` will add the given quote/pun to a review file so that you can manually move it over later.  If the
 broadcaster uses this command the quote/pun will go straight into the live file (that means be careful).  In the future
 you will be able to move them over through twitch chat so you don't have to do it manually.
+
+`!review <type> <decision>` will allow you to review your quotes and puns through chat.  Use `start` for `<decision>`
+and that will load them up into the dictionary.  From there you can use `approve` or `reject` to decide if you like
+the text.  Once you have finished reviewing, use `commit` to save the changes to the live file.
 
 `!song` will display the current song you are playing on osu if you have osu!np going and your game is set to Osu!, or
 it will output the current song you are listening to from a media player if you have something that can read the info
@@ -48,6 +52,8 @@ can be useful to cut down on flood.
 
 Ability to set flood limits on all commands.  Each command has its own flood limit, so you can use some more than
 others.
+
+Insult people who don't know who トーボウ is.
 
 Under The Hood Stuff
 ====================
