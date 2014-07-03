@@ -353,12 +353,14 @@ class SaltyBot:
             for text in self.review[text_type]:
                 if text[1] == 0:
                     text[1] = 1
+                    self.text_review('review ' + text_type)
                     return
             self.twitch_send_message('No more to review.  Please use "!review <text type> commit" to lock the changes in place.')
         elif decision == 'reject':
             for text in self.review[text_type]:
                 if text[1] == 0:
                     text[1] = 2
+                    self.text_review('review ' + text_type)
                     return
             self.twitch_send_message('No more to review.  Please use "!review <text type> commit" to lock the changes in place.')
         elif decision == 'commit':
@@ -371,7 +373,7 @@ class SaltyBot:
                 pass
             with open('{}_{}.txt'.format(self.channel, text_type), 'a') as data_file:
                 for line in self.review[text_type]:
-                    if line[0] == 1:
+                    if line[1] == 1:
                         data_file.write(line[0] + '\n')
             self.twitch_send_message('{}s moved to the live file.'.format(text_type))
         else:
