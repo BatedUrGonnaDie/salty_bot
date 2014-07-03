@@ -90,6 +90,10 @@ class SaltyBot:
                                             'messages_last' : self.messages_received, 'time' : self.config_data['general']['social']['time']}
             self.social_text = self.config_data['general']['social']['text']
 
+        if self.config_data['general']['toobou']['on'] == True:
+            self.command_times['toobou'] = {'last' : int(time.time()),
+                                            'limit' : self.config_data['general']['toobou']['limit']}
+
     def twitch_send_message(self, response, command = ''):
             response = response.encode('utf-8')
             to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
@@ -358,9 +362,6 @@ class SaltyBot:
             self.twitch_send_message('No more to review.  Please use "!review <text type> commit" to lock the changes in place.')
         elif decision == 'commit':
             file_name = '{}_{}_review.txt'.format(self.channel, text_type)
-            with open(file_name, 'a+') as data_file:
-                lines_read = data_file.readlines()
-            lines = sum(1 for line in lines_read)
             for text in self.review[text_type]:
                 if text[1] == 0:
                     self.twitch_send_message('There are still more {}s to review, please finish reviewing first.'.format(text_type))
@@ -368,8 +369,9 @@ class SaltyBot:
             with open(file_name, 'w') as data_file:
                 pass
             with open('{}_{}.txt'.format(self.channel, text_type), 'a') as data_file:
-                for line in lines_read:
-                    data_file.write(line)
+                for line in self.review[text_type]:
+                    if line[0] == 1:
+                        data_file.write(line[0] + '\n')
             self.twitch_send_message('{}s moved to the live file.'.format(text_type))
         else:
             for text in self.review[text_type]:
@@ -412,6 +414,12 @@ class SaltyBot:
                 if self.message_body.find('youtube.com/watch?v=') != -1:
                     if self.config_data['general']['youtube_link']:
                         self.youtube_video_check(self.message_body)
+
+                if self.message_body.lower().find('toobou') != -1:
+                    if 'toobou' in self.command_times:
+                        if self.time_check('toobou'):
+                            self.twitch_send_message(self.config_data['general']['toobou']['insult'])
+                        
 
                 if self.__DB:
                     print("message body: " + self.message_body)
