@@ -395,6 +395,7 @@ class SaltyBot:
 
             self.message = self.irc.recv(4096)
             self.message = self.message.split('\r\n')[0]
+            self.message = self.message.strip()
 
             if self.message.startswith('PING'):
                 self.irc.send('PONG tmi.twitch.tv\r\n')
@@ -683,6 +684,5 @@ if __name__ == '__main__':
     main()
     print "program ending"
 
-#toobou rate limiting, review quotes/puns from chat
 #runes/masteries
 #make web page that doesn't suck
