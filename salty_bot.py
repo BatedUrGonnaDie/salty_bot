@@ -150,9 +150,9 @@ class SaltyBot:
                     self.twitch_send_message(wr, '!wr')
 
     def leaderboard_retrieve(self):
-        if self.game in self.config_data['commands']['!leaderboards']['games']:
-            leaderboard = self.config_data['commands']['!leaderboards']['games'][self.game]
-            self.twitch_send_message(leaderboard, '!leaderboards')
+        if self.game in self.config_data['commands']['!leaderboard']['games']:
+            leaderboard = self.config_data['commands']['!leaderboard']['games'][self.game]
+            self.twitch_send_message(leaderboard, '!leaderboard')
 
     def add_text(self, text_type, text_add):
         text = text_add.split('{} '.format(text_type))[-1]
@@ -441,12 +441,12 @@ class SaltyBot:
                                     self.wr_retrieve()
 
                     elif self.message_body.startswith('leaderboard'):
-                        if '!leaderboards' in self.commands:
-                            if '!leaderboards' in self.admin_commands:
+                        if '!leaderboard' in self.commands:
+                            if '!leaderboard' in self.admin_commands:
                                 if self.sender in self.admin_file:
                                     self.leaderboard_retrieve()
                             else:
-                                if self.time_check('!leaderboards'):
+                                if self.time_check('!leaderboard'):
                                     self.leaderboard_retrieve()
 
                     elif self.message_body.startswith('addquote'):
