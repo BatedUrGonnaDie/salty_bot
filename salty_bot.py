@@ -228,7 +228,7 @@ class SaltyBot:
                             real_time = (int(time.time()) - srl_race_time)
                             m, s = divmod(real_time, 60)
                             h, m = divmod(m, 60)
-                        response += ', RaceBot Time: {}:{}:{}'.format(h, m, s)
+                            response += ', RaceBot Time: {}:{}:{}'.format(h, m, s)
                     if len(srl_race_entrants) <= 6:
                         for j in srl_race_entrants:
                             multitwitch_link += j + '/'
