@@ -59,7 +59,7 @@ class SaltyBot:
 
     def twitch_connect(self):
         if self.__DB:
-            print("joining {} as {}".format(self.channel,self.twitch_nick))
+            print("Joining {} as {}.\n".format(self.channel,self.twitch_nick))
         self.irc.connect((self.twitch_host, self.port))
         self.irc.send('PASS {}\r\n'.format(self.twitch_oauth))
         self.irc.send('NICK {}\r\n'.format(self.twitch_nick))
@@ -427,10 +427,11 @@ class SaltyBot:
                         
 
                 if self.__DB:
-                    print("message body: " + self.message_body)
+                    print self.sender + ": " + self.message_body
 
+                find_ex = self.message_body.count('!')
                 if self.message_body.startswith('!'):
-                    self.message_body = self.message_body.split('!')[-1]
+                    self.message_body = self.message_body.split('!')[-find_ex]
 
                     if self.message_body.startswith('wr'):
                         if '!wr' in self.commands:
