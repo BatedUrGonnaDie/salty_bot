@@ -172,7 +172,7 @@ class SaltyBot:
                 self.twitch_send_message(response)
 
     def text_retrieve(self, text_type):
-        with open('{}_{}.txt'.format(self.channel, text_type), 'r') as data_file:
+        with open('{}_{}.txt'.format(self.channel, text_type), 'a+') as data_file:
             lines_read = data_file.readlines()
         lines = sum(1 for line in lines_read)
         if lines == 0:
