@@ -358,15 +358,13 @@ class SaltyBot:
             for text in self.review[text_type]:
                 if text[1] == 0:
                     text[1] = 1
-                    self.text_review('review ' + text_type)
-                    return
+                    self.text_review('review {} next'.format(text_type))
             self.twitch_send_message('No more to review.  Please use "!review <text type> commit" to lock the changes in place.')
         elif decision == 'reject':
             for text in self.review[text_type]:
                 if text[1] == 0:
                     text[1] = 2
-                    self.text_review('review ' + text_type)
-                    return
+                    self.text_review('review {} next'.format(text_type))
             self.twitch_send_message('No more to review.  Please use "!review <text type> commit" to lock the changes in place.')
         elif decision == 'commit':
             file_name = '{}_{}_review.txt'.format(self.channel, text_type)
@@ -402,7 +400,7 @@ class SaltyBot:
             self.message = self.message.strip()
 
             if self.message.startswith('PING'):
-                self.irc.send('PONG tmi.twitch.tv\r\n')
+                self.irc.sendall('PONG tmi.twitch.tv\r\n')
 
             try:
                 self.action = self.message.split(' ')[1]
@@ -587,9 +585,9 @@ def osu_send_message(osu_irc_pass, osu_nick, request_url):
     osu_host = 'irc.ppy.sh'
     osu_port = 6667
     irc.connect((osu_host, osu_port))
-    irc.send('PASS {}\r\n'.format(osu_irc_pass))
-    irc.send('NICK batedurgonnadie\r\n')
-    irc.send('PRIVMSG {} :{}\r\n'.format(osu_nick, request_url))
+    irc.sendall('PASS {}\r\n'.format(osu_irc_pass))
+    irc.sendall('NICK batedurgonnadie\r\n')
+    irc.sendall('PRIVMSG {} :{}\r\n'.format(osu_nick, request_url))
     irc.close()
 
 def twitch_info_grab(bots):
