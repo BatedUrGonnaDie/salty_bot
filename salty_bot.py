@@ -95,11 +95,14 @@ class SaltyBot:
                                             'limit' : self.config_data['general']['toobou']['limit']}
 
     def twitch_send_message(self, response, command = ''):
+        try:
             response = response.encode('utf-8')
-            to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
-            self.irc.sendall(to_send)
-            if command != '':
-                self.command_times[command]['last'] = int(time.time())
+        except:
+            pass
+        to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
+        self.irc.sendall(to_send)
+        if command != '':
+            self.command_times[command]['last'] = int(time.time())
 
     def time_check(self, command):
         return int(time.time()) - self.command_times[command]['last'] >= self.command_times[command]['limit']
@@ -385,6 +388,46 @@ class SaltyBot:
                 self.twitch_send_message('Please use "!review <text type> commit" to lock the changes in place.')
             else:
                 self.twitch_send_message('Nothing to review in {}.'.format(text_type))
+
+    def emotes(self, message):
+        try:
+            emote_type = message.split[-1]
+        except:
+            emote_type = 'ffz'
+        if emote_type != 'ffz' and emote_type != 'sub':
+            emote_type = 'ffz'
+        if emote_type == 'ffz':
+            with open('emotes.txt', 'r') as data_file:
+                lines = data_file.readlines()
+            lines_sum = sum(1 for line in lines)
+            emotes = []
+            try :
+                emotes_start = lines.index(self.channel + '\r\n')
+            except:
+                self.twitch_send_message('Could not find FFZ user ¯\_(ツ)_/¯')
+                return
+            for i in range(emotes_start + 1, lines_sum):
+                if lines[i].startswith('.'):
+                    emotes.append(lines[i][1:-2])
+                if not lines[i].startswith('.'):
+                    break
+            response = ''
+            for i in emotes:
+                response += i[0] + '­' + i[1:] + ', '
+            response[:-2]
+            self.twitch_send_message(response, '!emotes')
+        elif emote_type == 'sub':
+            data = requests.get('https://api.twitch.tv/kraken/chat/{}/emoticons'.format(self.channel))
+            data_decode = data.json()
+            if data_decode['emoticons'][0]['subscriber_only'] == True:
+                emotes = []
+                for i in data_decode['emoticons']:
+                    if data_decode['emoticons'][i]['subscriber_only'] == True:
+                        emotes.append(data_decode['emoticons'][i]['regex'])
+                    if data_decode['emoticons'][i]['subscriber_only'] == False:
+                        break
+                reponse = ', '.join(emotes)
+                self.twitch_send_message(response, '!emotes')
                 
 
     def twitch_run(self):
@@ -527,6 +570,15 @@ class SaltyBot:
                     elif self.message_body.startswith('review') and self.sender == self.channel:
                         self.text_review(self.message_body)
 
+                    elif self.message_body.startswith('emotes'):
+                        if '!emotes' in self.commands:
+                            if '!emotes' in self.admin_commands:
+                                if self.sender in self.admin_file:
+                                    self.emotes(self.message_body)
+                            else:
+                                if self.time_check('!emotes'):
+                                    self.emotes(self.message_body)
+
                     elif self.message_body == 'commands':
                         if self.time_check('!commands'):
                             self.twitch_send_message(self.commands_string, '!commands')
@@ -539,23 +591,23 @@ class SaltyBot:
 
                         break
 
-                    elif 'stop' in self.message_body and (self.sender == 'batedurgonnadie' or self.sender == 'bomb_mask'):
+                    elif self.message.body == 'stop' and (self.sender == 'batedurgonnadie' or self.sender == 'bomb_mask'):
                         if self.__DB:
                             print('SHUTDOWN CALLED BY {}'.format(self.sender.upper()))
                         self.admin(STOP)
 
-                    elif 'check' in self.message_body:
+                    elif self.message.body == 'check':
                         self.admin(CHECK)
 
 
-                elif self.action == 'MODE':
-                    if '+o ' in self.message:
-                        admin = self.message.split('+o ')[-1]
-                        if admin not in self.admin_file:
-                            with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
-                                data_file.write('{}\n'.format(admin))
-                            with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
-                                self.admin_file = data_file.read()
+            elif self.action == 'MODE':
+                if '+o ' in self.message:
+                    admin = self.message.split('+o ')[-1]
+                    if admin not in self.admin_file:
+                        with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
+                            data_file.write('{}\n'.format(admin))
+                        with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
+                            self.admin_file = data_file.read()
 
             if self.config_data['general']['social']['text'] != '':
                 if self.messages_received >= (self.command_times['social']['messages'] + self.command_times['social']['messages_last']):
