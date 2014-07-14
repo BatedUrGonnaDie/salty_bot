@@ -40,6 +40,16 @@ does not work due to the way that the bot is run now.  In the future I may set u
 users you must put in both of these to enter your vote.  `!votes <optional vote_book>` will output all of the winning
 votes for each vote category you input.  If category is specified it will only output the one supplied.
 
+Channel Owner Commands
+======================
+`!blacklist` allows you to take away the ability for a user to use commands.  Currently this will remove the ability to
+use the bot at all, so please be careful.
+
+`!whitelist` will removea user from the blacklist.
+
+`!restart` will attempt to restart the bot if it gets hung up.  Note that this will not work if the bot throws an error
+due to the way Python works.  Also note that this can break the bot in you channel if Twitch decides to reject the
+connection.
 
 Passive Features
 ================
@@ -47,7 +57,7 @@ Ability to send you the maps posted in chat for osu directly in game.
 
 Post the title and uploader of a youtube video posted in chat (can detect spam this way).
 
-Insult people who don't know who トーボウ is.
+Insult people who don't know who トーボウ (can change this to other text in the future) is.
 
 Ability to output static text every x amount of messages, or x amount of time, or both.  This can be useful for
 different links to various social media.
