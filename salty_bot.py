@@ -42,6 +42,8 @@ class SaltyBot:
         self.channel = config_data['general']['channel']
         self.commands = []
         self.admin_commands = []
+        with open('{}_blacklist.txt'.format(self.channel), 'a+') as data_file:
+            self.blacklist = data_file.readlines()
         self.command_times = {}
         with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
             self.admin_file = data_file.read()
@@ -106,6 +108,17 @@ class SaltyBot:
 
     def time_check(self, command):
         return int(time.time()) - self.command_times[command]['last'] >= self.command_times[command]['limit']
+
+    def is_live(self, user):
+        url = 'https://api.twitch.tv/kraken/streams/' + user
+        headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
+        data = requests.get(url, headers = headers)
+        data_decode = data.json()
+        data_stream = data_decode['stream']
+        if data_stream == None:
+            return False
+        else:
+            return True
 
     def osu_api_user(self):
         osu_nick = self.config_data['general']['osu']['osu_nick']
@@ -236,7 +249,8 @@ class SaltyBot:
                             response += ', RaceBot Time: {}:{}:{}'.format(h, m, s)
                     if len(srl_race_entrants) <= 6:
                         for j in srl_race_entrants:
-                            multitwitch_link += j + '/'
+                            if self.is_live(j):
+                                multitwitch_link += j + '/'
                         response += '.  {}'.format(multitwitch_link)
                     else:
                         response += '.  {}'.format(srl_race_id)
@@ -329,7 +343,7 @@ class SaltyBot:
             response = '.  '.join(response_list)
         self.twitch_send_message(response, '!vote')
 
-    def text_review(self, message):
+    def text_review(self, message, last_r = 'none'):
         try:
             text_type = message.split(' ')[1]
             if text_type != 'quote' and text_type != 'pun':
@@ -358,13 +372,15 @@ class SaltyBot:
             for text in self.review[text_type]:
                 if text[1] == 0:
                     text[1] = 1
-                    self.text_review('review {} next'.format(text_type))
+                    self.text_review('review {} next'.format(text_type), 'Approved')
+                    return
             self.twitch_send_message('No more to review.  Please use "!review <text type> commit" to lock the changes in place.')
         elif decision == 'reject':
             for text in self.review[text_type]:
                 if text[1] == 0:
                     text[1] = 2
-                    self.text_review('review {} next'.format(text_type))
+                    self.text_review('review {} next'.format(text_type), 'Rejected')
+                    return
             self.twitch_send_message('No more to review.  Please use "!review <text type> commit" to lock the changes in place.')
         elif decision == 'commit':
             file_name = '{}_{}_review.txt'.format(self.channel, text_type)
@@ -382,12 +398,36 @@ class SaltyBot:
         else:
             for text in self.review[text_type]:
                 if text[1] == 0:
-                    self.twitch_send_message(text[0])
-                    return
+                    if last_r == 'none':
+                        self.twitch_send_message(text[0])
+                        return
+                    else:
+                        self.twitch_send_message(last_r + ", next quote: " + text[0])
+                        return
             if self.review[text_type]:
                 self.twitch_send_message('Please use "!review <text type> commit" to lock the changes in place.')
             else:
                 self.twitch_send_message('Nothing to review in {}.'.format(text_type))
+
+    def lister(self, message, s_list):
+        user = message.split(' ')[-1]
+        worked = False
+        if s_list == 'black':
+            self.blacklist.append(user)
+            with open('{}_blacklist.txt'.format(self.channel), 'a+') as data_file:
+                data_file.write(user + '\n')
+                worked = True
+        elif s_list == 'white':
+            if user in self.blacklist:
+                self.blacklist.remove(user)
+                with open('{}_blacklist.txt'.format(self.channel), 'w') as data_file:
+                    try:
+                        data_file.write(self.blacklist)
+                    except:
+                        pass
+                worked = True
+        if worked == True:
+            self.twitch_send_message('{} has been {}listed'.format(user, s_list))
 
     def twitch_run(self):
         self.twitch_connect()
@@ -411,6 +451,8 @@ class SaltyBot:
                 self.messages_received += 1
                 self.sender = self.message.split(':')[1].split('!')[0]
                 self.message_body = ':'.join(self.message.split(':')[2:])
+                if self.sender in self.blacklist:
+                    continue
 
                 if self.message_body.find('osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
                     if self.game == 'osu!':
@@ -435,7 +477,13 @@ class SaltyBot:
                 if self.message_body.startswith('!'):
                     self.message_body = self.message_body.split('!')[-find_ex]
 
-                    if self.message_body.startswith('wr'):
+                    if self.message_body.startswith('blacklist ') and self.sender == self.channel:
+                        self.lister(self.message_body, 'black')
+
+                    elif self.message_body.startswith('whitelist ') and self.sender == self.channel:
+                        self.lister(self.message_body, 'white')
+
+                    elif self.message_body.startswith('wr'):
                         if '!wr' in self.commands:
                             if '!wr' in self.admin_commands:
                                 if self.sender in self.admin_file:
@@ -538,7 +586,6 @@ class SaltyBot:
                             print('{} is restarting, called by {}'.format(self.channel + ' ' + self.twitch_nick, self.sender))
                         self.admin(RESTART)
                         self.twitch_send_message('Restarting the bot.')
-
                         break
 
                     elif self.message_body == 'stop' and (self.sender == 'batedurgonnadie' or self.sender == 'bomb_mask'):
