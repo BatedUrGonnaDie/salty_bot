@@ -394,7 +394,7 @@ class SaltyBot:
                 for line in self.review[text_type]:
                     if line[1] == 1:
                         data_file.write(line[0] + '\n')
-            self.twitch_send_message('{}s moved to the live file.'.format(text_type))
+            self.twitch_send_message('Approved {}s moved to the live file.'.format(text_type))
         else:
             for text in self.review[text_type]:
                 if text[1] == 0:
