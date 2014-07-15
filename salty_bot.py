@@ -42,8 +42,11 @@ class SaltyBot:
         self.channel = config_data['general']['channel']
         self.commands = []
         self.admin_commands = []
+        self.blacklist = []
         with open('{}_blacklist.txt'.format(self.channel), 'a+') as data_file:
-            self.blacklist = data_file.readlines()
+            blacklist = data_file.readlines()
+        for i in blacklist:
+            self.blacklist.append(i.split('\n'))
         self.command_times = {}
         with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
             self.admin_file = data_file.read()
@@ -368,20 +371,22 @@ class SaltyBot:
                     self.twitch_send_message(self.review[text_type][0][0])
                 else:
                     self.twitch_send_message('Nothing to review.')
+            else:
+                self.twitch_send_message("Review already started.")
         elif decision == 'approve':
             for text in self.review[text_type]:
                 if text[1] == 0:
                     text[1] = 1
                     self.text_review('review {} next'.format(text_type), 'Approved')
                     return
-            self.twitch_send_message('No more to review.  Please use "!review <text type> commit" to lock the changes in place.')
+            self.text_review('review {} next'.format(text_type))
         elif decision == 'reject':
             for text in self.review[text_type]:
                 if text[1] == 0:
                     text[1] = 2
                     self.text_review('review {} next'.format(text_type), 'Rejected')
                     return
-            self.twitch_send_message('No more to review.  Please use "!review <text type> commit" to lock the changes in place.')
+            self.text_review('review {} next'.format(text_type))
         elif decision == 'commit':
             file_name = '{}_{}_review.txt'.format(self.channel, text_type)
             for text in self.review[text_type]:
@@ -394,6 +399,7 @@ class SaltyBot:
                 for line in self.review[text_type]:
                     if line[1] == 1:
                         data_file.write(line[0] + '\n')
+            self.review[text_type] = []
             self.twitch_send_message('Approved {}s moved to the live file.'.format(text_type))
         else:
             for text in self.review[text_type]:
@@ -405,7 +411,7 @@ class SaltyBot:
                         self.twitch_send_message(last_r + ", next quote: " + text[0])
                         return
             if self.review[text_type]:
-                self.twitch_send_message('Please use "!review <text type> commit" to lock the changes in place.')
+                self.twitch_send_message('Please use "!review {} commit" to lock the changes in place.'.format(text_type))
             else:
                 self.twitch_send_message('Nothing to review in {}.'.format(text_type))
 
