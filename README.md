@@ -24,10 +24,6 @@ has more to keep the link size down.
 broadcaster uses this command the quote/pun will go straight into the live file (that means be careful).  In the future
 you will be able to move them over through twitch chat so you don't have to do it manually.
 
-`!review <type> <decision>` will allow you to review your quotes and puns through chat.  Use `start` for `<decision>`
-and that will load them up into the dictionary.  From there you can use `approve` or `reject` to decide if you like
-the text.  Once you have finished reviewing, use `commit` to save the changes to the live file.
-
 `!song` will display the current song you are playing on osu if you have osu!np going and your game is set to Osu!, or
 it will output the current song you are listening to from a media player if you have something that can read the info
 from them (I use [SMG](http://obsproject.com/forum/threads/smg-now-playing.12744/) for this).  This command currently
@@ -45,7 +41,11 @@ Channel Owner Commands
 `!blacklist` allows you to take away the ability for a user to use commands.  Currently this will remove the ability to
 use the bot at all, so please be careful.
 
-`!whitelist` will removea user from the blacklist.
+`!whitelist` will removes user from the blacklist.
+
+`!review <type> <decision>` will allow you to review your quotes and puns through chat.  Use `start` for `<decision>`
+and that will load them up into the dictionary.  From there you can use `approve` or `reject` to decide if you like
+the text.  Once you have finished reviewing, use `commit` to save the changes to the live file.
 
 `!restart` will attempt to restart the bot if it gets hung up.  Note that this will not work if the bot throws an error
 due to the way Python works.  Also note that this can break the bot in you channel if Twitch decides to reject the
