@@ -36,7 +36,6 @@ class SaltyBot:
         self.irc = socket.socket()
         self.twitch_host = 'irc.twitch.tv'
         self.port = 6667
-
         self.twitch_nick = config_data['general']['twitch_nick']
         self.twitch_oauth = config_data['general']['twitch_oauth']
         self.channel = config_data['general']['channel']
@@ -46,7 +45,7 @@ class SaltyBot:
         with open('{}_blacklist.txt'.format(self.channel), 'a+') as data_file:
             blacklist = data_file.readlines()
         for i in blacklist:
-            self.blacklist.append(i.split('\n'))
+            self.blacklist.append(i.split('\n')[0])
         self.command_times = {}
         with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
             self.admin_file = data_file.read()
@@ -65,7 +64,14 @@ class SaltyBot:
     def twitch_connect(self):
         if self.__DB:
             print("Joining {} as {}.\n".format(self.channel,self.twitch_nick))
-        self.irc.connect((self.twitch_host, self.port))
+        while True:
+            try:
+                self.irc.connect((self.twitch_host, self.port))
+                break
+            except:
+                print "Connection to {}'s channel failed, attempting to reconnect in 30 seconds.\n".format(self.channel)
+                time.sleep(30)
+                continue
         self.irc.send('PASS {}\r\n'.format(self.twitch_oauth))
         self.irc.send('NICK {}\r\n'.format(self.twitch_nick))
         self.irc.send('JOIN #{}\r\n'.format(self.channel))
@@ -76,8 +82,8 @@ class SaltyBot:
                 self.commands.append(keys)
             if self.config_data['commands'][keys]['admin']:
                 self.admin_commands.append(keys)
-            self.command_times[keys] = {'last' : 0, 'limit' : self.config_data['commands'][keys]['limit']}
-        self.commands_string = ', '.join(self.commands)
+            self.command_times[keys] = {'last' : 0,
+                                        'limit' : self.config_data['commands'][keys]['limit']}
 
         if '!vote' in self.commands:
             self.votes = {}
@@ -85,19 +91,35 @@ class SaltyBot:
         if '!quote' in self.commands or '!pun' in self.commands:
             if '!quote' in self.commands:
                 self.review = {'quote' : []}
-            elif '!pun' in self.commands:
+            if '!pun' in self.commands:
                 self.review = {'pun' : []}
-            else:
-                self.review = {'quote' : [], 'pun' : []}
 
         if self.config_data['general']['social']['text'] != '':
-            self.command_times['social'] = {'time_last' : int(time.time()), 'messages' : self.config_data['general']['social']['messages'],
-                                            'messages_last' : self.messages_received, 'time' : self.config_data['general']['social']['time']}
+            self.command_times['social'] = {'time_last' : int(time.time()),
+                                            'messages' : self.config_data['general']['social']['messages'],
+                                            'messages_last' : self.messages_received,
+                                            'time' : self.config_data['general']['social']['time']}
             self.social_text = self.config_data['general']['social']['text']
 
         if self.config_data['general']['toobou']['on'] == True:
-            self.command_times['toobou'] = {'last' : int(time.time()),
+            self.command_times['toobou'] = {'trigger' : self.config_data['general']['toobou']['trigger'],
+                                            'last' : int(time.time()),
                                             'limit' : self.config_data['general']['toobou']['limit']}
+
+        if self.config_data['general']['custom']['on'] == True:
+            self.command_times['custom'] = {'triggers' : self.config_data['general']['custom']['triggers'],
+                                            'outputs' : self.config_data['general']['custom']['output'],
+                                            'admins' : self.config_data['general']['custom']['admins'],
+                                            'limits' : self.config_data['general']['custom']['limits'],
+                                            'lasts' : []}
+            for i in self.command_times['custom']['triggers']:
+                self.command_times['custom']['lasts'].append(0)
+                self.commands.append(('!' + i))
+            for i in self.command_times['custom']['admins']:
+                if self.command_times['custom']['admins'][i] == True:
+                    self.admin_commands.append(self.command_times['custom']['admins'][i])
+
+        self.commands_string = ', '.join(self.commands)
 
     def twitch_send_message(self, response, command = ''):
         try:
@@ -238,6 +260,10 @@ class SaltyBot:
                     srl_race_status = race_channel['statetext']
                     srl_race_time = race_channel['time']
                     srl_race_link = 'http://www.speedrunslive.com/race/?id={}'.format(srl_race_id)
+                    srl_live_entrants = []
+                    for j in srl_race_entrants:
+                        if self.is_live(j):
+                            srl_live_entrants.append(j)
                     multitwitch_link = 'www.multitwitch.tv/'
                     response = 'Game: {}, Category: {}, Status: {}'.format(srl_race_game, srl_race_category, srl_race_status)
                     if srl_race_time > 0:
@@ -250,10 +276,9 @@ class SaltyBot:
                             m, s = divmod(real_time, 60)
                             h, m = divmod(m, 60)
                             response += ', RaceBot Time: {}:{}:{}'.format(h, m, s)
-                    if len(srl_race_entrants) <= 6:
-                        for j in srl_race_entrants:
-                            if self.is_live(j):
-                                multitwitch_link += j + '/'
+                    if len(srl_live_entrants) <= 6:
+                        for j in srl_live_entrants:
+                            multitwitch_link += j + '/'
                         response += '.  {}'.format(multitwitch_link)
                     else:
                         response += '.  {}'.format(srl_race_id)
@@ -469,7 +494,7 @@ class SaltyBot:
                     if self.config_data['general']['youtube_link']:
                         self.youtube_video_check(self.message_body)
 
-                if self.message_body.lower().find('toobou') != -1:
+                if self.message_body.lower().find(self.config_data['general']['toobou']['trigger']) != -1:
                     if 'toobou' in self.command_times:
                         if self.time_check('toobou'):
                             self.twitch_send_message(self.config_data['general']['toobou']['insult'])
@@ -579,6 +604,16 @@ class SaltyBot:
                             else:
                                 if self.time_check('!vote'):
                                     self.check_votes(self.message_body)
+
+                    elif self.message_body in self.command_times['custom']['triggers']:
+                        location = self.command_times['custom']['triggers'].index(self.message_body)
+                        if int(time.time()) - self.command_times['custom']['lasts'][location] >= self.command_times['custom']['limits'][location]:
+                            if self.message_body in self.admin_commands:
+                                if self.sender in self.admin_file:
+                                    self.twitch_send_message(self.command_times['custom']['outputs'][location])
+                            else:
+                                self.twitch_send_message(self.command_times['custom']['outputs'][location])
+                                self.command_times['custom']['lasts'][location] = int(time.time())
 
                     elif self.message_body.startswith('review') and self.sender == self.channel:
                         self.text_review(self.message_body)
