@@ -4,25 +4,24 @@ Coded with Python 2.7.6.  Required module install Requests due to how many API c
 
 Aim of this bot is to be able to retrieve game playing for speedrunners to have rotating commands for different games.
 
-Commands Explanation
-====================
+Commands
+========
 `!commands` will output all of the active commands at the current time.
 
-`!wr` will simply output the world record for the game and category.  Game is retrieved from Twitch API, and category is
+`!wr` will output the world record for the game and category.  Game is retrieved from Twitch API, and category is
 found by matching the title against categories in the config file.  If one matches then it will print out that time.
 
-`!leaderboards` will simply output the leaderboard for the game as specified in the config file.
+`!leaderboards` will output the leaderboard for the game as specified in the config file.
 
 `!race` will check to see if a variant of "race" is in your title to prevent spamming, and if it is it will check the
 SRL API to see if you are in a race.  If you are listed in the race it will generate the game, category, and SRL nicks
-racing, as well as output a multitwitch link if the race has 6 or fewer active racers, or an SRL race page link if it 
+racing, as well as output a multitwitch link if the race has 6 or fewer live racers, or an SRL race page link if it 
 has more to keep the link size down.
 
 `!quote`/`!pun` will display a randomly selected quote/pun from a file.
 
 `!addqoute`/`!addpun` will add the given quote/pun to a review file so that you can manually move it over later.  If the
-broadcaster uses this command the quote/pun will go straight into the live file (that means be careful).  In the future
-you will be able to move them over through twitch chat so you don't have to do it manually.
+broadcaster uses this command the quote/pun will go straight into the live file (that means be careful).
 
 `!song` will display the current song you are playing on osu if you have osu!np going and your game is set to Osu!, or
 it will output the current song you are listening to from a media player if you have something that can read the info
@@ -32,9 +31,12 @@ does not work due to the way that the bot is run now.  In the future I may set u
 `!rank` will retrieve the accuracy, pp ranking, level, and username of the streamer.
 
 `!vote <vote_book> <your_vote>` will allow you to do much more than before.  If you are mod or broadcaster you can use
-`<vote_book>` as createvote or removevote, which will create or remove the specified vote book respectively.  For normal
+`createvote` or `removevote` as `<vote_book>`, which will create or remove the specified vote book respectively.  For normal
 users you must put in both of these to enter your vote.  `!votes <optional vote_book>` will output all of the winning
 votes for each vote category you input.  If category is specified it will only output the one supplied.
+
+You can now make custom commands.  They must be one word commands and only have static text output.  Currently the only
+way to add custom commands is to manually add them to the config file.  Hopefully this will be changed in the future.
 
 Channel Owner Commands
 ======================
@@ -57,7 +59,7 @@ Ability to send you the maps posted in chat for osu directly in game.
 
 Post the title and uploader of a youtube video posted in chat (can detect spam this way).
 
-Insult people who don't know who トーボウ (can change this to other text in the future) is.
+Insult people who don't know who トーボウ is (trigger can be changed to something else).
 
 Ability to output static text every x amount of messages, or x amount of time, or both.  This can be useful for
 different links to various social media.
