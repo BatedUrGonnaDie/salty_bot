@@ -484,6 +484,8 @@ class SaltyBot:
                 self.message_body = ':'.join(self.message.split(':')[2:])
                 if self.sender in self.blacklist:
                     continue
+                if self.message_body.find('­') != -1:
+                    continue
 
                 if self.message_body.find('osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
                     if self.game == 'osu!':
