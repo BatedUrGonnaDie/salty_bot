@@ -42,6 +42,7 @@ class SaltyBot:
         self.commands = []
         self.admin_commands = []
         self.blacklist = []
+        self.t_trig = None
         with open('{}_blacklist.txt'.format(self.channel), 'a+') as data_file:
             blacklist = data_file.readlines()
         for i in blacklist:
@@ -102,6 +103,7 @@ class SaltyBot:
             self.social_text = self.config_data['general']['social']['text']
 
         if self.config_data['general']['toobou']['on'] == True:
+            self.t_trig = self.config_data['general']['toobou']['trigger']
             self.command_times['toobou'] = {'trigger' : self.config_data['general']['toobou']['trigger'],
                                             'last' : int(time.time()),
                                             'limit' : self.config_data['general']['toobou']['limit']}
@@ -135,24 +137,29 @@ class SaltyBot:
         return int(time.time()) - self.command_times[command]['last'] >= self.command_times[command]['limit']
 
     def is_live(self, user):
-        url = 'https://api.twitch.tv/kraken/streams/' + user
-        headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
-        data = requests.get(url, headers = headers)
-        data_decode = data.json()
-        data_stream = data_decode['stream']
-        if data_stream == None:
-            return False
-        else:
+        try:
+            url = 'https://api.twitch.tv/kraken/streams/' + user
+            headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
+            data = requests.get(url, headers = headers)
+            data_decode = data.json()
+            data_stream = data_decode['stream']
+            if data_stream == None:
+                return False
+            else:
+                return True
+        except:
             return True
 
     def osu_api_user(self):
         osu_nick = self.config_data['general']['osu']['osu_nick']
         osu_api_key = self.config_data['general']['osu']['osu_api_key']
         url = 'https://osu.ppy.sh/api/get_user?k={}&u={}'.format(osu_api_key, osu_nick)
-        data = requests.get(url)
-        data_decode = data.json()
-        data_decode = data_decode[0]
-
+        try:
+            data = requests.get(url)
+            data_decode = data.json()
+            data_decode = data_decode[0]
+        except:
+            return
         username = data_decode['username']
         level = data_decode['level']
         level = round(float(level))
@@ -175,9 +182,12 @@ class SaltyBot:
             osu_number = 'b=' + self.message_body.split('osu.ppy.sh/b/')[-1].split(' ')[0]
 
         url = 'https://osu.ppy.sh/api/get_beatmaps?k={}&{}'.format(osu_api_key, osu_number)
-        data = requests.get(url)
-        data_decode = data.json()
-        data_decode = data_decode[0]
+        try:
+            data = requests.get(url)
+            data_decode = data.json()
+            data_decode = data_decode[0]
+        except:
+            return
         response = '{} - {}, mapped by {}'.format(data_decode['artist'], data_decode['title'], data_decode['creator'])
 
         self.twitch_send_message(response)
@@ -240,9 +250,12 @@ class SaltyBot:
     def srl_race_retrieve(self):
         self.srl_nick = self.config_data['general']['srl_nick']
         url = 'http://api.speedrunslive.com/races'
-        data = requests.get(url)
-        data_decode = data.json()
-        data_races = data_decode['races']
+        try:
+            data = requests.get(url)
+            data_decode = data.json()
+            data_races = data_decode['races']
+        except:
+            return
         srl_race_entrants = []
         for i in data_races:
             for races in i['entrants']:
@@ -291,9 +304,12 @@ class SaltyBot:
         if ' ' in youtube_video_id:
             youtube_video_id = youtube_video_id.split(' ')[0]
         url = 'https://www.googleapis.com/youtube/v3/videos?part=snippet&id={}&key={}'.format(youtube_video_id, self.youtube_api_key)
-        data = requests.get(url)
-        data_decode = data.json()
-        data_items = data_decode['items']
+        try:
+            data = requests.get(url)
+            data_decode = data.json()
+            data_items = data_decode['items']
+        except:
+            return
         youtube_title = data_items[0]['snippet']['title']
         youtube_uploader = data_items[0]['snippet']['channelTitle']
         response = '{} uploaded by {}'.format(youtube_title, youtube_uploader)
@@ -349,7 +365,7 @@ class SaltyBot:
                     self.votes[vote_category]['voters'][sender] = sender_bet
                     response = 'Your vote has been recorded.'
             else:
-                response = 'You did not put an open vote category.'
+                return
         self.twitch_send_message(response, '!vote')
 
     def check_votes(self, message):
@@ -496,12 +512,14 @@ class SaltyBot:
                     if self.config_data['general']['youtube_link']:
                         self.youtube_video_check(self.message_body)
 
-                if self.message_body.lower().find(self.config_data['general']['toobou']['trigger']) != -1:
-                    if 'toobou' in self.command_times:
-                        if self.time_check('toobou'):
-                            self.twitch_send_message(self.config_data['general']['toobou']['insult'])
-                            self.command_times['toobou']['last'] = int(time.time())
-                        
+                try:
+                    if self.message_body.lower().find(self.t_trig) != -1:
+                        if 'toobou' in self.command_times:
+                            if self.time_check('toobou'):
+                                self.twitch_send_message(self.config_data['general']['toobou']['insult'])
+                                self.command_times['toobou']['last'] = int(time.time())
+                except:
+                    pass
 
                 if self.__DB:
                     print self.sender + ": " + self.message_body
@@ -690,9 +708,11 @@ def twitch_info_grab(bots):
     for channel in channels:
         url = 'https://api.twitch.tv/kraken/channels/'+channel
         headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
-        data = requests.get(url, headers = headers)
-        data_decode = data.json()
-        #data_stream = data_decode['stream']
+        try:
+            data = requests.get(url, headers = headers)
+            data_decode = data.json()
+        except:
+            data_decode = {'game' : '', 'title' : ''}
 
         game = data_decode['game']
         title = data_decode['status']
