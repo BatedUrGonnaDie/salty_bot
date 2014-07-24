@@ -712,7 +712,7 @@ def twitch_info_grab(bots):
             data = requests.get(url, headers = headers)
             data_decode = data.json()
         except:
-            data_decode = {'game' : '', 'title' : ''}
+            data_decode = {'game' : '', 'status' : ''}
 
         game = data_decode['game']
         title = data_decode['status']
