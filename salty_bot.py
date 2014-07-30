@@ -31,7 +31,6 @@ class SaltyBot:
 
     def __init__(self, config_data, debug = False):
         self.__DB = debug
-
         self.config_data = config_data
         self.irc = socket.socket()
         self.twitch_host = 'irc.twitch.tv'
@@ -64,7 +63,7 @@ class SaltyBot:
 
     def twitch_connect(self):
         if self.__DB:
-            print("Joining {} as {}.\n".format(self.channel,self.twitch_nick))
+            print "Joining {} as {}.\n".format(self.channel,self.twitch_nick)
         while True:
             try:
                 self.irc.connect((self.twitch_host, self.port))
@@ -137,29 +136,33 @@ class SaltyBot:
         return int(time.time()) - self.command_times[command]['last'] >= self.command_times[command]['limit']
 
     def is_live(self, user):
+        url = 'https://api.twitch.tv/kraken/streams/' + user
+        headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
+        data_decode = self.api_caller(url, headers)
+        if data_decode == False:
+            return True
+        data_stream = data_decode['stream']
+        if data_stream == None:
+            return False
+        else:
+            return True
+
+    def api_caller(self, url, headers = None):
         try:
-            url = 'https://api.twitch.tv/kraken/streams/' + user
-            headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
             data = requests.get(url, headers = headers)
             data_decode = data.json()
-            data_stream = data_decode['stream']
-            if data_stream == None:
-                return False
-            else:
-                return True
+            return data_decode
         except:
-            return True
+            return False
 
     def osu_api_user(self):
         osu_nick = self.config_data['general']['osu']['osu_nick']
         osu_api_key = self.config_data['general']['osu']['osu_api_key']
         url = 'https://osu.ppy.sh/api/get_user?k={}&u={}'.format(osu_api_key, osu_nick)
-        try:
-            data = requests.get(url)
-            data_decode = data.json()
-            data_decode = data_decode[0]
-        except:
+        data_decode = self.api_caller(url)
+        if data_decode == False:
             return
+        data_decode = data_decode[0]
         username = data_decode['username']
         level = data_decode['level']
         level = round(float(level))
@@ -181,17 +184,16 @@ class SaltyBot:
         elif self.message_body.find('osu.ppy.sh/b/') != -1:
             osu_number = 'b=' + self.message_body.split('osu.ppy.sh/b/')[-1].split(' ')[0]
 
-        url = 'https://osu.ppy.sh/api/get_beatmaps?k={}&{}'.format(osu_api_key, osu_number)
-        try:
-            data = requests.get(url)
-            data_decode = data.json()
-            data_decode = data_decode[0]
-        except:
-            return
-        response = '{} - {}, mapped by {}'.format(data_decode['artist'], data_decode['title'], data_decode['creator'])
-
-        self.twitch_send_message(response)
         osu_send_message(osu_irc_pass, osu_nick, self.message_body)
+
+        url = 'https://osu.ppy.sh/api/get_beatmaps?k={}&{}'.format(osu_api_key, osu_number)
+        data_decode = self.api_caller(url)
+        if data_decode == False:
+            return
+        data_decode = data_decode[0]
+
+        response = '{} - {}, mapped by {}'.format(data_decode['artist'], data_decode['title'], data_decode['creator'])
+        self.twitch_send_message(response)
 
     def wr_retrieve(self):
         if self.game in self.config_data['commands']['!wr']['games']:
@@ -250,12 +252,10 @@ class SaltyBot:
     def srl_race_retrieve(self):
         self.srl_nick = self.config_data['general']['srl_nick']
         url = 'http://api.speedrunslive.com/races'
-        try:
-            data = requests.get(url)
-            data_decode = data.json()
-            data_races = data_decode['races']
-        except:
+        data_decode = self.api_caller(url)
+        if data_decode == False:
             return
+        data_races = data_decode['races']
         srl_race_entrants = []
         for i in data_races:
             for races in i['entrants']:
@@ -304,12 +304,10 @@ class SaltyBot:
         if ' ' in youtube_video_id:
             youtube_video_id = youtube_video_id.split(' ')[0]
         url = 'https://www.googleapis.com/youtube/v3/videos?part=snippet&id={}&key={}'.format(youtube_video_id, self.youtube_api_key)
-        try:
-            data = requests.get(url)
-            data_decode = data.json()
-            data_items = data_decode['items']
-        except:
+        data_decode = self.api_caller(url)
+        if data_decode == False:
             return
+        data_items = data_decode['items']
         youtube_title = data_items[0]['snippet']['title']
         youtube_uploader = data_items[0]['snippet']['channelTitle']
         response = '{} uploaded by {}'.format(youtube_title, youtube_uploader)
@@ -476,6 +474,55 @@ class SaltyBot:
         if worked == True:
             self.twitch_send_message('{} has been {}listed'.format(user, s_list))
 
+    def custom_command(self, message, sender):
+        space_count = message.count(' ')
+        if space_count == 0:
+            command = message
+            param = ''
+        else:
+            command = message.split(' ')[0]
+            param = message.split(' ')[-space_count]
+        if command not in self.command_times['custom']['triggers']:
+            return
+        if command in self.admin_commands and sender not in self.admin_file:
+            return
+        location = self.command_times['custom']['triggers'].index(command)
+        if int(time.time()) - self.command_times['custom']['lasts'][location] <= self.command_times['custom']['limits'][location]:
+            return
+        output = self.command_times['custom']['outputs'][location]
+        if output.count(' ') != 0:
+            out_a = output.split(' ')
+        else:
+            out_a = [output]
+        for i in out_a:
+            if i == '$sender':
+                t_location = out_a.index(i)
+                out_a[t_location] = sender
+            elif i == '$param':
+                t_location = out_a.index(i)
+                out_a[t_location] = param
+        out_final = ' '.join(out_a)
+        self.twitch_send_message(out_final)
+        self.command_times['custom']['lasts'][location] = int(time.time())
+
+    def lol_runes(self):
+        lol_api_key = 'INSERT_API_KEY_HERE_YA_DINGUS'
+        self.summoner_name = 'batedurgonnadie'
+        name_url = 'https://na.api.pvp.net/api/lol/na/v1.4/summoner/by-name/{}?api_key={}'.format(self.summoner_name, lol_api_key)
+        name_data = self.api_caller(name_url)
+        if name_data == False:
+            return
+        summoner_id = name_data[self.summoner_name]['id']
+        rune_url = 'https://na.api.pvp.net/api/lol/na/v1.4/summoner/{}/runes?api_key={}'.format(summoner_id, lol_api_key)
+        rune_data = self.api_caller(rune_url)
+        if rune_data == False:
+            return
+        for i in rune_data['{}'.format(summoner_id)]['pages']:
+            if i['current'] == True:
+                active_page = i
+                break
+        print active_page
+
     def twitch_run(self):
         self.twitch_connect()
         self.twitch_commands()
@@ -524,9 +571,12 @@ class SaltyBot:
                 if self.__DB:
                     print self.sender + ": " + self.message_body
 
-                find_ex = self.message_body.count('!')
                 if self.message_body.startswith('!'):
+                    find_ex = self.message_body.count('!')
                     self.message_body = self.message_body.split('!')[-find_ex]
+
+                    if len(self.command_times['custom']['triggers']) != 0:
+                        self.custom_command(self.message_body, self.sender)
 
                     if self.message_body.startswith('blacklist ') and self.sender == self.channel:
                         self.lister(self.message_body, 'black')
@@ -625,18 +675,11 @@ class SaltyBot:
                                 if self.time_check('!vote'):
                                     self.check_votes(self.message_body)
 
-                    elif self.message_body in self.command_times['custom']['triggers']:
-                        location = self.command_times['custom']['triggers'].index(self.message_body)
-                        if int(time.time()) - self.command_times['custom']['lasts'][location] >= self.command_times['custom']['limits'][location]:
-                            if self.message_body in self.admin_commands:
-                                if self.sender in self.admin_file:
-                                    self.twitch_send_message(self.command_times['custom']['outputs'][location])
-                            else:
-                                self.twitch_send_message(self.command_times['custom']['outputs'][location])
-                                self.command_times['custom']['lasts'][location] = int(time.time())
-
                     elif self.message_body.startswith('review') and self.sender == self.channel:
                         self.text_review(self.message_body)
+
+                    #elif self.message_body == 'runes':
+                        #self.lol_runes()
 
                     elif self.message_body == 'commands':
                         if self.time_check('!commands'):
@@ -674,14 +717,14 @@ class SaltyBot:
                         self.command_times['social']['time_last'] = int(time.time())
                         self.command_times['social']['messages_last'] = self.messages_received
 
-        print("thread stoped")
+        print "thread stoped"
     #@@ ADMIN FUNCTIONS @@#
 
-    def admin(self,call='<test>'):
+    def admin(self, call='<test>'):
         if call == RESTART:
-            interface.put([call,self])
+            interface.put([call, self])
             if self.__DB:
-                print('bot id {}'.format(self))
+                print 'bot id {}'.format(self)
 
         else:
             interface.put([call,self])
