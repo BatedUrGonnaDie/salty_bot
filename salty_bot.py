@@ -842,3 +842,14 @@ if __name__ == '__main__':
 
 #runes/masteries
 #make web page that doesn't suck
+#BOMB HAS TO DO:
+#League API stuff
+#restart command fix
+#bot info 
+#custom commands from chat ie !addcustom <command trigger> <do stuff>
+
+
+
+
+
+
