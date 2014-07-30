@@ -1,27 +1,25 @@
 Somewhat basic Twitch chat bot with Twitch, Osu, YouTube, SRL, and soon LoL API integration.
 
-Coded with Python 2.7.6.  Required module install Requests due to how many API calls it has now.
-
-Aim of this bot is to be able to retrieve game playing for speedrunners to have rotating commands for different games.
+Coded with Python 2.7.  Required module install Requests due to how many API calls it has now.
 
 Commands
 ========
 `!commands` will output all of the active commands at the current time.
 
-`!wr` will output the world record for the game and category.  Game is retrieved from Twitch API, and category is
-found by matching the title against categories in the config file.  If one matches then it will print out that time.
+`!wr` will output the world record for the game and category.  Game is retrieved from Twitch API, and category is found
+by matching the title against categories in the config file.  If one matches then it will print out that time.
 
 `!leaderboards` will output the leaderboard for the game as specified in the config file.
 
 `!race` will check to see if a variant of "race" is in your title to prevent spamming, and if it is it will check the
 SRL API to see if you are in a race.  If you are listed in the race it will generate the game, category, and SRL nicks
-racing, as well as output a multitwitch link if the race has 6 or fewer live racers, or an SRL race page link if it 
-has more to keep the link size down.
+racing, as well as output a multitwitch link if the race has 6 or fewer live racers, or an SRL race page link if it  has
+more to keep the link size down.
 
-`!quote`/`!pun` will display a randomly selected quote/pun from a file.
+`!quote`/pun` will display a randomly selected quote/pun from a file.
 
-`!addqoute`/`!addpun` will add the given quote/pun to a review file so that you can manually move it over later.  If the
-broadcaster uses this command the quote/pun will go straight into the live file (that means be careful).
+`!addqoute`/addpun` will add the given quote/pun to a review file so that you can manually move it over later.  If the
+`!broadcaster uses this command the quote/pun will go straight into the live file (that means be careful).
 
 `!song` will display the current song you are playing on osu if you have osu!np going and your game is set to Osu!, or
 it will output the current song you are listening to from a media player if you have something that can read the info
@@ -31,23 +29,24 @@ does not work due to the way that the bot is run now.  In the future I may set u
 `!rank` will retrieve the accuracy, pp ranking, level, and username of the streamer.
 
 `!vote <vote_book> <your_vote>` will allow you to do much more than before.  If you are mod or broadcaster you can use
-`createvote` or `removevote` as `<vote_book>`, which will create or remove the specified vote book respectively.  For normal
-users you must put in both of these to enter your vote.  `!votes <optional vote_book>` will output all of the winning
-votes for each vote category you input.  If category is specified it will only output the one supplied.
+`createvote` or `removevote` as `<vote_book>`, which will create or remove the specified vote book respectively.  For
+normal users you must put in both of these to enter your vote.  `!votes <optional vote_book>` will output all of the
+winning votes for each vote category you input.  If category is specified it will only output the one supplied.
 
-You can now make custom commands.  They must be one word commands and only have static text output.  Currently the only
-way to add custom commands is to manually add them to the config file.  Hopefully this will be changed in the future.
+You can now make custom commands.  They must be one word commands and only have static text output.  You may also use
+wildcards.  `$sender` and `$param` can be used and replaced with who sent the message and the first word after the
+command respectively.  Currently the only way to add custom commands is to manually add them to the config file.
 
 Channel Owner Commands
 ======================
-`!blacklist` allows you to take away the ability for a user to use commands.  Currently this will remove the ability to
-use the bot at all, so please be careful.
+`!blacklist` allows you to take away the ability for a user to use
+commands.  Currently this will remove the ability to use the bot at all, so please be careful.
 
 `!whitelist` will removes user from the blacklist.
 
 `!review <type> <decision>` will allow you to review your quotes and puns through chat.  Use `start` for `<decision>`
-and that will load them up into the dictionary.  From there you can use `approve` or `reject` to decide if you like
-the text.  Once you have finished reviewing, use `commit` to save the changes to the live file.
+and that will load them up into the dictionary.  From there you can use `approve` or `reject` to decide if you like the
+text.  Once you have finished reviewing, use `commit` to save the changes to the live file.
 
 `!restart` will attempt to restart the bot if it gets hung up.  Note that this will not work if the bot throws an error
 due to the way Python works.  Also note that this can break the bot in you channel if Twitch decides to reject the
@@ -64,8 +63,8 @@ Insult people who don't know who トーボウ is (trigger can be changed to some
 Ability to output static text every x amount of messages, or x amount of time, or both.  This can be useful for
 different links to various social media.
 
-Ability to set all commands as admin only.  This means that only your moderators will be able to use that command.  This
-can be useful to cut down on flood.
+Ability to set all commands as admin only.  This means that only your moderators will be able to use that command.
+This can be useful to cut down on flood.
 
 Ability to set flood limits on all commands.  Each command has its own flood limit, so you can use some more than
 others.
@@ -85,8 +84,8 @@ changing quite a bit.
 
 Usage
 =====
-You can either download the bot (1 file) and make your own config file for the channels you want it to join and commands
-to use, or shoot me an email at batedurgonnadie@yahoo.com and I can add you to my config file.  In the future I hope to
-have a webpage up that will allow you to authenticate through twitch and customize the commands from there.  If you're
-interested I will ask you all the necessary info needed to set you up and then all you have to do is keep me updated
-with leaderboard/wr times.
+You can either download the bot (1 file) and make your own config file for the channels you want it to join
+and commands to use, or shoot me an email at batedurgonnadie@yahoo.com and I can add you to my config file.  In the
+future I hope to have a webpage up that will allow you to authenticate through twitch and customize the commands from
+there.  If you're interested I will ask you all the necessary info needed to set you up and then all you have to do is
+keep me updated with leaderboard/wr times.
