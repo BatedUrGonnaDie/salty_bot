@@ -701,7 +701,6 @@ class SaltyBot:
                     elif self.message_body == 'check':
                         self.admin(CHECK)
 
-
             elif self.action == 'MODE':
                 if '+o ' in self.message:
                     admin = self.message.split('+o ')[-1]
@@ -753,7 +752,7 @@ def twitch_info_grab(bots):
         url = 'https://api.twitch.tv/kraken/channels/'+channel
         headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
         data = requests.get(url, headers = headers)
-        if data.response_code == 200:
+        if data.status_code == 200:
             data_decode = data.json()
         else:
             data_decode = {'game' : '', 'status' : ''}
@@ -773,7 +772,7 @@ def twitch_info_grab(bots):
         channel_game_title.update({channel : {'game' : game, 'title' : title}})
 
     bots_update = []
-
+    threading.enumerate()
     for bot in bots:
         bot.twitch_info(channel_game_title)
         bots_update.append(bot)
