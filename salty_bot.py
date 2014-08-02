@@ -148,11 +148,11 @@ class SaltyBot:
             return True
 
     def api_caller(self, url, headers = None):
-        try:
-            data = requests.get(url, headers = headers)
+        data = requests.get(url, headers = headers)
+        if data.status_code == 200:
             data_decode = data.json()
             return data_decode
-        except:
+        else:
             return False
 
     def osu_api_user(self):
@@ -752,10 +752,10 @@ def twitch_info_grab(bots):
     for channel in channels:
         url = 'https://api.twitch.tv/kraken/channels/'+channel
         headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
-        try:
-            data = requests.get(url, headers = headers)
+        data = requests.get(url, headers = headers)
+        if data.response_code == 200:
             data_decode = data.json()
-        except:
+        else:
             data_decode = {'game' : '', 'status' : ''}
 
         game = data_decode['game']
@@ -782,7 +782,7 @@ def twitch_info_grab(bots):
     t_check.daemon = True
     t_check.start()
 
-def restartBot(bot,bot_list):
+def restart_bot(bot, bot_list):
     #@ OPEN CONFIGURATION FILE
     with open('config.json', 'r') as data_file:
         #@ GET THE RIGHT CONFIG DICTIONARY FROM THE FILE
@@ -812,6 +812,7 @@ def main():
         bots.append(SaltyBot(channels, debuging))
         #@@ START BOT THREAD @@#
         bots[-1].start()
+        time.sleep(2)
 
     twitch_info_grab(bots)
 
@@ -822,7 +823,7 @@ def main():
             register = interface.get(False)
 
             if register[TYPE] == RESTART:
-                restartBot(register[DATA],bots)
+                restart_bot(register[DATA],bots)
 
             if register[TYPE] == STOP:
                 break
@@ -833,9 +834,6 @@ def main():
 
         except:
             pass
-
-
-
 
 if __name__ == '__main__':
     main()
@@ -848,9 +846,3 @@ if __name__ == '__main__':
 #restart command fix
 #bot info 
 #custom commands from chat ie !addcustom <command trigger> <do stuff>
-
-
-
-
-
-
