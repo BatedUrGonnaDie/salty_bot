@@ -33,6 +33,7 @@ class SaltyBot:
         self.__DB = debug
         self.config_data = config_data
         self.irc = socket.socket()
+        self.irc.settimeout(600)
         self.twitch_host = 'irc.twitch.tv'
         self.port = 6667
         self.twitch_nick = config_data['general']['twitch_nick']
@@ -89,10 +90,11 @@ class SaltyBot:
             self.votes = {}
 
         if '!quote' in self.commands or '!pun' in self.commands:
+            self.review = {}
             if '!quote' in self.commands:
-                self.review = {'quote' : []}
+                self.review['quote'] = []
             if '!pun' in self.commands:
-                self.review = {'pun' : []}
+                self.review['pun'] = []
 
         if self.config_data['general']['social']['text'] != '':
             self.command_times['social'] = {'time_last' : int(time.time()),
@@ -530,7 +532,12 @@ class SaltyBot:
 
         while self.running:
 
-            self.message = self.irc.recv(4096)
+            try:
+                self.message = self.irc.recv(4096)
+            except socket.timout:
+                self.irc.close()
+                twitch_run()
+
             self.message = self.message.split('\r\n')[0]
             self.message = self.message.strip()
 
@@ -686,6 +693,9 @@ class SaltyBot:
                         if self.time_check('!commands'):
                             self.twitch_send_message(self.commands_string, '!commands')
 
+                    elif self.message_body == 'bot_info':
+                        self.twitch_send_message('Powered by SaltyBot, for a full list of commands check out www.github.com/batedurgonnadie/salty_bot')
+
                     elif self.message_body == 'restart' and self.sender == self.channel:# or self.sender == "bomb_mask"):
                         if self.__DB:
                             print('{} is restarting, called by {}'.format(self.channel + ' ' + self.twitch_nick, self.sender))
@@ -751,28 +761,33 @@ def twitch_info_grab(bots):
     for channel in channels:
         url = 'https://api.twitch.tv/kraken/channels/'+channel
         headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
-        data = requests.get(url, headers = headers)
-        if data.status_code == 200:
-            data_decode = data.json()
-        else:
-            data_decode = {'game' : '', 'status' : ''}
-
-        game = data_decode['game']
-        title = data_decode['status']
-
         try:
-            game = game.lower()
-        except:
-            game = ''
-        try:
-            title = title.lower()
-        except:
-            title = ''
+            data = requests.get(url, headers = headers)
+            if data.status_code == 200:
+                data_decode = data.json()
+            else:
+                data_decode = {'game' : '', 'status' : ''}
 
-        channel_game_title.update({channel : {'game' : game, 'title' : title}})
+            game = data_decode['game']
+            title = data_decode['status']
+
+            try:
+                game = game.lower()
+            except:
+                game = ''
+            try:
+                title = title.lower()
+            except:
+                title = ''
+
+            channel_game_title.update({channel : {'game' : game, 'title' : title}})
+
+            time.sleep(3)
+        except:
+            channel_game_title.update({channel : {'game' : '', 'title' : title}})
 
     bots_update = []
-    threading.enumerate()
+
     for bot in bots:
         bot.twitch_info(channel_game_title)
         bots_update.append(bot)
@@ -843,5 +858,3 @@ if __name__ == '__main__':
 #BOMB HAS TO DO:
 #League API stuff
 #restart command fix
-#bot info 
-#custom commands from chat ie !addcustom <command trigger> <do stuff>
