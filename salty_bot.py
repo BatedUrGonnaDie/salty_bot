@@ -13,7 +13,7 @@ import urlparse
 import Queue as Q
 
 debuging = False
-
+Config_file_name = 'dConfig.json' if debuging else 'config.json'
 
 RESTART = "<restart>"
 STOP = "<stop program>"
@@ -814,27 +814,33 @@ def restart_bot(bot, bot_list):
 
 
 def main():
-    running = True
+    
+    bot_dict = {} #Bot instances go in here
+    channels_dict = {} #All channels go in here from the JSON file
+    
+    with open(Config_file_name, 'r') as data_file:
+        channels_dict = json.load(data_file, encoding = 'utf-8')
 
-    channel_configs = {}
-    with open('config.json', 'r') as data_file:
-        channel_configs = json.load(data_file, encoding = 'utf-8')
-
-    bots = []
-    for channels in channel_configs.values():
-        #@@ CREATE BOT INSTANCE @@#
-        bots.append(SaltyBot(channels, debuging))
-        #@@ START BOT THREAD @@#
-        bots[-1].start()
+    for channel_name,channel_data in channels_dict.items():
+        # Create bot and put it by name into a dictionary 
+        bot_dict[channel_name] = SaltyBot(channel_data, debuging)
+        
+        # Look up bot and start the thread
+        bot_dict[channel_name].start()
+        
+        # Wait because of twitch connect settings
         time.sleep(2)
+    
 
-    twitch_info_grab(bots)
+
+    #twitch_info_grab(bots)
 
     ##MAIN LOOP##
-    while running:
+    while True:
 
         try:
             register = interface.get(False)
+            print register
 
             if register[TYPE] == RESTART:
                 restart_bot(register[DATA],bots)
@@ -843,8 +849,8 @@ def main():
                 break
 
             if register[TYPE] == CHECK:
-                for i in bots:
-                    print i.thread
+                for bot_name,bot_inst in bot_dict.items():
+                    print bot_name+': ',bot_inst.thread
 
         except:
             pass
