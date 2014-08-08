@@ -698,7 +698,7 @@ class SaltyBot:
                     elif self.message_body == 'bot_info':
                         self.twitch_send_message('Powered by SaltyBot, for a full list of commands check out www.github.com/batedurgonnadie/salty_bot')
 
-                    elif self.message_body == 'restart' and self.sender == self.channel:# or self.sender == "bomb_mask"):
+                    elif self.message_body == 'restart' and (self.sender == 'batedurgonnadie' or self.sender == "bomb_mask"):
                         if self.__DB:
                             print('{} is restarting, called by {}'.format(self.channel + ' ' + self.twitch_nick, self.sender))
                         self.admin(RESTART)
@@ -710,7 +710,7 @@ class SaltyBot:
                             print('SHUTDOWN CALLED BY {}'.format(self.sender.upper()))
                         self.admin(STOP)
 
-                    elif self.message_body == 'check':
+                    elif self.message_body == 'check' and ( self.sender == 'batedurgonnadie' or self.sender == 'bomb_mask'):
                         self.admin(CHECK)
                         
                     elif self.message_body == 'crash' and (self.sender == 'batedurgonnadie' or self.sender == 'bombmask'):
