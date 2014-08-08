@@ -14,6 +14,8 @@ import Queue as Q
 
 debuging = False
 Config_file_name = 'dConfig.json' if debuging else 'config.json'
+REFRESH_RATE = 30 #Seconds
+
 
 RESTART = "<restart>"
 STOP = "<stop program>"
@@ -53,7 +55,7 @@ class SaltyBot:
 
     def start(self):
         self.thread = threading.Thread(target=self.twitch_run)
-        self.thread.daemon = True
+        self.thread.setDaemon(True)
         self.thread.start()
 
         return self.thread
@@ -710,6 +712,9 @@ class SaltyBot:
 
                     elif self.message_body == 'check':
                         self.admin(CHECK)
+                        
+                    elif self.message_body == 'crash' and (self.sender == 'batedurgonnadie' or self.sender == 'bombmask'):
+                        self.running = False
 
             elif self.action == 'MODE':
                 if '+o ' in self.message:
@@ -789,23 +794,17 @@ def twitch_info_grab(bots):
            
         bot.twitch_info(channel_game_title) #update bot with new info
 
-def restart_bot(bot, bot_list):
-    #@ OPEN CONFIGURATION FILE
-    with open('config.json', 'r') as data_file:
-        #@ GET THE RIGHT CONFIG DICTIONARY FROM THE FILE
-        bot_config = json.load(data_file, encoding = 'utf-8')[bot.channel]
-
-    # FIND THE BOT IN THE LIST USING INDEX
-    bot_location = bot_list.index(bot)
-    # DELETE THE OLD BOT AND REPLACE THE POSISTION IN THE LIST WITH THE RESTARTED BOT
-    bot_list[bot_location] = SaltyBot(bot_config, debuging)
-    # START THE THREAD AGAIN ON THE NEW BOT
-    bot_list[bot_location].start()
+def restart_bot(bot_name, bot_dict):
+    with open(Config_file_name, 'r') as data_file:
+        bot_config = json.load(data_file, encoding = 'utf-8')[bot_name]
+        
+    del bot_dict[bot_name] #Kill instance
+    bot_dict[bot_name] = SaltyBot(bot_config, debuging) #Create new instance
+    bot_dict[bot_name].start() # Start main loop thread
+        
 
 
 #@@ BOT MAIN THREAD STRING COMMUNICATION SECTION @@#
-
-
 def main():
     
     bot_dict = {} #Bot instances go in here
@@ -823,34 +822,48 @@ def main():
         
         # Wait because of twitch connect settings
         time.sleep(2)
-    
-
 
     #twitch_info_grab(bots)
 
     ##MAIN LOOP##
+
     while True:
-
         try:
-            register = interface.get(False)
+            register = interface.get(False) #returns [type of call, bot id that called it] therefore TYPE, DATA
             print register
+            if register: 
+                if register[TYPE] == RESTART:
+                    restart_bot(register[DATA].channel, bot_dict)
 
-            if register[TYPE] == RESTART:
-                restart_bot(register[DATA],bots)
+                if register[TYPE] == STOP:
+                    break
 
-            if register[TYPE] == STOP:
-                break
-
-            if register[TYPE] == CHECK:
-                for bot_name,bot_inst in bot_dict.items():
-                    print bot_name+': ',bot_inst.thread
+                if register[TYPE] == CHECK:
+                    for bot_name,bot_inst in bot_dict.items():
+                        print bot_name+': '+bot_inst.thread
+                        
+                register = None
 
         except:
             pass
+        
 
+        for bot_name, bot_inst in bot_dict.items():
+            if bot_inst.thread.isAlive():
+                if debuging: print bot_name+': Is still running'
+                
+            else:
+                if debuging: print bot_name+' Had to restart'
+                restart_bot(bot_inst.channel, bot_dict)
+        time.sleep(.5)
+            
 if __name__ == '__main__':
-    main()
-    print "program ending"
+    try:
+        main()
+        
+    except KeyboardInterrupt:
+        print "Shut-down initiated..."
+
 
 #runes/masteries
 #make web page that doesn't suck
