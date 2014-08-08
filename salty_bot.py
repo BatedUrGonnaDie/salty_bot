@@ -16,7 +16,7 @@ debuging = False
 Config_file_name = 'dConfig.json' if debuging else 'config.json'
 REFRESH_RATE = 30 #Seconds
 
-
+SUPER_USER = ['batedurgonnadie','bomb_mask','glacials']
 RESTART = "<restart>"
 STOP = "<stop program>"
 CHECK = "<check threads>"
@@ -688,8 +688,8 @@ class SaltyBot:
                     elif self.message_body.startswith('review') and self.sender == self.channel:
                         self.text_review(self.message_body)
 
-                    #elif self.message_body == 'runes':
-                        #self.lol_runes()
+                    elif self.message_body == 'runes' and self.sender in SUPER_USER:
+                        self.lol_runes()
 
                     elif self.message_body == 'commands':
                         if self.time_check('!commands'):
@@ -698,22 +698,22 @@ class SaltyBot:
                     elif self.message_body == 'bot_info':
                         self.twitch_send_message('Powered by SaltyBot, for a full list of commands check out www.github.com/batedurgonnadie/salty_bot')
 
-                    elif self.message_body == 'restart' and (self.sender == 'batedurgonnadie' or self.sender == "bomb_mask"):
+                    elif self.message_body == 'restart' and self.sender in SUPER_USER:
                         if self.__DB:
                             print('{} is restarting, called by {}'.format(self.channel + ' ' + self.twitch_nick, self.sender))
                         self.admin(RESTART)
                         self.twitch_send_message('Restarting the bot.')
                         break
 
-                    elif self.message_body == 'stop' and (self.sender == 'batedurgonnadie' or self.sender == 'bomb_mask'):
+                    elif self.message_body == 'stop' and self.sender in SUPER_USER:
                         if self.__DB:
                             print('SHUTDOWN CALLED BY {}'.format(self.sender.upper()))
                         self.admin(STOP)
 
-                    elif self.message_body == 'check' and ( self.sender == 'batedurgonnadie' or self.sender == 'bomb_mask'):
+                    elif self.message_body == 'check' and self.sender in SUPER_USER:
                         self.admin(CHECK)
                         
-                    elif self.message_body == 'crash' and (self.sender == 'batedurgonnadie' or self.sender == 'bombmask'):
+                    elif self.message_body == 'crash' and self.sender in SUPER_USER:
                         self.running = False
 
             elif self.action == 'MODE':
