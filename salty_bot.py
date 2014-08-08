@@ -752,25 +752,26 @@ def osu_send_message(osu_irc_pass, osu_nick, request_url):
     irc.close()
 
 def twitch_info_grab(bots):
-    with open('config.json', 'r') as data_file:
+    with open(Config_file_name, 'r') as data_file:
         channel_configs = json.load(data_file, encoding = 'utf-8')
 
     channels = channel_configs.keys()
     channel_game_title = {}
 
-    for channel in channels:
-        url = 'https://api.twitch.tv/kraken/channels/'+channel
-        headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
-        try:
-            data = requests.get(url, headers = headers)
-            if data.status_code == 200:
-                data_decode = data.json()
+    for channel, bot in zip(channels, bots.values()): 
+        url = 'https://api.twitch.tv/kraken/channels/'+channel #API URL
+        headers = {'Accept' : 'application/vnd.twitchtv.v2+json'} #something
+        try: #if fail fall back 
+            data = requests.get(url, headers = headers) #get JSON data
+            if data.status_code == 200: #if good return then
+                data_decode = data.json() #get dictionary from json
             else:
                 data_decode = {'game' : '', 'status' : ''}
 
             game = data_decode['game']
             title = data_decode['status']
-
+    
+            # Error handling 
             try:
                 game = game.lower()
             except:
@@ -780,21 +781,13 @@ def twitch_info_grab(bots):
             except:
                 title = ''
 
-            channel_game_title.update({channel : {'game' : game, 'title' : title}})
+            channel_game_title.update({channel : {'game' : game, 'title' : title}}) #Update dictionary
 
             time.sleep(3)
         except:
             channel_game_title.update({channel : {'game' : '', 'title' : title}})
-
-    bots_update = []
-
-    for bot in bots:
-        bot.twitch_info(channel_game_title)
-        bots_update.append(bot)
-
-    t_check = threading.Timer(60, twitch_info_grab, args = [bots_update])
-    t_check.daemon = True
-    t_check.start()
+           
+        bot.twitch_info(channel_game_title) #update bot with new info
 
 def restart_bot(bot, bot_list):
     #@ OPEN CONFIGURATION FILE
