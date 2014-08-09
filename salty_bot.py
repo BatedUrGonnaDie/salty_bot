@@ -75,9 +75,9 @@ class SaltyBot:
                 print "Connection to {}'s channel failed, attempting to reconnect in 30 seconds.\n".format(self.channel)
                 time.sleep(30)
                 continue
-        self.irc.send('PASS {}\r\n'.format(self.twitch_oauth))
-        self.irc.send('NICK {}\r\n'.format(self.twitch_nick))
-        self.irc.send('JOIN #{}\r\n'.format(self.channel))
+        self.irc.sendall('PASS {}\r\n'.format(self.twitch_oauth))
+        self.irc.sendall('NICK {}\r\n'.format(self.twitch_nick))
+        self.irc.sendall('JOIN #{}\r\n'.format(self.channel))
 
     def twitch_commands(self):
         for keys in self.config_data['commands']:
@@ -743,7 +743,11 @@ class SaltyBot:
 
         else:
             interface.put([call,self])
-
+    
+    def stop(self):
+        self.irc.sendall("QUIT")
+        self.irc.close()
+        
 #@@BOT END@@#
 
 def osu_send_message(osu_irc_pass, osu_nick, request_url):
@@ -802,41 +806,18 @@ def restart_bot(bot_name, bot_dict):
     bot_dict[bot_name] = SaltyBot(bot_config, debuging) #Create new instance
     bot_dict[bot_name].start() # Start main loop thread
         
-
-
-#@@ BOT MAIN THREAD STRING COMMUNICATION SECTION @@#
-def main():
-    
-    bot_dict = {} #Bot instances go in here
-    channels_dict = {} #All channels go in here from the JSON file
-    
-    with open(Config_file_name, 'r') as data_file:
-        channels_dict = json.load(data_file, encoding = 'utf-8')
-
-    for channel_name,channel_data in channels_dict.items():
-        # Create bot and put it by name into a dictionary 
-        bot_dict[channel_name] = SaltyBot(channel_data, debuging)
-        
-        # Look up bot and start the thread
-        bot_dict[channel_name].start()
-        
-        # Wait because of twitch connect settings
-        time.sleep(2)
-
-    #twitch_info_grab(bots)
-
-    ##MAIN LOOP##
-
+def automated_main_loop(bot_dict):
+    time_to_check = 0
     while True:
         try:
             register = interface.get(False) #returns [type of call, bot id that called it] therefore TYPE, DATA
-            print register
+
             if register: 
                 if register[TYPE] == RESTART:
                     restart_bot(register[DATA].channel, bot_dict)
 
                 if register[TYPE] == STOP:
-                    break
+                    raise 
 
                 if register[TYPE] == CHECK:
                     for bot_name,bot_inst in bot_dict.items():
@@ -846,16 +827,58 @@ def main():
 
         except:
             pass
-        
 
-        for bot_name, bot_inst in bot_dict.items():
-            if bot_inst.thread.isAlive():
-                if debuging: print bot_name+': Is still running'
+        if time_to_check < time.time():
+            print "checking stuff"
+            for bot_name, bot_inst in bot_dict.items():
+                if bot_inst.thread.isAlive():
+                    if True:
+                        print '#'+bot_name+': Is still running'
+                    
+                else:
+                    if True: print '#'+bot_name+' Had to restart'
+                    restart_bot(bot_inst.channel, bot_dict)
+                    
+            #twitch-do-stuff()
+            
+            time_to_check = time.time() + 60
+
+
+#@@ BOT MAIN THREAD STRING COMMUNICATION SECTION @@#
+def main():
+    
+    bot_dict = {} #Bot instances go in here
+    channels_dict = {} #All channels go in here from the JSON file
+    
+    with open(Config_file_name, 'r') as data_file: #Get file data
+        channels_dict = json.load(data_file, encoding = 'utf-8')
+
+    for channel_name,channel_data in channels_dict.items(): #Start bots
+        # Create bot and put it by name into a dictionary 
+        bot_dict[channel_name] = SaltyBot(channel_data, debuging)
+        
+        # Look up bot and start the thread
+        bot_dict[channel_name].start()
+        
+        # Wait because of twitch connect settings
+        time.sleep(2)
+
+    otherT = threading.Thread(target = automated_main_loop, args = [bot_dict])
+    otherT.setDaemon(True)
+    otherT.start()
+
+    while True:
+        command = raw_input("> ")
+        if command.startswith("/brcs"):
+            for bot,inst in bot_dict.items():
+                inst.twitch_send_message("[Broadcast message]: "+(' '.join(command.split(' ')[1:])))
                 
-            else:
-                if debuging: print bot_name+' Had to restart'
-                restart_bot(bot_inst.channel, bot_dict)
-        time.sleep(.5)
+        if command.startswith("/stop"):
+            for bot,inst in bot_dict.items():
+                inst.stop()
+                
+            sys.exit()()
+            
             
 if __name__ == '__main__':
     try:
@@ -870,3 +893,4 @@ if __name__ == '__main__':
 #BOMB HAS TO DO:
 #League API stuff
 #restart command fix
+#fix broadcast
