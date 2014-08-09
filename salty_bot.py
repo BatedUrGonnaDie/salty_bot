@@ -68,18 +68,22 @@ class SaltyBot:
         self.title = title
 
     def twitch_connect(self):
+        connected = False
         if self.__DB:
             print "Joining {} as {}.\n".format(self.channel,self.twitch_nick)
-        while True:
+        while connected == False:
             for i in self.twitch_host:
                 try:
                     self.irc.connect((i, self.port))
+                    connected = True
                     break
                 except:
                     print '{} failed to connect to {}'.format(self.channel, i)
                     time.sleep(5)
                     continue
-            break
+            if connected == False:
+                time.sleep(30)
+
         self.irc.sendall('PASS {}\r\n'.format(self.twitch_oauth))
         self.irc.sendall('NICK {}\r\n'.format(self.twitch_nick))
         self.irc.sendall('JOIN #{}\r\n'.format(self.channel))
@@ -770,7 +774,7 @@ def twitch_info_grab(bots):
         channel_configs = json.load(data_file, encoding = 'utf-8')
 
     channels = channel_configs.keys()
-    url = 'https://api.twitch.tv/kraken/streams?channel=' +'daisy8789'# ','.join(channels)
+    url = 'https://api.twitch.tv/kraken/streams?channel=' + ','.join(channels)
     headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
     try:
         data = requests.get(url, headers = headers)
@@ -780,7 +784,7 @@ def twitch_info_grab(bots):
                 return
             for i in data_decode['streams']:
                 for k, v in bots.iteritems():
-                    if i['channel']['name'] == 'daisy8789':
+                    if i['channel']['name'] == k:
                         v.twitch_info(i['channel']['game'], i['channel']['status'])
     except:
         pass
