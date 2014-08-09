@@ -16,10 +16,10 @@ SRL API to see if you are in a race.  If you are listed in the race it will gene
 racing, as well as output a multitwitch link if the race has 6 or fewer live racers, or an SRL race page link if it  has
 more to keep the link size down.
 
-`!quote`/pun` will display a randomly selected quote/pun from a file.
+`!quote`/`pun` will display a randomly selected quote/pun from a file.
 
-`!addqoute`/addpun` will add the given quote/pun to a review file so that you can manually move it over later.  If the
-`!broadcaster uses this command the quote/pun will go straight into the live file (that means be careful).
+`!addqoute`/`!addpun` will add the given quote/pun to a review file so that you can manually move it over later.  If 
+the broadcaster uses this command the quote/pun will go straight into the live file (that means be careful).
 
 `!song` will display the current song you are playing on osu if you have osu!np going and your game is set to Osu!, or
 it will output the current song you are listening to from a media player if you have something that can read the info
