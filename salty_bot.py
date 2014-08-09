@@ -12,9 +12,8 @@ import json
 import urlparse
 import Queue as Q
 
-debuging = False
+debuging = True
 Config_file_name = 'dConfig.json' if debuging else 'config.json'
-REFRESH_RATE = 30 #Seconds
 
 SUPER_USER = ['batedurgonnadie','bomb_mask','glacials']
 RESTART = "<restart>"
@@ -60,9 +59,13 @@ class SaltyBot:
 
         return self.thread
 
-    def twitch_info(self, info):
-        self.game = info[self.channel]['game']
-        self.title = info[self.channel]['title']
+    def twitch_info(self, game, title):
+        if game != None:
+            game = game.lower
+        if title != None:
+            title = title.lower
+        self.game = game
+        self.title = title
 
     def twitch_connect(self):
         if self.__DB:
@@ -765,46 +768,28 @@ def twitch_info_grab(bots):
         channel_configs = json.load(data_file, encoding = 'utf-8')
 
     channels = channel_configs.keys()
-    channel_game_title = {}
-
-    for channel, bot in zip(channels, bots.values()): 
-        url = 'https://api.twitch.tv/kraken/channels/'+channel #API URL
-        headers = {'Accept' : 'application/vnd.twitchtv.v2+json'} #something
-        try: #if fail fall back 
-            data = requests.get(url, headers = headers) #get JSON data
-            if data.status_code == 200: #if good return then
-                data_decode = data.json() #get dictionary from json
-            else:
-                data_decode = {'game' : '', 'status' : ''}
-
-            game = data_decode['game']
-            title = data_decode['status']
-    
-            # Error handling 
-            try:
-                game = game.lower()
-            except:
-                game = ''
-            try:
-                title = title.lower()
-            except:
-                title = ''
-
-            channel_game_title.update({channel : {'game' : game, 'title' : title}}) #Update dictionary
-
-            time.sleep(3)
-        except:
-            channel_game_title.update({channel : {'game' : '', 'title' : title}})
-           
-        bot.twitch_info(channel_game_title) #update bot with new info
+    url = 'https://api.twitch.tv/kraken/streams?channel=' +'daisy8789'# ','.join(channels)
+    headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
+    try:
+        data = requests.get(url, headers = headers)
+        if data.status_code == 200:
+            data_decode = data.json()
+            if not data_decode['streams']:
+                return
+            for i in data_decode['streams']:
+                for k, v in bots.iteritems():
+                    if i['channel']['name'] == 'daisy8789':
+                        v.twitch_info(i['channel']['game'], i['channel']['status'])
+    except:
+        pass
 
 def restart_bot(bot_name, bot_dict):
     with open(Config_file_name, 'r') as data_file:
         bot_config = json.load(data_file, encoding = 'utf-8')[bot_name]
         
-    del bot_dict[bot_name] #Kill instance
-    bot_dict[bot_name] = SaltyBot(bot_config, debuging) #Create new instance
-    bot_dict[bot_name].start() # Start main loop thread
+    del bot_dict[bot_name]
+    bot_dict[bot_name] = SaltyBot(bot_config, debuging)
+    bot_dict[bot_name].start()
         
 def automated_main_loop(bot_dict):
     time_to_check = 0
@@ -828,20 +813,20 @@ def automated_main_loop(bot_dict):
         except:
             pass
 
-        if time_to_check < time.time():
-            print "checking stuff"
+        if time_to_check < int(time.time()):
             for bot_name, bot_inst in bot_dict.items():
                 if bot_inst.thread.isAlive():
-                    if True:
-                        print '#'+bot_name+': Is still running'
+                    if debuging == True:
+                        print '#' + bot_name  + ': Is still running'
                     
                 else:
-                    if True: print '#'+bot_name+' Had to restart'
+                    if debuging == True:
+                        print '#' + bot_name + ' Had to restart'
                     restart_bot(bot_inst.channel, bot_dict)
                     
-            #twitch-do-stuff()
+            twitch_info_grab(bot_dict)
             
-            time_to_check = time.time() + 60
+            time_to_check = int(time.time()) + 60
 
 
 #@@ BOT MAIN THREAD STRING COMMUNICATION SECTION @@#
