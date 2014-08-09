@@ -12,7 +12,7 @@ import json
 import urlparse
 import Queue as Q
 
-debuging = True
+debuging = False
 Config_file_name = 'dConfig.json' if debuging else 'config.json'
 
 SUPER_USER = ['batedurgonnadie','bomb_mask','glacials']
@@ -35,7 +35,7 @@ class SaltyBot:
         self.config_data = config_data
         self.irc = socket.socket()
         self.irc.settimeout(600)
-        self.twitch_host = 'irc.twitch.tv'
+        self.twitch_host = ['irc.twitch.tv', '199.9.252.120', '199.9.250.229', '199.9.250.239', '199.9.252.28']
         self.port = 6667
         self.twitch_nick = config_data['general']['twitch_nick']
         self.twitch_oauth = config_data['general']['twitch_oauth']
@@ -71,13 +71,15 @@ class SaltyBot:
         if self.__DB:
             print "Joining {} as {}.\n".format(self.channel,self.twitch_nick)
         while True:
-            try:
-                self.irc.connect((self.twitch_host, self.port))
-                break
-            except:
-                print "Connection to {}'s channel failed, attempting to reconnect in 30 seconds.\n".format(self.channel)
-                time.sleep(30)
-                continue
+            for i in self.twitch_host:
+                try:
+                    self.irc.connect((i, self.port))
+                    break
+                except:
+                    print '{} failed to connect to {}'.format(self.channel, i)
+                    time.sleep(5)
+                    continue
+            break
         self.irc.sendall('PASS {}\r\n'.format(self.twitch_oauth))
         self.irc.sendall('NICK {}\r\n'.format(self.twitch_nick))
         self.irc.sendall('JOIN #{}\r\n'.format(self.channel))
@@ -859,7 +861,7 @@ def main():
                 inst.twitch_send_message("[Broadcast message]: "+(' '.join(command.split(' ')[1:])))
                 
         if command.startswith("/stop"):
-            for bot,inst in bot_dict.items():
+            for bot, inst in bot_dict.items():
                 inst.stop()
                 
             sys.exit()()
