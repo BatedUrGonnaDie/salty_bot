@@ -11,6 +11,7 @@ import requests
 import json
 import urlparse
 import Queue as Q
+import re
 
 debuging = False
 Config_file_name = 'dConfig.json' if debuging else 'config.json'
@@ -60,12 +61,8 @@ class SaltyBot:
         return self.thread
 
     def twitch_info(self, game, title):
-        if game != None:
-            game = game.lower()
-        if title != None:
-            title = title.lower()
-        self.game = game
-        self.title = title
+        self.game = game.lower() if game != None else game
+        self.title = title.lower() if game != None else title
 
     def twitch_connect(self):
         connected = False
@@ -161,6 +158,9 @@ class SaltyBot:
             return True
 
     def api_caller(self, url, headers = None):
+        if self.__DB:
+            print url, "Headers: ", headers
+
         data = requests.get(url, headers = headers)
         if data.status_code == 200:
             data_decode = data.json()
@@ -315,15 +315,19 @@ class SaltyBot:
         self.youtube_api_key = self.config_data['general']['youtube_api_key']
         url_values = urlparse.parse_qs(urlparse.urlparse(message).query)
         youtube_video_id = url_values['v'][0]
+
         if ' ' in youtube_video_id:
             youtube_video_id = youtube_video_id.split(' ')[0]
+
         url = 'https://www.googleapis.com/youtube/v3/videos?part=snippet&id={}&key={}'.format(youtube_video_id, self.youtube_api_key)
         data_decode = self.api_caller(url)
+
         if data_decode == False:
             return
+
         data_items = data_decode['items']
-        youtube_title = data_items[0]['snippet']['title'].encode('utf-8')
-        youtube_uploader = data_items[0]['snippet']['channelTitle'].encode('utf-8')
+        youtube_title = data_items[0]['snippet']['title'].encode("utf-8")
+        youtube_uploader = data_items[0]['snippet']['channelTitle'].encode("utf-8")
         response = '{} uploaded by {}'.format(youtube_title, youtube_uploader)
         self.twitch_send_message(response)
 
@@ -518,7 +522,7 @@ class SaltyBot:
         out_final = ' '.join(out_a)
         self.twitch_send_message(out_final)
         self.command_times['custom']['lasts'][location] = int(time.time())
-
+    
     def lol_masteries(self):
         lol_api_key = 'INSERT_API_KEY_HERE_YA_DINGUS'
         self.summoner_name = 'batedurgonnadie'
@@ -549,22 +553,69 @@ class SaltyBot:
         self.twitch_send_message(response)
 
     def lol_runes(self):
-        lol_api_key = 'INSERT_API_KEY_HERE_YA_DINGUS'
+        with open("runes.json",'w') as fout:
+            runes_dict = self.api_caller("http://ddragon.leagueoflegends.com/cdn/4.4.3/data/en_US/rune.json")
+            json.dump(runes_dict,fout, sort_keys = True, indent = 4, encoding='utf-8')
+
+
+        lol_api_key = "d8276c5e-d1cd-4872-9dec-4cf250442791"
         self.summoner_name = 'batedurgonnadie'
+        
         name_url = 'https://na.api.pvp.net/api/lol/na/v1.4/summoner/by-name/{}?api_key={}'.format(self.summoner_name, lol_api_key)
         name_data = self.api_caller(name_url)
+        
         if name_data == False:
             return
+            
         summoner_id = name_data[self.summoner_name]['id']
         rune_url = 'https://na.api.pvp.net/api/lol/na/v1.4/summoner/{}/runes?api_key={}'.format(summoner_id, lol_api_key)
         rune_data = self.api_caller(rune_url)
+        
         if rune_data == False:
             return
-        for i in rune_data['{}'.format(summoner_id)]['pages']:
+            
+        for i in rune_data[str(summoner_id)]['pages']:
             if i['current'] == True:
                 active_page = i
                 break
-        print active_page
+
+        rune_api_info = "https://na.api.pvp.net/api/lol/static-data/na/v1.2/rune/{rune}?api_key={key}"
+
+        counted_rune_data = {5052:{"count":50,"api_string":''}}
+
+        with open("runes.json",'r') as fin:
+            runes_list = json.load(fin, encoding="utf-8")
+
+        for rune in active_page["slots"]:
+            try:
+                counted_rune_data[rune["runeId"]] += 1
+            except KeyError:
+                counted_rune_data[rune["runeId"]] = 1
+
+        for k,v in counted_rune_data.items():
+            #symbol, number, effect
+            current_rune = runes_list["data"][k]
+
+            description = current_rune["description"].split(' ')
+
+            stats["s"] = current_rune["stats"].values()[0]
+            stats["slvl18"] = stats["multi"] * 18
+            stats["sr"] = round(stats['s'],2)
+            stats["srlvl18"] = round(stats["slvl18"],2)
+            
+            precent = ("%" if description[0][-1] == '%' else '')
+            symbol = ('+' if stats['s'] > 0 else '-')
+
+            stats["str-sr"] = symbol + stats['sr'] + precent
+            stats["str-srlvl18"] = symbol + stats['srlvl18'] + precent
+
+
+
+
+
+            #counted_rune_data_string += (symbol + final + " " + effect + ' | ')
+
+        self.twitch_send_message("Page Name: {PageName} {data}".format(PageName=active_page["name"],data=counted_rune_data_string))   
 
     def twitch_run(self):
         self.twitch_connect()
@@ -574,6 +625,7 @@ class SaltyBot:
 
             try:
                 self.message = self.irc.recv(4096)
+                print self.message
             except socket.timout:
                 self.irc.close()
                 twitch_run()
@@ -729,9 +781,9 @@ class SaltyBot:
                     elif self.message_body == 'runes' and self.sender in SUPER_USER:
                         self.lol_runes()
 
-                    elif self.message_body == 'masteries' and self.sender in SUPER_USER:
+                    elif self.message_body == "masteries" and self.sender in SUPER_USER:
                         self.lol_masteries()
-
+                        
                     elif self.message_body == 'commands':
                         if self.time_check('!commands'):
                             self.twitch_send_message(self.commands_string, '!commands')
@@ -756,6 +808,7 @@ class SaltyBot:
                         
                     elif self.message_body == 'crash' and self.sender in SUPER_USER:
                         self.running = False
+
 
             elif self.action == 'MODE':
                 if '+o ' in self.message:
