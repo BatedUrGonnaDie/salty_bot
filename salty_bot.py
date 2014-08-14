@@ -137,8 +137,10 @@ class SaltyBot:
             response = response.encode('utf-8')
         except:
             pass
+
         to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
         self.irc.sendall(to_send)
+
         if command != '':
             self.command_times[command]['last'] = int(time.time())
 
@@ -558,7 +560,7 @@ class SaltyBot:
             json.dump(runes_dict,fout, sort_keys = True, indent = 4, encoding='utf-8')
 
 
-        lol_api_key = "d8276c5e-d1cd-4872-9dec-4cf250442791"
+        lol_api_key = "INSERT_API_KEY_HERE_YA_DINGUS"
         self.summoner_name = 'batedurgonnadie'
         
         name_url = 'https://na.api.pvp.net/api/lol/na/v1.4/summoner/by-name/{}?api_key={}'.format(self.summoner_name, lol_api_key)
@@ -579,9 +581,10 @@ class SaltyBot:
                 active_page = i
                 break
 
-        rune_api_info = "https://na.api.pvp.net/api/lol/static-data/na/v1.2/rune/{rune}?api_key={key}"
+        #rune_api_info = "https://na.api.pvp.net/api/lol/static-data/na/v1.2/rune/{rune}?api_key={key}"
 
-        counted_rune_data = {5052:{"count":50,"api_string":''}}
+        rune_str_list = []
+        counted_rune_data = {}
 
         with open("runes.json",'r') as fin:
             runes_list = json.load(fin, encoding="utf-8")
@@ -593,29 +596,28 @@ class SaltyBot:
                 counted_rune_data[rune["runeId"]] = 1
 
         for k,v in counted_rune_data.items():
-            #symbol, number, effect
+            k = str(k)
             current_rune = runes_list["data"][k]
+            stat_number = current_rune["stats"].values()[0]
 
-            description = current_rune["description"].split(' ')
+            description = current_rune["description"].split('(')
 
-            stats["s"] = current_rune["stats"].values()[0]
-            stats["slvl18"] = stats["multi"] * 18
-            stats["sr"] = round(stats['s'],2)
-            stats["srlvl18"] = round(stats["slvl18"],2)
-            
-            precent = ("%" if description[0][-1] == '%' else '')
-            symbol = ('+' if stats['s'] > 0 else '-')
-
-            stats["str-sr"] = symbol + stats['sr'] + precent
-            stats["str-srlvl18"] = symbol + stats['srlvl18'] + precent
+            stats = {}
+            stats["stat"] = str( round( stat_number, 2) )
+            stats["statlvl18"] = str( round( stat_number * 18, 2) )
 
 
+            description[0] = re.sub("-?\d+\.\d+", stats["stat"], description[0])
 
+            if len(description) == 2 :
+                description[1] = re.sub("-?\d+\.\d+", stats["statlvl18"], description[1])
 
+                rune_str_list += ['('.join(description)]
+            else:
+                rune_str_list += [description[0]]
 
-            #counted_rune_data_string += (symbol + final + " " + effect + ' | ')
-
-        self.twitch_send_message("Page Name: {PageName} {data}".format(PageName=active_page["name"],data=counted_rune_data_string))   
+        self.twitch_send_message("Page Name: {} : {}".format(active_page["name"], " | ".join(rune_str_list)))
+   
 
     def twitch_run(self):
         self.twitch_connect()
