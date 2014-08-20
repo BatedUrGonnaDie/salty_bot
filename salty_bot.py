@@ -26,6 +26,17 @@ DATA = 1
 
 interface = Q.Queue()
 
+with open('general_config.json', 'r') as data_file:
+    general_config = json.load(data_file, encoding = 'utf-8')
+
+lol_api_key = general_config['general_info']['lol_api_key']
+youtube_api_key = general_config['general_info']['youtube_api_key']
+osu_api_key = general_config['general_info']['osu']['osu_api_key']
+osu_irc_nick = general_config['general_info']['osu']['osu_irc_nick']
+osu_irc_pass = general_config['general_info']['osu']['osu_irc_pass']
+
+games = general_config['games']
+
 class SaltyBot:
 
     running = True
@@ -41,6 +52,8 @@ class SaltyBot:
         self.twitch_nick = config_data['general']['twitch_nick']
         self.twitch_oauth = config_data['general']['twitch_oauth']
         self.channel = config_data['general']['channel']
+        self.game = ''
+        self.title = ''
         self.commands = []
         self.admin_commands = []
         self.blacklist = []
@@ -144,6 +157,20 @@ class SaltyBot:
         if command != '':
             self.command_times[command]['last'] = int(time.time())
 
+    def command_check(self, command):
+        if command in self.commands:
+            if command in self.admin_commands:
+                if self.sender in self.admin_file:
+                    return True
+                else:
+                    return False
+            else:
+                if self.time_check(command):
+                    return True
+                else:
+                    return False
+
+
     def time_check(self, command):
         return int(time.time()) - self.command_times[command]['last'] >= self.command_times[command]['limit']
 
@@ -172,7 +199,6 @@ class SaltyBot:
 
     def osu_api_user(self):
         osu_nick = self.config_data['general']['osu']['osu_nick']
-        osu_api_key = self.config_data['general']['osu']['osu_api_key']
         url = 'https://osu.ppy.sh/api/get_user?k={}&u={}'.format(osu_api_key, osu_nick)
         data_decode = self.api_caller(url)
         if data_decode == False:
@@ -191,8 +217,6 @@ class SaltyBot:
 
     def osu_link(self):
         osu_nick = self.config_data['general']['osu']['osu_nick']
-        osu_irc_pass = self.config_data['general']['osu']['osu_irc_pass']
-        osu_api_key = self.config_data['general']['osu']['osu_api_key']
 
         if self.message_body.find('osu.ppy.sh/s/') != -1:
             osu_number = 's=' + self.message_body.split('osu.ppy.sh/s/')[-1].split(' ')[0]
@@ -314,14 +338,14 @@ class SaltyBot:
                     self.twitch_send_message(response, '!race')
 
     def youtube_video_check(self, message):
-        self.youtube_api_key = self.config_data['general']['youtube_api_key']
         url_values = urlparse.parse_qs(urlparse.urlparse(message).query)
+        print url_values
         youtube_video_id = url_values['v'][0]
 
         if ' ' in youtube_video_id:
             youtube_video_id = youtube_video_id.split(' ')[0]
 
-        url = 'https://www.googleapis.com/youtube/v3/videos?part=snippet&id={}&key={}'.format(youtube_video_id, self.youtube_api_key)
+        url = 'https://www.googleapis.com/youtube/v3/videos?part=snippet&id={}&key={}'.format(youtube_video_id, youtube_api_key)
         data_decode = self.api_caller(url)
 
         if data_decode == False:
@@ -526,7 +550,6 @@ class SaltyBot:
         self.command_times['custom']['lasts'][location] = int(time.time())
     
     def lol_masteries(self):
-        lol_api_key = 'INSERT_API_KEY_HERE_YA_DINGUS'
         self.summoner_name = 'batedurgonnadie'
         name_url = 'https://na.api.pvp.net/api/lol/na/v1.4/summoner/by-name/{}?api_key={}'.format(self.summoner_name, lol_api_key)
         name_data = self.api_caller(name_url)
@@ -541,26 +564,18 @@ class SaltyBot:
             if i['current'] == True:
                 active_set = i
                 break
-        with open('masteries.json', 'r') as data_file:
-            all_masteries = json.load(data_file, encoding = 'utf-8')
         masteries_used = {'offense' : 0, 'defense': 0, 'utility' : 0}
         for i in active_set['masteries']:
-            if i['id'] in j:
+            if str(i['id'])[1] == '1':
                 masteries_used['offense'] += i['rank']
-            if i['id'] in j:
+            elif str(i['id'])[1] == '2':
                 masteries_used['defense'] += i['rank']
-            if i['id'] in j:
+            elif str(i['id'])[1] == '3':
                 masteries_used['utility'] += i['rank']
         response = 'Page: {} | {}/{}/{}'.format(active_set['name'], masteries_used['offense'], masteries_used['defense'], masteries_used['utility'])
         self.twitch_send_message(response)
 
     def lol_runes(self):
-        with open("runes.json",'w') as fout:
-            runes_dict = self.api_caller("http://ddragon.leagueoflegends.com/cdn/4.4.3/data/en_US/rune.json")
-            json.dump(runes_dict,fout, sort_keys = True, indent = 4, encoding='utf-8')
-
-
-        lol_api_key = "INSERT_API_KEY_HERE_YA_DINGUS"
         self.summoner_name = 'batedurgonnadie'
         
         name_url = 'https://na.api.pvp.net/api/lol/na/v1.4/summoner/by-name/{}?api_key={}'.format(self.summoner_name, lol_api_key)
@@ -581,8 +596,6 @@ class SaltyBot:
                 active_page = i
                 break
 
-        #rune_api_info = "https://na.api.pvp.net/api/lol/static-data/na/v1.2/rune/{rune}?api_key={key}"
-
         rune_str_list = []
         counted_rune_data = {}
 
@@ -595,12 +608,14 @@ class SaltyBot:
             except KeyError:
                 counted_rune_data[rune["runeId"]] = 1
 
-        for k,v in counted_rune_data.items():
+        for k, v in counted_rune_data.items():
             k = str(k)
             current_rune = runes_list["data"][k]
             stat_number = current_rune["stats"].values()[0]
+            print stat_number
 
             description = current_rune["description"].split('(')
+            print description
 
             stats = {}
             stats["stat"] = str( round( stat_number, 2) )
@@ -627,10 +642,9 @@ class SaltyBot:
 
             try:
                 self.message = self.irc.recv(4096)
-                print self.message
-            except socket.timout:
+            except:
                 self.irc.close()
-                twitch_run()
+                self.twitch_run()
 
             self.message = self.message.split('\r\n')[0]
             self.message = self.message.strip()
@@ -687,95 +701,46 @@ class SaltyBot:
                         self.lister(self.message_body, 'white')
 
                     elif self.message_body.startswith('wr'):
-                        if '!wr' in self.commands:
-                            if '!wr' in self.admin_commands:
-                                if self.sender in self.admin_file:
-                                    self.wr_retrieve()
-                            else:
-                                if self.time_check('!wr'):
-                                    self.wr_retrieve()
+                        if self.command_check('!wr'):
+                            self.wr_retrieve()
 
                     elif self.message_body.startswith('leaderboard'):
-                        if '!leaderboard' in self.commands:
-                            if '!leaderboard' in self.admin_commands:
-                                if self.sender in self.admin_file:
-                                    self.leaderboard_retrieve()
-                            else:
-                                if self.time_check('!leaderboard'):
-                                    self.leaderboard_retrieve()
+                        if self.command_check('!leaderboard'):
+                                self.leaderboard_retrieve()
 
                     elif self.message_body.startswith('addquote'):
-                        if '!quote' in self.commands:
-                            if '!quote' in self.admin_commands:
-                                if self.sender in self.admin_file:
-                                    self.add_text('quote', self.message_body)
-                            else:
-                                self.add_text('quote', self.message_body)
+                        if self.command_check('!quote'):
+                            self.add_text('quote', self.message_body)
 
                     elif self.message_body == 'quote':
-                        if '!quote'in self.commands:
-                            if '!quote' in self.admin_commands:
-                                if self.sender in self.admin_file:
-                                    self.text_retrieve('quote')
-                            else:
-                                if self.time_check('!quote'):
-                                    self.text_retrieve('quote')
+                        if self.command_check('!quote'):
+                            self.text_retrieve('quote')
 
                     elif self.message_body.startswith('addpun'):
-                        if '!pun' in self.commands:
-                            if '!pun' in self.admin_commands:
-                                if self.sender in self.admin_file:
-                                    self.add_text('pun', self.message_body)
-                            else:
-                                self.add_text('pun', self.message_body)
+                        if self.command_check('!pun'):
+                            self.add_text('pun', self.message_body)
 
                     elif self.message_body == 'pun':
-                        if '!pun' in self.commands:
-                            if '!pun' in self.admin_commands:
-                                if self.sender in self.admin_file:
-                                    self.text_retrieve('pun')
-                            else:
-                                if self.time_check('!pun'):
-                                    self.text_retrieve('pun')
+                        if self.command_check('!pun'):
+                            self.text_retrieve('pun')
 
                     elif self.message_body == 'rank':
                         if self.game == 'osu!':
-                            if '!rank' in self.commands:
-                                if '!rank' in self.admin_commands:
-                                    if self.sender in self.admin_file:
-                                        self.osu_api_user()
-                                else:
-                                    if self.time_check('!rank'):
-                                        self.osu_api_user()
+                            if self.command_check('!rank'):
+                                self.osu_api_user()
 
                     elif self.message_body == 'race':
-                        if '!race' in self.commands:
-                            if '!race' in self.admin_commands:
-                                if self.sender in self.admin_file:
-                                    if 'race' in self.title or 'races' in self.title or 'racing' in self.title:
-                                        self.srl_race_retrieve()
-                            else:
-                                if 'race' in self.title or 'races' in self.title or 'racing' in self.title:
-                                    if self.time_check('!race'):
-                                        self.srl_race_retrieve()
+                        if 'race' in self.title or 'races' in self.title or 'racing' in self.title:
+                            if self.command_check('!race'):
+                                self.srl_race_retrieve()
 
                     elif self.message_body.startswith('vote '):
-                        if '!vote' in self.commands:
-                            if '!vote' in self.admin_commands:
-                                if self.sender in self.admin_file:
-                                    self.vote(self.message_body, self.sender)
-                            else:
-                                if self.time_check('!vote'):
-                                    self.vote(self.message_body, self.sender)
+                        if self.command_check('!vote'):
+                            self.vote(self.message_body, self.sender)
 
                     elif self.message_body.startswith('votes'):
-                        if '!vote' in self.commands:
-                            if '!vote' in self.admin_commands:
-                                if self.sender in self.admin_file:
-                                    self.check_votes(self.message_body)
-                            else:
-                                if self.time_check('!vote'):
-                                    self.check_votes(self.message_body)
+                        if self.command_check('!vote'):
+                            self.check_votes(self.message_body)
 
                     elif self.message_body.startswith('review') and self.sender == self.channel:
                         self.text_review(self.message_body)
@@ -852,7 +817,7 @@ def osu_send_message(osu_irc_pass, osu_nick, request_url):
     osu_port = 6667
     irc.connect((osu_host, osu_port))
     irc.sendall('PASS {}\r\n'.format(osu_irc_pass))
-    irc.sendall('NICK batedurgonnadie\r\n')
+    irc.sendall('NICK {}}\r\n'.format(osu_irc_nick))
     irc.sendall('PRIVMSG {} :{}\r\n'.format(osu_nick, request_url))
     irc.close()
 
@@ -924,7 +889,8 @@ def automated_main_loop(bot_dict):
 
 #@@ BOT MAIN THREAD STRING COMMUNICATION SECTION @@#
 def main():
-    
+
+
     bot_dict = {} #Bot instances go in here
     channels_dict = {} #All channels go in here from the JSON file
     
@@ -966,9 +932,4 @@ if __name__ == '__main__':
         print "Shut-down initiated..."
 
 
-#runes/masteries
 #make web page that doesn't suck
-#BOMB HAS TO DO:
-#League API stuff
-#restart command fix
-#fix broadcast
