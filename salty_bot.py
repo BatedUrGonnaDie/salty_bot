@@ -235,15 +235,15 @@ class SaltyBot:
         self.twitch_send_message(response)
 
     def wr_retrieve(self):
-        if self.game in self.config_data['commands']['!wr']['games']:
-            for keys in self.config_data['commands']['!wr']['games'][self.game].keys():
+        if self.game in games:
+            for keys in games[self.game]['categories'].keys():
                 if keys in self.title:
-                    wr = self.config_data['commands']['!wr']['games'][self.game][keys]
+                    wr = games[self.game]['categories'][keys]
                     self.twitch_send_message(wr, '!wr')
 
     def leaderboard_retrieve(self):
-        if self.game in self.config_data['commands']['!leaderboard']['games']:
-            leaderboard = self.config_data['commands']['!leaderboard']['games'][self.game]
+        if self.game in games:
+            leaderboard = games[self.game]['leaderboard']
             self.twitch_send_message(leaderboard, '!leaderboard')
 
     def add_text(self, text_type, text_add):
