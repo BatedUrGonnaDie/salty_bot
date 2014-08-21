@@ -1,6 +1,6 @@
-Somewhat basic Twitch chat bot with Twitch, Osu, YouTube, SRL, and soon LoL API integration.
+Twitch chat bot with Twitch, Osu, YouTube, SRL, and LoL API integration.
 
-Coded with Python 2.7.  Required module install Requests due to how many API calls it has now.
+Coded with Python 2.7.  Only required module is Requests.
 
 Commands
 ========
@@ -13,25 +13,25 @@ by matching the title against categories in the config file.  If one matches the
 
 `!race` will check to see if a variant of "race" is in your title to prevent spamming, and if it is it will check the
 SRL API to see if you are in a race.  If you are listed in the race it will generate the game, category, and SRL nicks
-racing, as well as output a multitwitch link if the race has 6 or fewer live racers, or an SRL race page link if it  has
+racing, as well as output a multitwitch link if the race has 6 or fewer live racers, or an SRL race page link if it has
 more to keep the link size down.
 
-`!quote`/`pun` will display a randomly selected quote/pun from a file.
+`!quote`/`!pun` will display a randomly selected quote/pun from a file.
 
 `!addqoute`/`!addpun` will add the given quote/pun to a review file so that you can manually move it over later.  If 
 the broadcaster uses this command the quote/pun will go straight into the live file (that means be careful).
 
-`!song` will display the current song you are playing on osu if you have osu!np going and your game is set to Osu!, or
-it will output the current song you are listening to from a media player if you have something that can read the info
-from them (I use [SMG](http://obsproject.com/forum/threads/smg-now-playing.12744/) for this).  This command currently
-does not work due to the way that the bot is run now.  In the future I may set up an ftp server for this to work.
+`!rank` will retrieve the accuracy, pp ranking, level, and username of the streamer on osu.
 
-`!rank` will retrieve the accuracy, pp ranking, level, and username of the streamer.
+`!createvote <loose/strict> "Poll Name" (option) (if) (strict)` will allow mods or channel host to create polls.  Only
+one poll can be created at a time.
 
-`!vote <vote_book> <your_vote>` will allow you to do much more than before.  If you are mod or broadcaster you can use
-`createvote` or `removevote` as `<vote_book>`, which will create or remove the specified vote book respectively.  For
-normal users you must put in both of these to enter your vote.  `!votes <optional vote_book>` will output all of the
-winning votes for each vote category you input.  If category is specified it will only output the one supplied.
+`!vote <option>` will allow viewers to vote.  If poll is set to strict then viewers must input one of the options set
+by the poll creator.
+
+`!votes` will show what option is currently winning and how many votes it has.
+
+`!endvote` will allow mods or channel host to close the current poll.
 
 You can now make custom commands.  They must be one word commands and only have static text output.  You may also use
 wildcards.  `$sender` and `$param` can be used and replaced with who sent the message and the first word after the
@@ -44,13 +44,11 @@ commands.  Currently this will remove the ability to use the bot at all, so plea
 
 `!whitelist` will removes user from the blacklist.
 
-`!review <type> <decision>` will allow you to review your quotes and puns through chat.  Use `start` for `<decision>`
-and that will load them up into the dictionary.  From there you can use `approve` or `reject` to decide if you like the
-text.  Once you have finished reviewing, use `commit` to save the changes to the live file.
-
-`!restart` will attempt to restart the bot if it gets hung up.  Note that this will not work if the bot throws an error
-due to the way Python works.  Also note that this can break the bot in you channel if Twitch decides to reject the
-connection.
+`!review <quote/pun> <start>` to start reviewing your puns or quotes that have been added.  Bot will spit out the first
+quote/pun in the file.
+`!review <quote/pun> <approve/reject>` to confirm or deny the quote.  Note that currently there is no way to change the
+text once it's in the file, so if formatting or capitalization is wrong, reject it and submit it correctly.
+`!review <quote/pun> commit` to lock changes in place once all text has been reviewed.  Bot will prompt for this.
 
 Passive Features
 ================
@@ -71,11 +69,11 @@ others.
 
 Stuff That Happens In The Background
 ====================================
-Passively retrieves game and title once per minute.  No more typing a command to retrieve it.  Should always be good to
-go now.
+Passively retrieves game and title once per minute.
 
-Passively watches for op messages, and when it sees one it adds the user to an admin file.  This allows you to restrict
-commands to being moderator only if you are so inclined.
+Passively watches for op messages to add mods to a mod list to allow for mod only commands.
+
+If bot crashes for whatever reason it will automatically rejoin the channel in 1 minute or less.
 
 Config File
 ===========
@@ -89,3 +87,7 @@ and commands to use, or shoot me an email at batedurgonnadie@yahoo.com and I can
 future I hope to have a webpage up that will allow you to authenticate through twitch and customize the commands from
 there.  If you're interested I will ask you all the necessary info needed to set you up and then all you have to do is
 keep me updated with leaderboard/wr times.
+
+License Thing?
+==============
+Do whatever you want with it except sell it or claim it to be your own unless you modify it.  Other than that have fun.
