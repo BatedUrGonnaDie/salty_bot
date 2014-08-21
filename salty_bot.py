@@ -339,8 +339,10 @@ class SaltyBot:
 
     def youtube_video_check(self, message):
         url_values = urlparse.parse_qs(urlparse.urlparse(message).query)
-        print url_values
-        youtube_video_id = url_values['v'][0]
+        try:
+            youtube_video_id = url_values['v'][0]
+        except:
+            return
 
         if ' ' in youtube_video_id:
             youtube_video_id = youtube_video_id.split(' ')[0]
@@ -351,11 +353,14 @@ class SaltyBot:
         if data_decode == False:
             return
 
-        data_items = data_decode['items']
-        youtube_title = data_items[0]['snippet']['title'].encode("utf-8")
-        youtube_uploader = data_items[0]['snippet']['channelTitle'].encode("utf-8")
-        response = '{} uploaded by {}'.format(youtube_title, youtube_uploader)
-        self.twitch_send_message(response)
+        if len(data_decode['items']) != 0:
+            data_items = data_decode['items']
+            youtube_title = data_items[0]['snippet']['title'].encode("utf-8")
+            youtube_uploader = data_items[0]['snippet']['channelTitle'].encode("utf-8")
+            response = '{} uploaded by {}'.format(youtube_title, youtube_uploader)
+            self.twitch_send_message(response)
+        else:
+            return
 
     def vote(self, message, sender):
         vote_category = message.split(' ')[1]
