@@ -362,76 +362,126 @@ class SaltyBot:
         else:
             return
 
-    def vote(self, message, sender):
-        vote_category = message.split(' ')[1]
-        if vote_category == 'createvote':
-            if self.sender == self.channel or self.sender in self.admin_file:
-                vote_section = message.split('createvote ')[-1]
-                self.votes[vote_section] = {}
-                self.votes[vote_section]['votes'] = {}
-                self.votes[vote_section]['voters'] = {}
-                response = 'You can now vote for {}.'.format(vote_section)
-            else:
-                response = 'You do not have permission to do that.'
-        elif vote_category == 'removevote':
-            if self.sender == self.channel or self.sender in self.admin_file:
-                vote_section = message.split('removevote ')[-1]
-                if vote_section in self.votes:
-                    try:
-                        winning_key = max(self.votes[vote_section]['votes'], key = self.votes[vote_section].get)
-                        winning_value = self.votes[vote_section]['votes'][winning_key]
-                        del self.votes[vote_section]
-                        response = '{} can no longer be voted on anymore.  {} has won with {} votes.'.format(vote_section, winning_key, str(winning_value))
-                    except ValueError:
-                        del self.votes[vote_section]
-                        response = ''
-            else:
-                response = 'You do not have permission to do that.'
+    def youtube_short_check(self, message):
+        video_id = message.split('youtu.be/')[-1]
+        
+        if ' ' in video_id:
+            video_id.split(' ')[0]
+
+        url = 'https://www.googleapis.com/youtube/v3/videos?part=snippet&id={}&key={}'.format(video_id, youtube_api_key)
+        data_decode = self.api_caller(url)
+
+        if data_decode == False:
+            return
+
+        if len(data_decode['items']) != 0:
+            data_items = data_decode['items']
+            youtube_title = data_items[0]['snippet']['title'].encode("utf-8")
+            youtube_uploader = data_items[0]['snippet']['channelTitle'].encode("utf-8")
+            response = '{} uploaded by {}'.format(youtube_title, youtube_uploader)
+            self.twitch_send_message(response)
         else:
-            if vote_category in self.votes:
-                sender_bet = message.split(vote_category)[-1]
-                sender_bet = sender_bet[1:]
-                if sender in self.votes[vote_category]['voters'] and sender_bet == self.votes[vote_category]['voters'][sender]:
-                    pass
-                elif sender in self.votes[vote_category]['voters'] and sender_bet != self.votes[vote_category]['voters'][sender]:
-                    previous_bet = self.votes[vote_category]['voters'][sender]
-                    self.votes[vote_category]['votes'][previous_bet] -= 1
-                    if self.votes[vote_category]['votes'][previous_bet] == 0:
-                        del self.votes[vote_category]['votes'][previous_bet]
-                    if sender_bet in self.votes[vote_category]['votes']:
-                        self.votes[vote_category]['votes'][sender_bet] += 1
-                    else:
-                        self.votes[vote_category]['votes'][sender_bet] = 1
-                    self.votes[vote_category]['voters'][sender] = sender_bet
-                    response = 'Your vote has been recorded.'
-                else:
-                    if sender_bet in self.votes[vote_category]['votes']:
-                        self.votes[vote_category]['votes'][sender_bet] += 1
-                    else:
-                        self.votes[vote_category]['votes'][sender_bet] = 1
-                    self.votes[vote_category]['voters'][sender] = sender_bet
-                    response = 'Your vote has been recorded.'
-            else:
+            return
+
+    def create_vote(self, message):
+        poll_type = message.split(' ')[1]
+
+        try:
+            poll = re.findall('"(.+)"', message)[0]
+        except:
+            self.twitch_send_message('Please give the poll a name.')
+            return
+
+        self.votes = {  'name' : poll,
+                        'type' : poll_type,
+                        'options' : {},
+                        'voters' : {}}
+
+        if poll_type == 'strict':
+            options = re.findall('\((.+?)\)', message)
+
+            if not options:
+                self.twitch_send_message('You did not supply any options, poll will be closed.')
+                self.votes.clear()
                 return
+
+            for i in options:
+                i = i.lower()
+                self.votes['options'][i] = 0
+            response = 'You may now vote for this poll using only the supplied options.'
+
+        elif poll_type == 'loose':
+            response = 'You may now vote for this poll with whatever choice you like.'
+
+        self.twitch_send_message(response)
+
+    def end_vote(self):
+        if self.votes:
+            try:
+                winning_key = max(self.votes['options'], key = self.votes['options'].get)
+                winning_value = self.votes['options'][winning_key]
+                self.votes.clear()
+                response = '{} has won with {} votes.'.format(winning_key, str(winning_value))
+            except ValueError:
+                self.votes.clear()
+                response = ''
+            self.twitch_send_message(response)
+
+    def vote(self, message, sender):
+        try:
+            sender_bet = message.split('vote ')[-1]
+            sender_bet = sender_bet.lower()
+        except:
+            print 'no bet'
+            return
+        if not self.votes:
+            return
+
+        if self.votes['type'] == 'strict':
+            if sender_bet not in self.votes['options']:
+                self.twitch_send_message('You must vote for one of the options specified: ' + ', '.join(self.votes['options'].keys()), '!vote')
+                return
+
+        if sender in self.votes['voters']:
+            if sender_bet == self.votes['voters'][sender]:
+                response = 'You have already voted for that {}.'.format(sender)
+            else:
+                previous = self.votes['voters'][sender]
+                self.votes['options'][previous] -= 1
+
+                if self.votes['options'][previous] == 0 and self.votes['type'] == 'loose':
+                    del self.votes['options'][previous]
+
+                try:
+                    self.votes['options'][sender_bet] += 1
+                except KeyError:
+                    self.votes['options'][sender_bet] = 1
+
+                self.votes['voters'][sender] = sender_bet
+                response = '{} has changed their vote to {}'.format(sender, sender_bet)
+        else:
+            try:
+                self.votes['options'][sender_bet] += 1
+            except KeyError:
+                self.votes['options'][sender_bet] = 1
+
+            self.votes['voters'][sender] = sender_bet
+            response = '{} now has {} votes for it.'.format(sender_bet, str(self.votes['options'][sender_bet]))
+
         self.twitch_send_message(response, '!vote')
 
     def check_votes(self, message):
-        try:
-            vote_category = message.split(' ')[1]
-            if not self.votes[vote_category]['votes']:
-                response = 'No one has bet in {} yet.'.format(vote_category)
-            else:
-                winning_key = max(self.votes[vote_category]['votes'], key = self.votes[vote_category].get)
-                winning_value = self.votes[vote_category]['votes'][winning_key]
-                response = '{} is winning with {} votes for it.'.format(winning_key, winning_value)
-        except IndexError:
-            response_list = []
-            for categories in self.votes:
-                if self.votes[categories]['votes']:
-                    winning_key = max(self.votes[categories]['votes'], key = self.votes[categories].get)
-                    winning_value = self.votes[categories]['votes'][winning_key]
-                    response_list.append('{}: {} is winning with {} votes.'.format(categories, winning_key, winning_value))
-            response = '.  '.join(response_list)
+        if not self.votes:
+            return
+
+        if not self.votes['options']:
+            response = 'No one has bet yet.'
+
+        else:
+            winning_key = max(self.votes['options'], key = self.votes['options'].get)
+            winning_value = self.votes['options'][winning_key]
+            response = '{} is winning with {} votes for it.'.format(winning_key, winning_value)
+
         self.twitch_send_message(response, '!vote')
 
     def text_review(self, message, last_r = 'none'):
@@ -617,10 +667,8 @@ class SaltyBot:
             k = str(k)
             current_rune = runes_list["data"][k]
             stat_number = current_rune["stats"].values()[0]
-            print stat_number
 
             description = current_rune["description"].split('(')
-            print description
 
             stats = {}
             stats["stat"] = str( round( stat_number, 2) )
@@ -679,6 +727,10 @@ class SaltyBot:
                 if self.message_body.find('youtube.com/watch?v=') != -1:
                     if self.config_data['general']['youtube_link']:
                         self.youtube_video_check(self.message_body)
+
+                if self.message_body.find('youtu.be/') != -1:
+                    if self.config_data['general']['youtube_link']:
+                        self.youtube_short_check(self.message_body)
 
                 try:
                     if self.message_body.lower().find(self.t_trig) != -1:
@@ -739,11 +791,17 @@ class SaltyBot:
                             if self.command_check('!race'):
                                 self.srl_race_retrieve()
 
+                    elif self.message_body.startswith('createvote ') and self.sender in self.admin_file:
+                        self.create_vote(self.message_body)
+
+                    elif self.message_body == 'endvote' and self.sender in self.admin_file:
+                        self.end_vote()
+
                     elif self.message_body.startswith('vote '):
                         if self.command_check('!vote'):
                             self.vote(self.message_body, self.sender)
 
-                    elif self.message_body.startswith('votes'):
+                    elif self.message_body == 'votes':
                         if self.command_check('!vote'):
                             self.check_votes(self.message_body)
 
