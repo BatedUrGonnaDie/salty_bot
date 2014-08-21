@@ -24,7 +24,8 @@ the broadcaster uses this command the quote/pun will go straight into the live f
 `!rank` will retrieve the accuracy, pp ranking, level, and username of the streamer on osu.
 
 `!createvote <loose/strict> "Poll Name" (option) (if) (strict)` will allow mods or channel host to create polls.  Only
-one poll can be created at a time.
+one poll can be created at a time.  If strict you must specify options for viewers to vote for, if loose viewers may
+vote for whatever they can think of.
 
 `!vote <option>` will allow viewers to vote.  If poll is set to strict then viewers must input one of the options set
 by the poll creator.
