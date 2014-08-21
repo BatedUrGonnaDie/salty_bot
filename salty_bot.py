@@ -235,16 +235,88 @@ class SaltyBot:
         self.twitch_send_message(response)
 
     def wr_retrieve(self):
+        categories_in_title = []
+        category_position = {}
         if self.game in games:
             for keys in games[self.game]['categories'].keys():
                 if keys in self.title:
-                    wr = games[self.game]['categories'][keys]
-                    self.twitch_send_message(wr, '!wr')
+                    categories_in_title.append(keys)
+            print categories_in_title
+            if len(categories_in_title) > 1:
+                for i in categories_in_title:
+                    for j in categories_in_title:
+                        if j == i:
+                            continue
+                        if j in i:
+                            categories_in_title.remove(j)
+                        category_position[j] = self.title.find(j)
+                if len(categories_in_title) > 1:
+                    first_cat = min(category_position, key = category_position.get)
+                    wr = games[self.game]['categories'][first_cat]
+                else:
+                    wr = games[self.game]['categories'][categories_in_title[0]]
+            else:
+                wr = games[self.game]['categories'][categories_in_title[0]]
+            self.twitch_send_message(wr, '!wr')
 
     def leaderboard_retrieve(self):
         if self.game in games:
             leaderboard = games[self.game]['leaderboard']
             self.twitch_send_message(leaderboard, '!leaderboard')
+
+    def splits_check(self):
+        url = 'http://splits.io/u/{}.json'.format(self.channel)
+        user = self.api_caller(url)
+        categories_in_title = []
+        category_position = {}
+
+        for i in user:
+            if i['game']['name'] == None or i['category']['name'] == None:
+                continue
+
+            if i['game']['name'].lower() == self.game:
+                if i['category']['name'].lower() in self.title:
+                    categories_in_title.append(i['category']['name'].lower())
+
+        if len(categories_in_title) == 0:
+            return
+
+        if len(categories_in_title) > 1:
+            for i in categories_in_title:
+                for j in categories_in_title:
+                    if j == i:
+                        continue
+                    if j in i:
+                        categories_in_title.remove(j)
+                    category_position[j] = self.title.find(j)
+            if len(categories_in_title) > 1:
+                current_cat = min(category_position, key = category_position.get)
+            else:
+                current_cat = categories_in_title[0]
+        else:
+            current_cat = categories_in_title[0]
+
+        best_time = 0
+
+        for i in user:
+            if i['game']['name'] == None or i['category']['name'] == None:
+                continue
+            if i['game']['name'].lower() == self.game and i['category']['name'].lower() == current_cat:
+                if best_time == 0:
+                    best_time = i['time']
+                    splits = i
+                if i['time'] < best_time:
+                    splits = i
+
+        if best_time == 0:
+            return
+
+        m, s = divmod(splits['time'], 60)
+        h, m = divmod(m, 60)
+        time = '{}:{}:{}'.format(int(h), int(m), round(s, 2))
+        link = 'http://splits.io/{}'.format(splits['nick'])
+        response = 'Splits with a time of {} {}'.format(time, link)
+        self.twitch_send_message(response, '!splits')
 
     def add_text(self, text_type, text_add):
         text = text_add.split('{} '.format(text_type))[-1]
@@ -768,6 +840,10 @@ class SaltyBot:
                     elif self.message_body.startswith('leaderboard'):
                         if self.command_check('!leaderboard'):
                                 self.leaderboard_retrieve()
+
+                    elif self.message_body == 'splits':
+                        if self.command_check('!splits'):
+                            self.splits_check()
 
                     elif self.message_body.startswith('addquote'):
                         if self.command_check('!quote'):
