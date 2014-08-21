@@ -16,6 +16,9 @@ SRL API to see if you are in a race.  If you are listed in the race it will gene
 racing, as well as output a multitwitch link if the race has 6 or fewer live racers, or an SRL race page link if it has
 more to keep the link size down.
 
+`!splits` will retrieve the best splits that you have uploaded to [Split.io](http://splits.io) for the current game
+and category.
+
 `!quote`/`!pun` will display a randomly selected quote/pun from a file.
 
 `!addqoute`/`!addpun` will add the given quote/pun to a review file so that you can manually move it over later.  If 
