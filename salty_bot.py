@@ -384,6 +384,10 @@ class SaltyBot:
             return
 
     def create_vote(self, message):
+        if self.votes:
+            self.twitch_send_message('There is already an open poll, please close it first.')
+            return
+        
         poll_type = message.split(' ')[1]
 
         try:
