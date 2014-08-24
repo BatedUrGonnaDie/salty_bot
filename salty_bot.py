@@ -143,7 +143,37 @@ class SaltyBot:
                 if self.command_times['custom']['admins'][i] == True:
                     self.admin_commands.append(self.command_times['custom']['admins'][i])
 
-        self.commands_string = ', '.join(self.commands)
+    def live_commands(self):
+        active_commands = self.commands
+        
+        if self.game != 'osu!':
+            try:
+                active_commands.remove('!rank')
+            except:
+                pass
+            try:
+                active_commands.remove('!song')
+            except:
+                pass
+
+        if self.game != 'league of legends':
+            try:
+                active_commands.remove('!runes')
+            except:
+                pass
+            try:
+                active_commands.remove('!masteries')
+            except:
+                pass
+        
+        if 'race' not in self.title or 'races' not in self.title or 'racing' not in self.title:
+            try:
+                active_commands.remove('!race')
+            except:
+                pass
+
+        command_string = ', '.join(active_commands)
+        self.twitch_send_message(command_string, '!commands')
 
     def twitch_send_message(self, response, command = ''):
         try:
@@ -169,7 +199,6 @@ class SaltyBot:
                     return True
                 else:
                     return False
-
 
     def time_check(self, command):
         return int(time.time()) - self.command_times[command]['last'] >= self.command_times[command]['limit']
@@ -241,7 +270,7 @@ class SaltyBot:
             for keys in games[self.game]['categories'].keys():
                 if keys in self.title:
                     categories_in_title.append(keys)
-            print categories_in_title
+
             if len(categories_in_title) > 1:
                 for i in categories_in_title:
                     for j in categories_in_title:
@@ -771,7 +800,7 @@ class SaltyBot:
 
             try:
                 self.message = self.irc.recv(4096)
-            except:
+            except socket.timeout:
                 self.irc.close()
                 self.twitch_run()
 
@@ -896,7 +925,7 @@ class SaltyBot:
                         
                     elif self.message_body == 'commands':
                         if self.time_check('!commands'):
-                            self.twitch_send_message(self.commands_string, '!commands')
+                            self.live_commands()
 
                     elif self.message_body == 'bot_info':
                         self.twitch_send_message('Powered by SaltyBot, for a full list of commands check out www.github.com/batedurgonnadie/salty_bot')
@@ -907,11 +936,6 @@ class SaltyBot:
                         self.admin(RESTART)
                         self.twitch_send_message('Restarting the bot.')
                         break
-
-                    elif self.message_body == 'stop' and self.sender in SUPER_USER:
-                        if self.__DB:
-                            print('SHUTDOWN CALLED BY {}'.format(self.sender.upper()))
-                        self.admin(STOP)
 
                     elif self.message_body == 'check' and self.sender in SUPER_USER:
                         self.admin(CHECK)
