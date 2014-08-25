@@ -15,6 +15,7 @@ import re
 
 debuging = False
 Config_file_name = 'dConfig.json' if debuging else 'config.json'
+#Config_file_name = 'config.json'
 
 SUPER_USER = ['batedurgonnadie','bomb_mask','glacials']
 RESTART = "<restart>"
@@ -112,10 +113,13 @@ class SaltyBot:
 
         if '!quote' in self.commands or '!pun' in self.commands:
             self.review = {}
+            self.last_text = {}
             if '!quote' in self.commands:
                 self.review['quote'] = []
+                self.last_text['quote'] = ''
             if '!pun' in self.commands:
                 self.review['pun'] = []
+                self.last_text['pun'] = ''
 
         if self.config_data['general']['social']['text'] != '':
             self.command_times['social'] = {'time_last' : int(time.time()),
@@ -372,22 +376,15 @@ class SaltyBot:
             response = 'No {}s have been added.'.format(text_type)
             self.this_retrieve = response
         elif lines == 1:
-            response = lines_read[0]
+            response = lines_read[0].encode('utf-8')
             self.this_retrieve = response
         else:
-            while True:
-                try:
-                    while self.this_retrieve == self.last_retrieve:
-                        select_line = random.randrange(1, lines, 1)
-                        response = lines_read[select_line]
-                        self.this_retrieve = response
-                except:
-                    self.last_retrieve = ''
-                    self.this_retrieve = ''
-                    continue
-                break
+            response = lines_read[random.randint(0, lines -1 )]
+            while response == self.last_text[text_type]:
+                response = lines_read[random.randint(0, lines - 1)]
+
         self.twitch_send_message(response, '!' + text_type)
-        self.last_retrieve = self.this_retrieve
+        self.last_text[text_type] = response
 
     def srl_race_retrieve(self):
         self.srl_nick = self.config_data['general']['srl_nick']
@@ -801,6 +798,7 @@ class SaltyBot:
             try:
                 self.message = self.irc.recv(4096)
             except socket.timeout:
+                print self.channel + ' timed out.'
                 self.irc.close()
                 self.twitch_run()
 
