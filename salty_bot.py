@@ -434,6 +434,7 @@ class SaltyBot:
                     else:
                         response += '.  {}'.format(srl_race_id)
                     self.twitch_send_message(response, '!race')
+                    return
 
     def youtube_video_check(self, message):
         url_values = urlparse.parse_qs(urlparse.urlparse(message).query)
@@ -534,7 +535,6 @@ class SaltyBot:
             sender_bet = message.split('vote ')[-1]
             sender_bet = sender_bet.lower()
         except:
-            print 'no bet'
             return
         if not self.votes:
             return
@@ -707,12 +707,12 @@ class SaltyBot:
         self.command_times['custom']['lasts'][location] = int(time.time())
     
     def lol_masteries(self):
-        self.summoner_name = 'batedurgonnadie'
-        name_url = 'https://na.api.pvp.net/api/lol/na/v1.4/summoner/by-name/{}?api_key={}'.format(self.summoner_name, lol_api_key)
+        summoner_name = self.config_data['general']['summoner_name']
+        name_url = 'https://na.api.pvp.net/api/lol/na/v1.4/summoner/by-name/{}?api_key={}'.format(summoner_name, lol_api_key)
         name_data = self.api_caller(name_url)
         if name_data == False:
             return
-        summoner_id = name_data[self.summoner_name]['id']
+        summoner_id = name_data[summoner_name]['id']
         mastery_url = 'https://na.api.pvp.net/api/lol/na/v1.4/summoner/{}/masteries?api_key={}'.format(summoner_id, lol_api_key)
         mastery_data = self.api_caller(mastery_url)
         if mastery_data == False:
@@ -729,65 +729,91 @@ class SaltyBot:
                 masteries_used['defense'] += i['rank']
             elif str(i['id'])[1] == '3':
                 masteries_used['utility'] += i['rank']
+
         response = 'Page: {} | {}/{}/{}'.format(active_set['name'], masteries_used['offense'], masteries_used['defense'], masteries_used['utility'])
-        self.twitch_send_message(response)
+        self.twitch_send_message(response, '!masteries')
 
     def lol_runes(self):
-        self.summoner_name = 'batedurgonnadie'
-        
-        name_url = 'https://na.api.pvp.net/api/lol/na/v1.4/summoner/by-name/{}?api_key={}'.format(self.summoner_name, lol_api_key)
+        with open("runes.json",'r') as fin:
+            runes_list = json.load(fin, encoding="utf-8")
+
+        version_url = 'https://na.api.pvp.net/api/lol/static-data/na/v1.2/realm?api_key=' + lol_api_key
+        version = self.api_caller(version_url)
+        if version == False:
+            return
+        if version['n']['rune'] != runes_list['version']:
+            url = 'http://ddragon.leagueoflegends.com/cdn/{}/data/en_US/rune.json'.format(version['n']['rune'])
+            data = self.api_caller(url)
+            with open('runes.json', 'w') as outfile:
+                json.dump(data, outfile, sort_keys = True, indent = 4, ensure_ascii=False, encoding = 'utf-8')
+
+        summoner_name = self.config_data['general']['summoner_name']
+        name_url = 'https://na.api.pvp.net/api/lol/na/v1.4/summoner/by-name/{}?api_key={}'.format(summoner_name, lol_api_key)
         name_data = self.api_caller(name_url)
-        
         if name_data == False:
             return
-            
-        summoner_id = name_data[self.summoner_name]['id']
+        summoner_id = name_data[summoner_name]['id']
+
         rune_url = 'https://na.api.pvp.net/api/lol/na/v1.4/summoner/{}/runes?api_key={}'.format(summoner_id, lol_api_key)
         rune_data = self.api_caller(rune_url)
-        
         if rune_data == False:
             return
-            
         for i in rune_data[str(summoner_id)]['pages']:
             if i['current'] == True:
                 active_page = i
                 break
 
-        rune_str_list = []
-        counted_rune_data = {}
-
-        with open("runes.json",'r') as fin:
-            runes_list = json.load(fin, encoding="utf-8")
-
+        runes_final = []
+        runes_counted = {}
+        runes_stats = runes_list['basic']['stats']
         for rune in active_page["slots"]:
-            try:
-                counted_rune_data[rune["runeId"]] += 1
-            except KeyError:
-                counted_rune_data[rune["runeId"]] = 1
-
-        for k, v in counted_rune_data.items():
-            k = str(k)
-            current_rune = runes_list["data"][k]
-            stat_number = current_rune["stats"].values()[0]
-
-            description = current_rune["description"].split('(')
-
-            stats = {}
-            stats["stat"] = str( round( stat_number, 2) )
-            stats["statlvl18"] = str( round( stat_number * 18, 2) )
-
-
-            description[0] = re.sub("-?\d+\.\d+", stats["stat"], description[0])
-
-            if len(description) == 2 :
-                description[1] = re.sub("-?\d+\.\d+", stats["statlvl18"], description[1])
-
-                rune_str_list += ['('.join(description)]
+            rune_id = str(rune['runeId'])
+            if rune_id not in runes_counted:
+                runes_counted[rune_id] = {'id' : rune_id, 'count' : 1, 'description' : runes_list['data'][rune_id]['description'], 'stats' : runes_list['data'][rune_id]['stats'].keys()}
             else:
-                rune_str_list += [description[0]]
+                runes_counted[rune_id]['count'] += 1
 
-        self.twitch_send_message("Page Name: {} : {}".format(active_page["name"], " | ".join(rune_str_list)))
-   
+        for k, v in runes_counted.iteritems():
+            if 'per level' in v['description']:
+                string = ''
+                string += v['description'].split('(')[1].split(' ')[0]
+                string += ' ' + ' '.join(v['description'].split(' ')[1:-1])
+                string = string.split('(')[0]
+                string = re.sub('per level', 'at level 18', string)
+                runes_counted[k]['description'] = string
+            if re.search('[+-](\d+\.\d+)', v['description']):
+                data = re.findall('[+-](\d+\.\d+)', v['description'])[0]
+                value = float(data) * v['count']
+                runes_counted[k]['description'] = v['description'][0] + re.sub('[+-](\d+\.\d+)', str(value), v['description'])
+                runes_counted[k]['value'] = value
+            else:
+                data = re.findall('[+-](\d+)', v['description'])
+                value = int(data[0]) * v['count']
+                runes_counted[k]['description'] = v['description'][0] + re.sub('[+-](\d+)', str(value), v['description'])
+                runes_counted[k]['value'] = value
+
+        for k, v in runes_counted.items():
+            for k2, v2 in runes_counted.items():
+                if k == k2:
+                    continue
+                if v['stats'][0] == v2['stats'][0]:
+                    try:
+                        runes_counted[k]['value'] = v['value'] + v2 ['value']
+                        del runes_counted[k2]
+                    except:
+                        pass
+
+        for k, v in runes_counted.iteritems():
+            if re.search('[+-](\d+\.\d+)', v['description']):
+                text = v['description'][0] + re.sub('[+-](\d+\.\d+)', str(v['value']), v['description'])
+                runes_final.append(text)
+            else:
+                text = v['description'][0] + re.sub('[+-](\d+)', str(v['value']), v['description'])
+                runes_final.append(text)
+
+        response = 'Page: {} | Stats: '.format(active_page['name'])
+        response += ' | '.join(runes_final)
+        self.twitch_send_message(response, '!runes')
 
     def twitch_run(self):
         self.twitch_connect()
@@ -851,7 +877,7 @@ class SaltyBot:
                     find_ex = self.message_body.count('!')
                     self.message_body = self.message_body.split('!')[-find_ex]
 
-                    if len(self.command_times['custom']['triggers']) != 0:
+                    if self.config_data['general']['custom']['on'] == True:
                         self.custom_command(self.message_body, self.sender)
 
                     if self.message_body.startswith('blacklist ') and self.sender == self.channel:
@@ -873,7 +899,7 @@ class SaltyBot:
                             self.splits_check()
 
                     elif self.message_body.startswith('addquote'):
-                        if self.command_check('!quote'):
+                        if self.command_check('!addquote'):
                             self.add_text('quote', self.message_body)
 
                     elif self.message_body == 'quote':
@@ -881,7 +907,7 @@ class SaltyBot:
                             self.text_retrieve('quote')
 
                     elif self.message_body.startswith('addpun'):
-                        if self.command_check('!pun'):
+                        if self.command_check('!addpun'):
                             self.add_text('pun', self.message_body)
 
                     elif self.message_body == 'pun':
