@@ -26,6 +26,11 @@ the broadcaster uses this command the quote/pun will go straight into the live f
 
 `!rank` will retrieve the accuracy, pp ranking, level, and username of the streamer on osu.
 
+`!runes` will retrieve the active rune page and add up all the values.  Note that this will most likely break for the
+runes with more than one stat.
+
+`!masteries` will retrieve the active mastery page and output it like so, x/y/z.
+
 `!createvote <loose/strict> "Poll Name" (option) (if) (strict)` will allow mods or channel host to create polls.  Only
 one poll can be created at a time.  If strict you must specify options for viewers to vote for, if loose viewers may
 vote for whatever they can think of.
