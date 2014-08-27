@@ -177,7 +177,10 @@ class SaltyBot:
                 pass
 
         command_string = ', '.join(active_commands)
-        self.twitch_send_message(command_string, '!commands')
+        if command_string == '!commands':
+            self.twitch_send_message('There are no current active commands.', '!commands')
+        else:
+            self.twitch_send_message(command_string, '!commands')
 
     def twitch_send_message(self, response, command = ''):
         try:
