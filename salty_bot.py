@@ -170,7 +170,7 @@ class SaltyBot:
             except:
                 pass
         
-        if 'race' not in self.title or 'races' not in self.title or 'racing' not in self.title:
+        if 'race' not in self.title and 'races' not in self.title and 'racing' not in self.title:
             try:
                 active_commands.remove('!race')
             except:
@@ -648,15 +648,27 @@ class SaltyBot:
             for text in self.review[text_type]:
                 if text[1] == 0:
                     if last_r == 'none':
-                        self.twitch_send_message(text[0])
+                        self.twitch_send_message('Please use "approve" or "reject" for reviewing.')
+                        return
+                    elif last_r == 'repeat':
+                        self.twitch_send_message('New {} added, {}: '.format(text_type, text_type) + text[0])
                         return
                     else:
                         self.twitch_send_message(last_r + ", next quote: " + text[0])
                         return
+
+            with open('{}_{}_review.txt'.format(self.channel, text_type), 'a+') as data_file:
+                new_text = data_file.readlines()
+            new_sum = sum(1 for line in new_text)
+            if new_sum != len(self.review[text_type]):
+                for i in new_text[len(self.review[text_type]):]:
+                    self.review[text_type].append([i.split('\n')[0], 0])
+                self.text_review('review {} repeat'.format(text_type), 'repeat')
+                return
             if self.review[text_type]:
                 self.twitch_send_message('Please use "!review {} commit" to lock the changes in place.'.format(text_type))
             else:
-                self.twitch_send_message('Nothing to review in {}.'.format(text_type))
+                self.twitch_send_message('Nothing {}s to review.'.format(text_type))
 
     def lister(self, message, s_list):
         user = message.split(' ')[-1]
