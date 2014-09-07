@@ -187,7 +187,11 @@ class SaltyBot:
             response = response.encode('utf-8')
         except:
             pass
-
+        if response.startswith('/me'):
+            pass
+        elif response.startswith('.') or response.startswith('/'):
+            response = "Please stop trying to abuse me BibleThump"
+            command = ''
         to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
         self.irc.sendall(to_send)
 
@@ -278,6 +282,9 @@ class SaltyBot:
                 if keys in self.title:
                     categories_in_title.append(keys)
 
+            if len(categories_in_title) == 0:
+                self.twitch_send_message("I'm sorry, but I do not have this category on file.", '!wr')
+                return
             if len(categories_in_title) > 1:
                 for i in categories_in_title:
                     for j in categories_in_title:
@@ -303,6 +310,9 @@ class SaltyBot:
     def splits_check(self):
         url = 'http://splits.io/u/{}.json'.format(self.channel)
         user = self.api_caller(url)
+        if user == False:
+            self.twitch_send_message("I'm sorry, I could not retrieve the user from splits.io")
+            return
         categories_in_title = []
         category_position = {}
 
@@ -315,21 +325,28 @@ class SaltyBot:
                     categories_in_title.append(i['category']['name'].lower())
 
         if len(categories_in_title) == 0:
+            self.twitch_send_message("I'm sorry, but I could not find any runs matching the categories in the title.", '!splits')
             return
-
-        if len(categories_in_title) > 1:
-            for i in categories_in_title:
-                for j in categories_in_title:
-                    if j == i:
-                        continue
-                    if j in i:
-                        categories_in_title.remove(j)
-                    category_position[j] = self.title.find(j)
+        elif len(categories_in_title) == 1:
+            current_cat = categories_in_title[0]
+        elif len(categories_in_title) > 1:
+            for i in range(len(categories_in_title)):
+                for j in range(i + 1, len(categories_in_title)):
+                    if categories_in_title[i] == categories_in_title[j]:
+                        del categories_in_title[j]
+                
+                try:
+                    category_position[i] = self.title.find(categories_in_title[i])
+                except:
+                    pass
             if len(categories_in_title) > 1:
+                print categories_in_title
+                print category_position
                 current_cat = min(category_position, key = category_position.get)
             else:
                 current_cat = categories_in_title[0]
         else:
+            print current_cat
             current_cat = categories_in_title[0]
 
         best_time = 0
@@ -349,7 +366,10 @@ class SaltyBot:
 
         m, s = divmod(splits['time'], 60)
         h, m = divmod(m, 60)
-        time = '{}:{}:{}'.format(int(h), int(m), round(s, 2))
+        if s < 10:
+            s = round(s, 2)
+            s = '0' + str(s)
+        time = '{}:{}:{}'.format(int(h), int(m), s)
         link = 'http://splits.io/{}'.format(splits['nick'])
         response = 'Splits with a time of {} {}'.format(time, link)
         self.twitch_send_message(response, '!splits')
@@ -430,7 +450,7 @@ class SaltyBot:
                             m, s = divmod(real_time, 60)
                             h, m = divmod(m, 60)
                             response += ', RaceBot Time: {}:{}:{}'.format(h, m, s)
-                    if len(srl_live_entrants) <= 6:
+                    if len(srl_live_entrants) <= 6 and len(srl_live_entrants) != 0:
                         for j in srl_live_entrants:
                             multitwitch_link += j + '/'
                         response += '.  {}'.format(multitwitch_link)
