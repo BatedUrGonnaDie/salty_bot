@@ -17,7 +17,6 @@ debuging = False
 Config_file_name = 'dConfig.json' if debuging else 'config.json'
 #Config_file_name = 'config.json'
 
-SUPER_USER = ['batedurgonnadie','bomb_mask','glacials']
 RESTART = "<restart>"
 STOP = "<stop program>"
 CHECK = "<check threads>"
@@ -27,6 +26,7 @@ DATA = 1
 
 interface = Q.Queue()
 
+#Set up all the global variables
 with open('general_config.json', 'r') as data_file:
     general_config = json.load(data_file, encoding = 'utf-8')
 
@@ -35,6 +35,7 @@ youtube_api_key = general_config['general_info']['youtube_api_key']
 osu_api_key = general_config['general_info']['osu']['osu_api_key']
 osu_irc_nick = general_config['general_info']['osu']['osu_irc_nick']
 osu_irc_pass = general_config['general_info']['osu']['osu_irc_pass']
+SUPER_USER = general_config['general_info']['super_user']
 
 games = general_config['games']
 
@@ -48,11 +49,13 @@ class SaltyBot:
         self.config_data = config_data
         self.irc = socket.socket()
         self.irc.settimeout(600)
+        #This is for previous issues with irc.twitch.tv failing to connect, will only use backups if neccessary
         self.twitch_host = ['irc.twitch.tv', '199.9.252.120', '199.9.250.229', '199.9.250.239', '199.9.252.28']
         self.port = 6667
         self.twitch_nick = config_data['general']['twitch_nick']
         self.twitch_oauth = config_data['general']['twitch_oauth']
         self.channel = config_data['general']['channel']
+        #Initialize game/title so it doesn't crash because using stream objects
         self.game = ''
         self.title = ''
         self.commands = []
@@ -75,16 +78,19 @@ class SaltyBot:
         return self.thread
 
     def twitch_info(self, game, title):
+        #Game can be nil (None) if left blank on Twitch, therefore check is neccessary
         self.game = game.lower() if game != None else game
         self.title = title.lower() if game != None else title
 
     def twitch_connect(self):
+        #Connect to Twitch IRC
         connected = False
         if self.__DB:
             print "Joining {} as {}.\n".format(self.channel,self.twitch_nick)
         while connected == False:
             for i in self.twitch_host:
                 try:
+                    #Jack around to make irc.twitch.tv not break everything if it denies connection
                     self.irc.connect((i, self.port))
                     connected = True
                     break
@@ -100,6 +106,7 @@ class SaltyBot:
         self.irc.sendall('JOIN #{}\r\n'.format(self.channel))
 
     def twitch_commands(self):
+        #Set up all the limits, if its admin, if its on, quote and pun stuff, and anything else that needs setting up for a command
         for keys in self.config_data['commands']:
             if self.config_data['commands'][keys]['on']:
                 self.commands.append(keys)
@@ -148,6 +155,7 @@ class SaltyBot:
                     self.admin_commands.append(self.command_times['custom']['admins'][i])
 
     def live_commands(self):
+        #Remove any commands that would not currently work when !commands is used
         active_commands = self.commands
         
         if self.game != 'osu!':
@@ -183,22 +191,28 @@ class SaltyBot:
             self.twitch_send_message(command_string, '!commands')
 
     def twitch_send_message(self, response, command = ''):
+        #Sending any message to chat goes through this function
         try:
             response = response.encode('utf-8')
         except:
             pass
         if response.startswith('/me'):
+            #Grant exception for /me because it can't do any harm
             pass
         elif response.startswith('.') or response.startswith('/'):
+            #Prevent people from issuing server commands since bot is usually mod (aka /ban)
             response = "Please stop trying to abuse me BibleThump"
             command = ''
         to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
         self.irc.sendall(to_send)
 
         if command != '':
+            #Update when the command was last used for rate limiting
             self.command_times[command]['last'] = int(time.time())
 
     def command_check(self, command):
+        #Finds if the user can use said command, and then if the command is off cooldown
+        #Will only return True if it's off cooldown and the user has the priviledges for the command
         if command in self.commands:
             if command in self.admin_commands:
                 if self.sender in self.admin_file:
@@ -212,13 +226,16 @@ class SaltyBot:
                     return False
 
     def time_check(self, command):
+        #Return the current time minus the time the command was last used (used to make sure its off cooldown)
         return int(time.time()) - self.command_times[command]['last'] >= self.command_times[command]['limit']
 
     def is_live(self, user):
+        #Checks to see if the racer on SRL is streaming to twitch and is live to build the multitwitch link
         url = 'https://api.twitch.tv/kraken/streams/' + user
         headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
         data_decode = self.api_caller(url, headers)
         if data_decode == False:
+            #If it fails to retrieve a json object, I give benefit of the doubt and say he is streaming
             return True
         data_stream = data_decode['stream']
         if data_stream == None:
@@ -227,6 +244,7 @@ class SaltyBot:
             return True
 
     def api_caller(self, url, headers = None):
+        #Call JSON api's for other functions
         if self.__DB:
             print url, "Headers: ", headers
 
@@ -238,6 +256,7 @@ class SaltyBot:
             return False
 
     def osu_api_user(self):
+        #Perform a simple check of basic user stats on osu
         osu_nick = self.config_data['general']['osu']['osu_nick']
         url = 'https://osu.ppy.sh/api/get_user?k={}&u={}'.format(osu_api_key, osu_nick)
         data_decode = self.api_caller(url)
@@ -256,6 +275,7 @@ class SaltyBot:
         self.twitch_send_message(response)
 
     def osu_link(self):
+        #Sends beatmaps linked in chat to you on osu, and then displays the map title and author in chat
         osu_nick = self.config_data['general']['osu']['osu_nick']
 
         if self.message_body.find('osu.ppy.sh/s/') != -1:
@@ -275,6 +295,7 @@ class SaltyBot:
         self.twitch_send_message(response)
 
     def wr_retrieve(self):
+        #Find the categories that are on file in the title, and then if more than one exist pick the one located earliest in the title
         categories_in_title = []
         category_position = {}
         if self.game in games:
@@ -303,15 +324,22 @@ class SaltyBot:
             self.twitch_send_message(wr, '!wr')
 
     def leaderboard_retrieve(self):
+        #Retrieve leaderboard for game as set on Twitch
         if self.game in games:
             leaderboard = games[self.game]['leaderboard']
             self.twitch_send_message(leaderboard, '!leaderboard')
 
     def splits_check(self):
+        #Slowest of all the commands (sometimes ~6 seconds)
+        #Get user JSON object from splits.io, find the categories, find the fastest run for said category, and then link
+        #it in chat for people to see the time/download
         url = 'http://splits.io/u/{}.json'.format(self.channel)
         user = self.api_caller(url)
         if user == False:
             self.twitch_send_message("I'm sorry, I could not retrieve the user from splits.io")
+            return
+        if len(user) == 0:
+            self.twitch_send_message("I'm sorry, but {} has no runs on splits.io".format(self.channel), "!splits")
             return
         categories_in_title = []
         category_position = {}
@@ -375,12 +403,14 @@ class SaltyBot:
         self.twitch_send_message(response, '!splits')
 
     def add_text(self, text_type, text_add):
+        #Add a pun or quote to the review file
         text = text_add.split('{} '.format(text_type))[-1]
 
         if text == 'add{}'.format(text_type) or text == 'add{} '.format(text_type):
             self.twitch_send_message('Please input a {}.'.format(text_type))
         else:
             if self.sender == self.channel:
+                #If person adding is channel owner, it goes straight to the live file
                 with open('{}_{}.txt'.format(self.channel, text_type), 'a+') as data_file:
                     data_file.write('{}\n'.format(text))
                 response = 'Your {} has been added.'.format(text_type)
@@ -392,6 +422,8 @@ class SaltyBot:
                 self.twitch_send_message(response)
 
     def text_retrieve(self, text_type):
+        #Pull a random pun/quote from the live file
+        #Will not pull the same one twice in a row
         with open('{}_{}.txt'.format(self.channel, text_type), 'a+') as data_file:
             lines_read = data_file.readlines()
         lines = sum(1 for line in lines_read)
@@ -410,6 +442,8 @@ class SaltyBot:
         self.last_text[text_type] = response
 
     def srl_race_retrieve(self):
+        #Goes through all races, finds the race the user is in, gathers all other users in the race, prints the game, the 
+        #category people are racing, the time racebot has, and either a multitwitch link or a SRL race room link
         self.srl_nick = self.config_data['general']['srl_nick']
         url = 'http://api.speedrunslive.com/races'
         data_decode = self.api_caller(url)
@@ -430,36 +464,44 @@ class SaltyBot:
                     user_time = race_channel['entrants'][self.srl_nick]['time']
                     srl_race_game = race_channel['game']['name']
                     srl_race_category = race_channel['goal']
-                    srl_race_id = race_channel['id']
+                    srl_race_id = '#srl-' + race_channel['id']
                     srl_race_status = race_channel['statetext']
                     srl_race_time = race_channel['time']
                     srl_race_link = 'http://www.speedrunslive.com/race/?id={}'.format(srl_race_id)
                     srl_live_entrants = []
-                    for j in srl_race_entrants:
-                        if self.is_live(j):
-                            srl_live_entrants.append(j)
+                    live_decoded = self.api_caller('https://api.twitch.tv/kraken/streams?channel=' + ','.join(srl_race_entrants))
+                    for j in live_decoded['streams']:
+                        srl_live_entrants.append(j['channel']['name'])
                     multitwitch_link = 'www.multitwitch.tv/'
                     response = 'Game: {}, Category: {}, Status: {}'.format(srl_race_game, srl_race_category, srl_race_status)
                     if srl_race_time > 0:
                         if user_time > 0:
                             m, s = divmod(user_time, 60)
                             h, m = divmod(m, 60)
+                            if s < 10:
+                                s = '0' + str(s)
                             response += ', Finished {} with a time of {}:{}:{}'.format(user_place, h, m, s)
                         else:
                             real_time = (int(time.time()) - srl_race_time)
                             m, s = divmod(real_time, 60)
                             h, m = divmod(m, 60)
+                            if s < 10:
+                                s = '0' + str(s)
                             response += ', RaceBot Time: {}:{}:{}'.format(h, m, s)
-                    if len(srl_live_entrants) <= 6 and len(srl_live_entrants) != 0:
+                    live_length = len(srl_live_entrants)
+                    if srl_race_status == 'Complete':
+                        response += '.  Join in channel {}'.format(srl_race_id)
+                    elif live_length <= 6 and live_length != 0 and live_length != 1:
                         for j in srl_live_entrants:
                             multitwitch_link += j + '/'
                         response += '.  {}'.format(multitwitch_link)
                     else:
-                        response += '.  {}'.format(srl_race_id)
+                        response += '.  Join in channel {}'.format(srl_race_id)
                     self.twitch_send_message(response, '!race')
                     return
 
     def youtube_video_check(self, message):
+        #Links the title and uploader of the youtube video in chat
         url_values = urlparse.parse_qs(urlparse.urlparse(message).query)
         try:
             youtube_video_id = url_values['v'][0]
@@ -485,6 +527,7 @@ class SaltyBot:
             return
 
     def youtube_short_check(self, message):
+        #Links the title and uploader of the youtube video in chat
         video_id = message.split('youtu.be/')[-1]
         
         if ' ' in video_id:
@@ -506,6 +549,8 @@ class SaltyBot:
             return
 
     def create_vote(self, message):
+        #Used to create polls in chat
+        #Creating polls requires a pretty specific syntax, but makes it easy to have different types
         if self.votes:
             self.twitch_send_message('There is already an open poll, please close it first.')
             return
@@ -542,6 +587,7 @@ class SaltyBot:
         self.twitch_send_message(response)
 
     def end_vote(self):
+        #Ending a current poll will display the winning vote of the poll and close it
         if self.votes:
             try:
                 winning_key = max(self.votes['options'], key = self.votes['options'].get)
@@ -554,6 +600,7 @@ class SaltyBot:
             self.twitch_send_message(response)
 
     def vote(self, message, sender):
+        #Allows viewers to vote in a poll created by mods/broadcaster
         try:
             sender_bet = message.split('vote ')[-1]
             sender_bet = sender_bet.lower()
@@ -596,6 +643,7 @@ class SaltyBot:
         self.twitch_send_message(response, '!vote')
 
     def check_votes(self, message):
+        #Allows you to see what is currently winning in the current poll w/o closing it
         if not self.votes:
             return
 
@@ -610,6 +658,7 @@ class SaltyBot:
         self.twitch_send_message(response, '!vote')
 
     def text_review(self, message, last_r = 'none'):
+        #Review puns/quotes through chat (spammy as shit), better implementation will be available in the website
         try:
             text_type = message.split(' ')[1]
             if text_type != 'quote' and text_type != 'pun':
@@ -691,6 +740,8 @@ class SaltyBot:
                 self.twitch_send_message('Nothing {}s to review.'.format(text_type))
 
     def lister(self, message, s_list):
+        #Add user to blacklist or remove them from it
+        #Blacklist will cause bot to completely ignore the blacklisted user
         user = message.split(' ')[-1]
         worked = False
         if s_list == 'black':
@@ -711,6 +762,7 @@ class SaltyBot:
             self.twitch_send_message('{} has been {}listed'.format(user, s_list))
 
     def custom_command(self, message, sender):
+        #Shitty custom command implementation, 
         space_count = message.count(' ')
         if space_count == 0:
             command = message
@@ -742,6 +794,7 @@ class SaltyBot:
         self.command_times['custom']['lasts'][location] = int(time.time())
     
     def lol_masteries(self):
+        #Pull the summoners active mastery page and adds up what trees they are in
         summoner_name = self.config_data['general']['summoner_name']
         name_url = 'https://na.api.pvp.net/api/lol/na/v1.4/summoner/by-name/{}?api_key={}'.format(summoner_name, lol_api_key)
         name_data = self.api_caller(name_url)
@@ -769,6 +822,8 @@ class SaltyBot:
         self.twitch_send_message(response, '!masteries')
 
     def lol_runes(self):
+        #Pulls the summoners active rune page, adds up all the values, and spits it out in chat
+        #Most likely will not work for the double pen runes, never tested with those
         with open("runes.json",'r') as fin:
             runes_list = json.load(fin, encoding="utf-8")
 
@@ -851,8 +906,9 @@ class SaltyBot:
         self.twitch_send_message(response, '!runes')
 
     def twitch_run(self):
-        self.twitch_connect()
-        self.twitch_commands()
+        #Main loop for running the bot
+        self.twitch_connect()   #Connect to IRC
+        self.twitch_commands()  #Get all the commands in order
 
         while self.running:
 
@@ -875,6 +931,7 @@ class SaltyBot:
                 self.action = ''
 
             if self.action == 'PRIVMSG':
+                #Messages to channel are PRIVMSG's, just aimed at a channel instead of a user
                 self.messages_received += 1
                 self.sender = self.message.split(':')[1].split('!')[0]
                 self.message_body = ':'.join(self.message.split(':')[2:])
@@ -883,19 +940,23 @@ class SaltyBot:
                 if self.message_body.find('­') != -1:
                     continue
 
+                #Link osu maps
                 if self.message_body.find('osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
                     if self.game == 'osu!':
                         if self.config_data['general']['osu']['song_link']:
                             self.osu_link()
 
+                #Link youtube info
                 if self.message_body.find('youtube.com/watch?v=') != -1:
                     if self.config_data['general']['youtube_link']:
                         self.youtube_video_check(self.message_body)
 
+                #Link youtube info
                 if self.message_body.find('youtu.be/') != -1:
                     if self.config_data['general']['youtube_link']:
                         self.youtube_short_check(self.message_body)
 
+                #Toobou trigger check
                 try:
                     if self.message_body.lower().find(self.t_trig) != -1:
                         if 'toobou' in self.command_times:
@@ -909,8 +970,11 @@ class SaltyBot:
                     print self.sender + ": " + self.message_body
 
                 if self.message_body.startswith('!'):
+                    #Dirty work around to allow text to have more !'s in them
                     find_ex = self.message_body.count('!')
                     self.message_body = self.message_body.split('!')[-find_ex]
+
+                    #All commands go here
 
                     if self.config_data['general']['custom']['on'] == True:
                         self.custom_command(self.message_body, self.sender)
@@ -1002,8 +1066,12 @@ class SaltyBot:
                     elif self.message_body == 'crash' and self.sender in SUPER_USER:
                         self.running = False
 
+                    #Commands end heree
 
             elif self.action == 'MODE':
+                #Adds users to the mod list
+                #Currently never removes them, I assume if they got modded once they are trust worthy to use all commands
+                #TMI also loves to drop mod status, which would break mod commands if it removed them as it de-op'd
                 if '+o ' in self.message:
                     admin = self.message.split('+o ')[-1]
                     if admin not in self.admin_file:
@@ -1012,6 +1080,7 @@ class SaltyBot:
                         with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
                             self.admin_file = data_file.read()
 
+            #Check the social down here, so that even if ping happens social can go off if the minimum time/messages are met but no one is talking
             if self.config_data['general']['social']['text'] != '':
                 if self.messages_received >= (self.command_times['social']['messages'] + self.command_times['social']['messages_last']):
                     if int(time.time()) >= ((self.command_times['social']['time'] * 60) + self.command_times['social']['time_last']):
@@ -1038,6 +1107,7 @@ class SaltyBot:
 #@@BOT END@@#
 
 def osu_send_message(osu_irc_pass, osu_nick, request_url):
+    #Send the message through IRC to the person playing osu
     irc = socket.socket()
     osu_host = 'irc.ppy.sh'
     osu_port = 6667
@@ -1048,6 +1118,7 @@ def osu_send_message(osu_irc_pass, osu_nick, request_url):
     irc.close()
 
 def twitch_info_grab(bots):
+    #Grab all the people using the bots data in one call using stream objects
     with open(Config_file_name, 'r') as data_file:
         channel_configs = json.load(data_file, encoding = 'utf-8')
 
@@ -1107,13 +1178,12 @@ def automated_main_loop(bot_dict):
                     if debuging == True:
                         print '#' + bot_name + ' Had to restart'
                     restart_bot(bot_inst.channel, bot_dict)
-                    
+
             twitch_info_grab(bot_dict)
             
             time_to_check = int(time.time()) + 60
 
 
-#@@ BOT MAIN THREAD STRING COMMUNICATION SECTION @@#
 def main():
 
 
@@ -1130,7 +1200,7 @@ def main():
         # Look up bot and start the thread
         bot_dict[channel_name].start()
         
-        # Wait because of twitch connect settings
+        # Wait for twitch limit
         time.sleep(2)
 
     otherT = threading.Thread(target = automated_main_loop, args = [bot_dict])
