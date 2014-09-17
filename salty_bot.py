@@ -35,7 +35,7 @@ youtube_api_key = general_config['general_info']['youtube_api_key']
 osu_api_key = general_config['general_info']['osu']['osu_api_key']
 osu_irc_nick = general_config['general_info']['osu']['osu_irc_nick']
 osu_irc_pass = general_config['general_info']['osu']['osu_irc_pass']
-SUPER_USER = general_config['general_info']['super_user']
+SUPER_USER = general_config['general_info']['super_users']
 
 games = general_config['games']
 
@@ -392,7 +392,7 @@ class SaltyBot:
         if best_time == 0:
             return
 
-        m, s = divmod(splits['time'], 60)
+        m, s = divmod(float(splits['time']), 60)
         h, m = divmod(m, 60)
         if s < 10:
             s = round(s, 2)
@@ -456,7 +456,7 @@ class SaltyBot:
                 if self.srl_nick in races:
                     race_channel = i
                     for values in race_channel['entrants'].values():
-                        if values['statetext'] == 'Ready':
+                        if values['statetext'] == 'Ready' or values['statetext'] == 'Entered':
                             if values['twitch'] != '':
                                 srl_race_entrants.append(values['twitch'])
                     user = i['entrants'][self.srl_nick]['twitch']
@@ -1040,18 +1040,20 @@ class SaltyBot:
                     elif self.message_body.startswith('review') and self.sender == self.channel:
                         self.text_review(self.message_body)
 
-                    elif self.message_body == 'runes' and self.sender in SUPER_USER:
-                        self.lol_runes()
+                    elif self.message_body == 'runes':
+                        if self.game == 'league of legends':
+                            self.lol_runes()
 
-                    elif self.message_body == "masteries" and self.sender in SUPER_USER:
-                        self.lol_masteries()
+                    elif self.message_body == "masteries":
+                        if self.game == 'league of legends':
+                            self.lol_masteries()
                         
                     elif self.message_body == 'commands':
                         if self.time_check('!commands'):
                             self.live_commands()
 
                     elif self.message_body == 'bot_info':
-                        self.twitch_send_message('Powered by SaltyBot, for a full list of commands check out www.github.com/batedurgonnadie/salty_bot')
+                        self.twitch_send_message('Powered by SaltyBot, for a full list of commands check out https://github.com/batedurgonnadie/salty_bot#readme')
 
                     elif self.message_body == 'restart' and self.sender in SUPER_USER:
                         if self.__DB:
@@ -1135,8 +1137,10 @@ def twitch_info_grab(bots):
                 for k, v in bots.iteritems():
                     if i['channel']['name'] == k:
                         v.twitch_info(i['channel']['game'], i['channel']['status'])
+        else:
+            pass
     except:
-        pass
+        print "Getting twitch data threw an exception"
 
 def restart_bot(bot_name, bot_dict):
     with open(Config_file_name, 'r') as data_file:
@@ -1147,7 +1151,8 @@ def restart_bot(bot_name, bot_dict):
     bot_dict[bot_name].start()
         
 def automated_main_loop(bot_dict):
-    time_to_check = 0
+    time_to_check_twitch = 0
+    time_to_restart = int(time.time()) + 86400 #Restart every 24 hours
     while True:
         try:
             register = interface.get(False) #returns [type of call, bot id that called it] therefore TYPE, DATA
@@ -1168,7 +1173,7 @@ def automated_main_loop(bot_dict):
         except:
             pass
 
-        if time_to_check < int(time.time()):
+        if time_to_check_twitch < int(time.time()):
             for bot_name, bot_inst in bot_dict.items():
                 if bot_inst.thread.isAlive():
                     if debuging == True:
@@ -1181,7 +1186,15 @@ def automated_main_loop(bot_dict):
 
             twitch_info_grab(bot_dict)
             
-            time_to_check = int(time.time()) + 60
+            time_to_check_twitch = int(time.time()) + 60
+
+        if time_to_restart < int(time.time()):
+            print "Restarting all bots"
+            for bot_name, bot_inst in bot_dict.items():
+                restart_bot(bot_inst.channel, bot_dict)
+                time.sleep(2)
+
+            time_to_restart = int(time.time()) + 86400
 
 
 def main():
