@@ -1191,6 +1191,8 @@ def automated_main_loop(bot_dict):
         if time_to_restart < int(time.time()):
             print "Restarting all bots"
             for bot_name, bot_inst in bot_dict.items():
+                bot_inst.running == False
+                bot_inst.thread.join()
                 restart_bot(bot_inst.channel, bot_dict)
                 time.sleep(2)
 
