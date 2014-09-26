@@ -35,6 +35,7 @@ youtube_api_key = general_config['general_info']['youtube_api_key']
 osu_api_key = general_config['general_info']['osu']['osu_api_key']
 osu_irc_nick = general_config['general_info']['osu']['osu_irc_nick']
 osu_irc_pass = general_config['general_info']['osu']['osu_irc_pass']
+#super users are used for bot breaking commands and beta commands
 SUPER_USER = general_config['general_info']['super_users']
 
 games = general_config['games']
@@ -93,6 +94,7 @@ class SaltyBot:
                     #Jack around to make irc.twitch.tv not break everything if it denies connection
                     self.irc.connect((i, self.port))
                     connected = True
+                    self.connected_server = i
                     break
                 except:
                     print '{} failed to connect to {}'.format(self.channel, i)
@@ -157,6 +159,16 @@ class SaltyBot:
     def live_commands(self):
         #Remove any commands that would not currently work when !commands is used
         active_commands = self.commands
+
+        if self.game == None:
+            try:
+                active_commands.remove('!wr')
+            except:
+                pass
+            try:
+                active_commands.remove('!leaderboard')
+            except:
+                pass
         
         if self.game != 'osu!':
             try:
@@ -246,7 +258,7 @@ class SaltyBot:
     def api_caller(self, url, headers = None):
         #Call JSON api's for other functions
         if self.__DB:
-            print url, "Headers: ", headers
+            print url
 
         data = requests.get(url, headers = headers)
         if data.status_code == 200:
@@ -467,7 +479,7 @@ class SaltyBot:
                     srl_race_id = '#srl-' + race_channel['id']
                     srl_race_status = race_channel['statetext']
                     srl_race_time = race_channel['time']
-                    srl_race_link = 'http://www.speedrunslive.com/race/?id={}'.format(srl_race_id)
+                    srl_race_link = 'http://www.speedrunslive.com/race/?id={}'.format(race_channel['id'])
                     srl_live_entrants = []
                     live_decoded = self.api_caller('https://api.twitch.tv/kraken/streams?channel=' + ','.join(srl_race_entrants))
                     for j in live_decoded['streams']:
@@ -490,13 +502,13 @@ class SaltyBot:
                             response += ', RaceBot Time: {}:{}:{}'.format(h, m, s)
                     live_length = len(srl_live_entrants)
                     if srl_race_status == 'Complete':
-                        response += '.  Join in channel {}'.format(srl_race_id)
+                        response += '.  {}'.format(srl_race_link)
                     elif live_length <= 6 and live_length != 0 and live_length != 1:
                         for j in srl_live_entrants:
                             multitwitch_link += j + '/'
                         response += '.  {}'.format(multitwitch_link)
                     else:
-                        response += '.  Join in channel {}'.format(srl_race_id)
+                        response += '.  {}'.format(srl_race_link)
                     self.twitch_send_message(response, '!race')
                     return
 
