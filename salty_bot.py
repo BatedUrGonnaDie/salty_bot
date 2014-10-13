@@ -158,7 +158,7 @@ class SaltyBot:
 
     def live_commands(self):
         #Remove any commands that would not currently work when !commands is used
-        active_commands = self.commands
+        active_commands = list(self.commands)
 
         if self.game == None:
             try:
@@ -227,7 +227,7 @@ class SaltyBot:
         #Will only return True if it's off cooldown and the user has the priviledges for the command
         if command in self.commands:
             if command in self.admin_commands:
-                if self.sender in self.admin_file:
+                if self.sender in self.admin_file or self.sender == self.channel:
                     return True
                 else:
                     return False
@@ -406,8 +406,8 @@ class SaltyBot:
 
         m, s = divmod(float(splits['time']), 60)
         h, m = divmod(m, 60)
+        s = round(s, 2)
         if s < 10:
-            s = round(s, 2)
             s = '0' + str(s)
         time = '{}:{}:{}'.format(int(h), int(m), s)
         link = 'http://splits.io/{}'.format(splits['nick'])
@@ -470,7 +470,7 @@ class SaltyBot:
                     for values in race_channel['entrants'].values():
                         if values['statetext'] == 'Ready' or values['statetext'] == 'Entered':
                             if values['twitch'] != '':
-                                srl_race_entrants.append(values['twitch'])
+                                srl_race_entrants.append(values['twitch'].lower())
                     user = i['entrants'][self.srl_nick]['twitch']
                     user_place = race_channel['entrants'][self.srl_nick]['place']
                     user_time = race_channel['entrants'][self.srl_nick]['time']
@@ -1127,7 +1127,7 @@ def osu_send_message(osu_irc_pass, osu_nick, request_url):
     osu_port = 6667
     irc.connect((osu_host, osu_port))
     irc.sendall('PASS {}\r\n'.format(osu_irc_pass))
-    irc.sendall('NICK {}}\r\n'.format(osu_irc_nick))
+    irc.sendall('NICK {}\r\n'.format(osu_irc_nick))
     irc.sendall('PRIVMSG {} :{}\r\n'.format(osu_nick, request_url))
     irc.close()
 
