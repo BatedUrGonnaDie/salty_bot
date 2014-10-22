@@ -4,6 +4,7 @@
 import os
 import sys
 import time
+from datetime import datetime
 import random
 import threading
 import socket
@@ -59,6 +60,7 @@ class SaltyBot:
         #Initialize game/title so it doesn't crash because using stream objects
         self.game = ''
         self.title = ''
+        self.time_start = ''
         self.commands = []
         self.admin_commands = []
         self.blacklist = []
@@ -78,10 +80,11 @@ class SaltyBot:
 
         return self.thread
 
-    def twitch_info(self, game, title):
+    def twitch_info(self, game, title, live):
         #Game can be nil (None) if left blank on Twitch, therefore check is neccessary
         self.game = game.lower() if game != None else game
         self.title = title.lower() if game != None else title
+        self.time_live = live
 
     def twitch_connect(self):
         #Connect to Twitch IRC
@@ -119,6 +122,9 @@ class SaltyBot:
 
         if '!vote' in self.commands:
             self.votes = {}
+
+        if '!highlight' in self.commands:
+            self.to_highlight = []
 
         if '!quote' in self.commands or '!pun' in self.commands:
             self.review = {}
@@ -257,8 +263,7 @@ class SaltyBot:
 
     def api_caller(self, url, headers = None):
         #Call JSON api's for other functions
-        if self.__DB:
-            print url
+        if self.__DB: print url
 
         data = requests.get(url, headers = headers)
         if data.status_code == 200:
@@ -729,7 +734,7 @@ class SaltyBot:
             for text in self.review[text_type]:
                 if text[1] == 0:
                     if last_r == 'none':
-                        self.twitch_send_message('Please use "approve" or "reject" for reviewing.')
+                        self.twitch_send_message('Please use "!review {} <approve/reject>" for reviewing.'.format(text_type))
                         return
                     elif last_r == 'repeat':
                         self.twitch_send_message('New {} added, {}: '.format(text_type, text_type) + text[0])
@@ -790,19 +795,9 @@ class SaltyBot:
         if int(time.time()) - self.command_times['custom']['lasts'][location] <= self.command_times['custom']['limits'][location]:
             return
         output = self.command_times['custom']['outputs'][location]
-        if output.count(' ') != 0:
-            out_a = output.split(' ')
-        else:
-            out_a = [output]
-        for i in out_a:
-            if i == '$sender':
-                t_location = out_a.index(i)
-                out_a[t_location] = sender
-            elif i == '$param':
-                t_location = out_a.index(i)
-                out_a[t_location] = param
-        out_final = ' '.join(out_a)
-        self.twitch_send_message(out_final)
+        output = re.sub('\$sender', sender, output)
+        output = re.sub('\$param', param, output)
+        self.twitch_send_message(output)
         self.command_times['custom']['lasts'][location] = int(time.time())
     
     def lol_masteries(self):
@@ -836,8 +831,8 @@ class SaltyBot:
     def lol_runes(self):
         #Pulls the summoners active rune page, adds up all the values, and spits it out in chat
         #Most likely will not work for the double pen runes, never tested with those
-        with open("runes.json",'r') as fin:
-            runes_list = json.load(fin, encoding="utf-8")
+        with open("runes.json",'r') as rune_file:
+            runes_list = json.load(rune_file, encoding="utf-8")
 
         version_url = 'https://na.api.pvp.net/api/lol/static-data/na/v1.2/realm?api_key=' + lol_api_key
         version = self.api_caller(version_url)
@@ -916,6 +911,29 @@ class SaltyBot:
         response = 'Page: {} | Stats: '.format(active_page['name'])
         response += ' | '.join(runes_final)
         self.twitch_send_message(response, '!runes')
+
+    def get_time_objects(self):
+        current_time = time.gmtime()
+        current_object = datetime(current_time[0], current_time[1], current_time[2], current_time[3], current_time[4], current_time[5])
+
+        time_live_split = re.split("(\d{4}?)-(\d{2}?)-(\d{2}?)T(\d{2}?):(\d{2}?):(\d{2}?)Z", self.time_start)[1:-1]
+        for i, s in enumerate(time_live_split):
+            time_live_split[i] = int(s)
+        live_object = datetime(time_live_split[0], time_live_split[1], time_live_split[2], time_live_split[3], time_live_split[4], time_live_split[5])
+        
+        return current_object, live_object
+
+    def uptime(self):
+        if self.time_start != '':
+            current_object, live_object = self.get_time_objects()
+            total_live_object = current_object - live_object
+            self.twitch_send_message("The current stream has been live for " + str(total_live_object), '!uptime')
+
+    def highlight(self, message):
+        current_object, live_object = self.get_time_objects()
+        time_to_highlight = current_object - live_object
+        self.to_highlight.append({'time' : time_to_highlight, 'desc' : message.split('highlight ')[-1]})
+
 
     def twitch_run(self):
         #Main loop for running the bot
@@ -1054,11 +1072,21 @@ class SaltyBot:
 
                     elif self.message_body == 'runes':
                         if self.game == 'league of legends':
-                            self.lol_runes()
+                            if self.command_check('!runes'):
+                                self.lol_runes()
 
                     elif self.message_body == "masteries":
                         if self.game == 'league of legends':
-                            self.lol_masteries()
+                            if self.command_check('!masteries'):
+                                self.lol_masteries()
+
+                    elif self.message_body == "uptime":
+                        if self.command_check('!uptime'):
+                            self.uptime()
+
+                    elif self.message_body.startswith('highlight'):
+                        if self.command_check('!highlight'):
+                            self.highlight(self.message_body)
                         
                     elif self.message_body == 'commands':
                         if self.time_check('!commands'):
@@ -1138,7 +1166,7 @@ def twitch_info_grab(bots):
 
     channels = channel_configs.keys()
     url = 'https://api.twitch.tv/kraken/streams?channel=' + ','.join(channels)
-    headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
+    headers = {'Accept' : 'application/vnd.twitchtv.v3+json'}
     try:
         data = requests.get(url, headers = headers)
         if data.status_code == 200:
@@ -1164,7 +1192,7 @@ def restart_bot(bot_name, bot_dict):
         
 def automated_main_loop(bot_dict):
     time_to_check_twitch = 0
-    time_to_restart = int(time.time()) + 86400 #Restart every 24 hours
+    #time_to_restart = int(time.time()) + 86400 #Restart every 24 hours
     while True:
         try:
             register = interface.get(False) #returns [type of call, bot id that called it] therefore TYPE, DATA
@@ -1200,15 +1228,15 @@ def automated_main_loop(bot_dict):
             
             time_to_check_twitch = int(time.time()) + 60
 
-        if time_to_restart < int(time.time()):
-            print "Restarting all bots"
-            for bot_name, bot_inst in bot_dict.items():
-                bot_inst.running == False
-                bot_inst.thread.join()
-                restart_bot(bot_inst.channel, bot_dict)
-                time.sleep(2)
+        # if time_to_restart < int(time.time()):
+        #     print "Restarting all bots"
+        #     for bot_name, bot_inst in bot_dict.items():
+        #         bot_inst.running == False
+        #         bot_inst.thread.join()
+        #         restart_bot(bot_inst.channel, bot_dict)
+        #         time.sleep(2)
 
-            time_to_restart = int(time.time()) + 86400
+        #     time_to_restart = int(time.time()) + 86400
 
 
 def main():
