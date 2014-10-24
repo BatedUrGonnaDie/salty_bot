@@ -1,0 +1,70 @@
+{
+    "games": {                                      //general rule for these is categories have a name and a time
+        "luigi's mansion": {                        //make sure to have a leaderboard key and link as well
+            "categories": {                         //can have as many categories as one desires
+                "100%": "1:15:42 by Veman3000", 
+                "any%": "59:18 by Veman3000"
+            }, 
+            "leaderboard": "http://bombch.us/FBZ"
+        }, 
+        "mario kart 8": {
+            "categories": {
+                "32 track": "1:23:28 by Kivicious"
+            }, 
+            "leaderboard": "http://bombch.us/ley"
+        }, 
+        "sonic adventure 2: battle": {
+            "categories": {
+                "180 emblem": "9:42:56 by Talon2461", 
+                "dark story": "36:29 by Talon2461", 
+                "hero story": "36:05 by Talon2461"
+            }, 
+            "leaderboard": "http://bombch.us/lpM"
+        }, 
+        "sonic adventure dx: director's cut": {
+            "categories": {
+                "": ""
+            }, 
+            "leaderboard": "http://bombch.us/obS"
+        }, 
+        "super mario 3d world": {
+            "categories": {
+                "100%": "9:34:41 by Downiebrownie111", 
+                "380 stars": "4:18:03 by Okikurume", 
+                "any%": "1:46:09 by Downiebrownie111"
+            }, 
+            "leaderboard": "http://bombch.us/Qpv"
+        }, 
+        "super mario 64": {
+            "categories": {
+                "120 star": "1:43:22 by Siglemic (VC)", 
+                "16 star": "15:46 by Alex (VC)", 
+                "70 star": "48:28 by Siglemic (V)"
+            }, 
+            "leaderboard": "http://marioruns.com/leaderboards/"
+        }, 
+        "super mario sunshine": {
+            "categories": {
+                "120 shine": "3:22:29 by Stelzig", 
+                "79 shine": "2:32:15 by トーボウ", 
+                "96 shine": "2:49:00 by トーボウ", 
+                "any%": "1:19:09 by トーボウ"
+            }, 
+            "leaderboard": "http://bombch.us/Gw"
+        }
+    }, 
+    "general_info": {
+        "lol_api_key": "add lol api key from riot games api", 
+        "osu": {
+            "osu_api_key": "add osu api key here", 
+            "osu_irc_nick": "put account to send the messages from song_link from", 
+            "osu_irc_pass": "pass for irc must be obtained through the website, not the normal pass for the account"
+        }, 
+        "super_users": [            //users that have access to dev commands or stuff that will break the bot
+            "batedurgonnadie",      //note this does not mean they can use special commands or bypass mod commands
+            "bomb_mask", 
+            "glacials"
+        ], 
+        "youtube_api_key": "add youtube api key here for video linking in chat"
+    }
+}
