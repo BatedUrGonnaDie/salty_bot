@@ -1,0 +1,115 @@
+//Live config file should just be "config.json"
+//"limit" can be any integer in seconds
+//"on" and "admin" are booleans denoting if the command is active and if you need mod to use it
+
+{
+    "batedurgonnadie": {
+        "commands": {
+            "!addpun": {
+                "admin": false, 
+                "limit": 0, 
+                "on": true
+            }, 
+            "!addquote": {
+                "admin": false, 
+                "limit": 0, 
+                "on": true
+            }, 
+            "!commands": {
+                "admin": false, 
+                "limit": 10, 
+                "on": true
+            }, 
+            "!leaderboard": {
+                "admin": false, 
+                "limit": 30, 
+                "on": true
+            }, 
+            "!masteries": {
+                "admin": false, 
+                "limit": 30, 
+                "on": true
+            }, 
+            "!pun": {
+                "admin": false, 
+                "limit": 15, 
+                "on": true
+            }, 
+            "!quote": {
+                "admin": false, 
+                "limit": 15, 
+                "on": true
+            }, 
+            "!race": {
+                "admin": false, 
+                "limit": 30, 
+                "on": true
+            }, 
+            "!rank": {
+                "admin": false, 
+                "limit": 30, 
+                "on": true
+            }, 
+            "!runes": {
+                "admin": false, 
+                "limit": 30, 
+                "on": true
+            }, 
+            "!song": {
+                "admin": false, 
+                "limit": 30, 
+                "on": true
+            }, 
+            "!splits": {
+                "admin": false, 
+                "limit": 60, 
+                "on": false
+            }, 
+            "!uptime": {
+                "admin": false, 
+                "limit": 30, 
+                "on": true
+            }, 
+            "!vote": {
+                "admin": false, 
+                "limit": 2, 
+                "on": true
+            }, 
+            "!wr": {
+                "admin": false, 
+                "limit": 30, 
+                "on": true
+            }
+        }, 
+        "general": {
+            "channel": "batedurgonnadie",       //chanel to join
+            "custom": {                         //custom commands, takes first argument in each array to build a command
+                "admins": [], 
+                "limits": [], 
+                "on": true, 
+                "output": [], 
+                "triggers": []
+            }, 
+            "osu": {                            //only needed if song_link is true or "!rank" is active
+                "osu_nick": "batedurgonnadie", 
+                "song_link": true
+            }, 
+            "social": {                         //used to auto-send text to chat
+                "messages": 0, 
+                "text": "", 
+                "time": 0
+            }, 
+            "srl_nick": "BatedUrGonnaDie",      //only used for "!races"
+            "summoner_name": "batedurgonnadie", //only used for "!runes" and "!masteries"
+            "toobou": {
+                "insult": "I think you mean トーボウ, #learnmoonrunes", 
+                "limit": 120, 
+                "on": true, 
+                "trigger": "toobou"
+            }, 
+            "twitch_nick": "thesaltybot",       //bot will join channel with this nick
+            "twitch_oauth": "oauth:xxxxxxxxxxxxxxxxxxxxxx",     //this oauth needs to be the bots oauth
+            "youtube_link": true
+        }
+    }
+}
