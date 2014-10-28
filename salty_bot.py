@@ -14,9 +14,9 @@ import urlparse
 import Queue as Q
 import re
 
-debuging = False
+debuging = True
 Config_file_name = 'dConfig.json' if debuging else 'config.json'
-#Config_file_name = 'config.json'
+Config_file_name = 'config.json'
 
 RESTART = "<restart>"
 STOP = "<stop program>"
@@ -84,7 +84,7 @@ class SaltyBot:
         #Game can be nil (None) if left blank on Twitch, therefore check is neccessary
         self.game = game.lower() if game != None else game
         self.title = title.lower() if game != None else title
-        self.time_live = live
+        self.time_start = live
 
     def twitch_connect(self):
         #Connect to Twitch IRC
@@ -1176,7 +1176,7 @@ def twitch_info_grab(bots):
             for i in data_decode['streams']:
                 for k, v in bots.iteritems():
                     if i['channel']['name'] == k:
-                        v.twitch_info(i['channel']['game'], i['channel']['status'])
+                        v.twitch_info(i['channel']['game'], i['channel']['status'],i["created_at"])
         else:
             pass
     except:
@@ -1217,7 +1217,8 @@ def automated_main_loop(bot_dict):
             for bot_name, bot_inst in bot_dict.items():
                 if bot_inst.thread.isAlive():
                     if debuging == True:
-                        print '#' + bot_name  + ': Is still running'
+                        #print '#' + bot_name  + ': Is still running'
+                        pass
                     
                 else:
                     if debuging == True:
