@@ -222,6 +222,7 @@ class SaltyBot:
             response = "Please stop trying to abuse me BibleThump"
             command = ''
         to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
+        if self.__DB == True: print '#' + self.channel + ' ' + self.twitch_nick + ": " + response
         self.irc.sendall(to_send)
 
         if command != '':
@@ -997,7 +998,7 @@ class SaltyBot:
                     pass
 
                 if self.__DB:
-                    print self.sender + ": " + self.message_body
+                    print '#' + self.channel + ' ' + self.sender + ": " + self.message_body
 
                 if self.message_body.startswith('!'):
                     #Dirty work around to allow text to have more !'s in them
