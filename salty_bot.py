@@ -222,10 +222,13 @@ class SaltyBot:
             response = "Please stop trying to abuse me BibleThump"
             command = ''
         to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
-        # if self.__DB == True: 
-        #     db_message = '#' + self.channel.encode('utf-8') + ' ' + self.twitch_nick.encode('utf-8') + ": " + response.encode('utf-8')
-        #     db_message = db_message.encode('utf-8')
-        #     print db_message
+        if self.__DB == True: 
+            try:
+                db_message = '#' + self.channel.encode('utf-8') + ' ' + self.twitch_nick.encode('utf-8') + ": " + response.encode('utf-8')
+                db_message = db_message.encode('utf-8')
+                print db_message
+            except:
+                print("Message contained unicode, could not display in terminal\n\n")
         self.irc.sendall(to_send)
 
         if command != '':
