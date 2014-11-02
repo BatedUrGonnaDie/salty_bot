@@ -209,6 +209,7 @@ class SaltyBot:
             self.twitch_send_message(command_string, '!commands')
 
     def twitch_send_message(self, response, command = ''):
+
         #Sending any message to chat goes through this function
         try:
             response = response.encode('utf-8')
@@ -224,7 +225,7 @@ class SaltyBot:
         to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
         if self.__DB == True: 
             try:
-                db_message = '#' + self.channel.encode('utf-8') + ' ' + self.twitch_nick.encode('utf-8') + ": " + response.encode('utf-8')
+                db_message = '#' + self.channel + ' ' + self.twitch_nick + ": " + response.encode('utf-8')
                 db_message = db_message.encode('utf-8')
                 print db_message
             except:
@@ -1004,7 +1005,9 @@ class SaltyBot:
                     pass
 
                 if self.__DB:
-                    print '#' + self.channel + ' ' + self.sender + ": " + self.message_body
+                    print '#' + self.channel + ' ' + self.sender + ": " + self.message_body.decode('utf-8')
+                    
+
 
                 if self.message_body.startswith('!'):
                     #Dirty work around to allow text to have more !'s in them
