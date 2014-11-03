@@ -225,7 +225,7 @@ class SaltyBot:
         to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
         if self.__DB == True: 
             try:
-                db_message = '#' + self.channel + ' ' + self.twitch_nick + ": " + response.encode('utf-8')
+                db_message = '#' + self.channel + ' ' + self.twitch_nick + ": " + response.decode('utf-8')
                 db_message = db_message.encode('utf-8')
                 print db_message
             except:
