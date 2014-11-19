@@ -52,7 +52,7 @@ class SaltyBot:
         self.irc = socket.socket()
         self.irc.settimeout(600)
         #This is for previous issues with irc.twitch.tv failing to connect, will only use backups if neccessary
-        self.twitch_host = ['irc.twitch.tv', '199.9.252.120', '199.9.250.229', '199.9.250.239', '199.9.252.28']
+        self.twitch_host = "irc.twitch.tv"
         self.port = 6667
         self.twitch_nick = config_data['general']['twitch_nick']
         self.twitch_oauth = config_data['general']['twitch_oauth']
@@ -92,19 +92,15 @@ class SaltyBot:
         if self.__DB:
             print "Joining {} as {}.\n".format(self.channel,self.twitch_nick)
         while connected == False:
-            for i in self.twitch_host:
-                try:
-                    #Jack around to make irc.twitch.tv not break everything if it denies connection
-                    self.irc.connect((i, self.port))
-                    connected = True
-                    self.connected_server = i
-                    break
-                except:
-                    print '{} failed to connect to {}'.format(self.channel, i)
-                    time.sleep(5)
-                    continue
+            try:
+                #If it fails to conenct try again in 60 seconds
+                self.irc.connect((twitch_host, self.port))
+                connected = True
+                break
+            except:
+                print '{} failed to connect.'.format(self.channel)
             if connected == False:
-                time.sleep(30)
+                time.sleep(60)
 
         self.irc.sendall('PASS {}\r\n'.format(self.twitch_oauth))
         self.irc.sendall('NICK {}\r\n'.format(self.twitch_nick))
@@ -960,7 +956,7 @@ class SaltyBot:
             except socket.timeout:
                 print self.channel + ' timed out.'
                 self.irc.close()
-                self.twitch_run()
+                self.admin(RESTART)
 
             self.message = self.message.split('\r\n')[0]
             self.message = self.message.strip()
