@@ -966,12 +966,15 @@ class SaltyBot:
             self.message = self.message.strip()
 
             if self.message.startswith('PING'):
+                print self.message
                 self.irc.sendall('PONG tmi.twitch.tv\r\n')
+                print "PONG tmi.twitch.tv"
 
             try:
                 self.action = self.message.split(' ')[1]
             except:
                 self.action = ''
+                print self.message
 
             if self.action == 'PRIVMSG':
                 #Messages to channel are PRIVMSG's, just aimed at a channel instead of a user
