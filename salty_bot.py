@@ -969,8 +969,9 @@ class SaltyBot:
             try:
                 self.action = self.message.split(' ')[1]
             except:
+                if self.message:
+                    print self.message
                 self.action = ''
-                print self.message
 
             if self.action == 'PRIVMSG':
                 #Messages to channel are PRIVMSG's, just aimed at a channel instead of a user
