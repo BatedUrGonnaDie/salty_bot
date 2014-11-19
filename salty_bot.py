@@ -94,7 +94,7 @@ class SaltyBot:
         while connected == False:
             try:
                 #If it fails to conenct try again in 60 seconds
-                self.irc.connect((twitch_host, self.port))
+                self.irc.connect((self.twitch_host, self.port))
                 connected = True
                 break
             except:
