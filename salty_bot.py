@@ -968,7 +968,7 @@ class SaltyBot:
                 self.action = self.message.split(' ')[1]
             except:
                 if self.message:
-                    print datetime.now().strftime('[%Y-%m-%d %H:%M:%S:]'),self.message
+                    print datetime.now().strftime('[%Y-%m-%d %H:%M:%S ]'),self.message
                 self.action = ''
 
             if self.action == 'PRIVMSG':
@@ -1008,7 +1008,7 @@ class SaltyBot:
                     pass
 
                 if self.__DB:
-                    print datetime.now().strftime('[%Y-%m-%d %H:%M:%S]:') + '#' + self.channel + ' ' + self.sender + ": " + self.message_body.decode('utf-8')
+                    print datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ') + '#' + self.channel + ' ' + self.sender + ": " + self.message_body.decode('utf-8')
                     
 
 
