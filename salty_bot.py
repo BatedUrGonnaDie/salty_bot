@@ -962,9 +962,7 @@ class SaltyBot:
             self.message = self.message.strip()
 
             if self.message.startswith('PING'):
-                print datetime.now().strftime('[%Y-%m-%d %H:%M:%S]:'),self.message
                 self.irc.sendall('PONG tmi.twitch.tv\r\n')
-                print datetime.now().strftime('[%Y-%m-%d %H:%M:%S]:'),"PONG tmi.twitch.tv"
 
             try:
                 self.action = self.message.split(' ')[1]
