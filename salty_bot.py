@@ -958,7 +958,7 @@ class SaltyBot:
                 self.irc.close()
                 self.admin(RESTART)
 
-            if len(self.message) == 0:
+            if self.message == "":
                 self.admin(RESTART)
 
             self.message = self.message.split('\r\n')[0]
