@@ -225,7 +225,7 @@ class SaltyBot:
             try:
                 db_message = '#' + self.channel + ' ' + self.twitch_nick + ": " + response.decode('utf-8')
                 db_message = db_message.encode('utf-8')
-                print datetime.now().strftime('[%Y-%m-%d %H:%M:%S]:'),db_message
+                print datetime.now().strftime('[%Y-%m-%d %H:%M:%S] '),db_message
             except:
                 print("Message contained unicode, could not display in terminal\n\n")
 
@@ -294,7 +294,7 @@ class SaltyBot:
         pp_rank = data_decode['pp_rank']
 
         response = '{} is level {} with {}% accuracy and ranked {}.'.format(username, level, accuracy, pp_rank)
-        self.t5witch_send_message(response)
+        self.twitch_send_message(response)
 
     def osu_link(self):
         #Sends beatmaps linked in chat to you on osu, and then displays the map title and author in chat
@@ -957,6 +957,9 @@ class SaltyBot:
                 print self.channel + ' timed out.'
                 self.irc.close()
                 self.admin(RESTART)
+                
+            if self.message == '':
+                self.admin(RESTART)
 
             self.message = self.message.split('\r\n')[0]
             self.message = self.message.strip()
@@ -968,7 +971,7 @@ class SaltyBot:
                 self.action = self.message.split(' ')[1]
             except:
                 if self.message:
-                    print datetime.now().strftime('[%Y-%m-%d %H:%M:%S ]'),self.message
+                    print datetime.now().strftime('[%Y-%m-%d %H:%M:%S] '),self.message
                 self.action = ''
 
             if self.action == 'PRIVMSG':
