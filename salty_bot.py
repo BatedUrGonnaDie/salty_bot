@@ -957,8 +957,8 @@ class SaltyBot:
                 print self.channel + ' timed out.'
                 self.irc.close()
                 self.admin(RESTART)
-                
-            if self.message == '':
+
+            if len(self.message) == 0:
                 self.admin(RESTART)
 
             self.message = self.message.split('\r\n')[0]
