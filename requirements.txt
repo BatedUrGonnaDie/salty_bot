@@ -1,0 +1,2 @@
+salty_bot
+requests>=2.3.0
