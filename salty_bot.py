@@ -355,11 +355,19 @@ class SaltyBot:
         #Slowest of all the commands (sometimes ~6 seconds)
         #Get user JSON object from splits.io, find the categories, find the fastest run for said category, and then link
         #it in chat for people to see the time/download
-        url = 'http://splits.io/u/{}.json'.format(self.channel)
-        user = self.api_caller(url)
-        if user == False:
-            self.twitch_send_message("I'm sorry, I could not retrieve the user from splits.io")
+        url = "https://splits.io/api/v2/users?name=" + self.channel
+        user_id = self.api_caller(url)
+        if user_id == False:
+            self.twitch_send_message("I'm sorry, I could not retrieve the user id from splits.io")
             return
+        user_id = user_id['id']
+        url = "https://splits.io/api/v1/runs?user_id=" + user_id
+        user = self.api_caller(url)
+        if not user:
+            self.twitch_send_message("I'm sorry, I could not retrieve the users runs from splits.io")
+            return
+
+        user = user['runs']
         if len(user) == 0:
             self.twitch_send_message("I'm sorry, but {} has no runs on splits.io".format(self.channel), "!splits")
             return
@@ -956,10 +964,11 @@ class SaltyBot:
             except socket.timeout:
                 print self.channel + ' timed out.'
                 self.irc.close()
-                self.admin(RESTART)
+                self.twitch_run()
 
             if self.message == "":
-                self.admin(RESTART)
+                self.irc.close()
+                self.twitch_run()
 
             self.message = self.message.split('\r\n')[0]
             self.message = self.message.strip()
