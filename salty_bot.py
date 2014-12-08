@@ -225,7 +225,7 @@ class SaltyBot:
             try:
                 db_message = '#' + self.channel + ' ' + self.twitch_nick + ": " + response.decode('utf-8')
                 db_message = db_message.encode('utf-8')
-                print datetime.now().strftime('[%Y-%m-%d %H:%M:%S] '),db_message
+                print datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ') + db_message
             except:
                 print("Message contained unicode, could not display in terminal\n\n")
 
@@ -968,7 +968,9 @@ class SaltyBot:
 
             if self.message == "":
                 self.irc.close()
-                self.twitch_run()
+                self.__init__(self.config_data, debuging)
+                self.twitch_connect()
+                self.twitch_commands()
 
             self.message = self.message.split('\r\n')[0]
             self.message = self.message.strip()
