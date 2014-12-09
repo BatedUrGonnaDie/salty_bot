@@ -963,14 +963,11 @@ class SaltyBot:
                 self.message = self.irc.recv(4096)
             except socket.timeout:
                 print self.channel + ' timed out.'
-                self.irc.close()
-                self.twitch_run()
+                self.socket_error_restart()
 
             if self.message == "":
-                self.irc.close()
-                self.__init__(self.config_data, debuging)
-                self.twitch_connect()
-                self.twitch_commands()
+                print self.channel + ' returned empty string.'
+                self.socket_error_restart()
 
             self.message = self.message.split('\r\n')[0]
             self.message = self.message.strip()
@@ -1159,6 +1156,12 @@ class SaltyBot:
 
         print "thread stoped"
     #@@ ADMIN FUNCTIONS @@#
+
+    def socket_error_restart(self):
+        self.irc.close()
+        self.irc = socket.socket()
+        self.twitch_connect()
+        return
 
     def admin(self, call='<test>'):
         if call == RESTART:
