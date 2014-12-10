@@ -993,7 +993,7 @@ class SaltyBot:
                     continue
 
                 #Link osu maps
-                if self.message_body.find('osu.ppy.sh/b/') != -1 or self.message_body.find('http://osu.ppy.sh/s/') != -1:
+                if self.message_body.find('osu.ppy.sh/b/') != -1 or self.message_body.find('osu.ppy.sh/s/') != -1:
                     if self.game == 'osu!':
                         if self.config_data['general']['osu']['song_link']:
                             self.osu_link()
