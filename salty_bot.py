@@ -355,7 +355,7 @@ class SaltyBot:
         if user_id == False:
             self.twitch_send_message("I'm sorry, I could not retrieve the user id from splits.io")
             return
-        user_id = user_id['id']
+        user_id = user_id[0]['id']
         url = "https://splits.io/api/v2/runs?user_id=" + user_id
         user = self.api_caller(url)
         if not user:
@@ -393,8 +393,6 @@ class SaltyBot:
                 except:
                     pass
             if len(categories_in_title) > 1:
-                print categories_in_title
-                print category_position
                 current_cat = min(category_position, key = category_position.get)
             else:
                 current_cat = categories_in_title[0]
@@ -792,7 +790,7 @@ class SaltyBot:
         output = re.sub('\$param', param, output)
         self.twitch_send_message(output)
         self.command_times['custom']['lasts'][location] = int(time.time())
-    
+
     def lol_masteries(self):
         #Pull the summoners active mastery page and adds up what trees they are in
         summoner_name = self.config_data['general']['summoner_name']
@@ -955,7 +953,7 @@ class SaltyBot:
                 self.action = self.message.split(' ')[1]
             except:
                 if self.message:
-                    print datetime.now().strftime('[%Y-%m-%d %H:%M:%S] '),self.message
+                    print datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ') + self.message
                 self.action = ''
 
             if self.action == 'PRIVMSG':
