@@ -51,13 +51,11 @@ class SaltyBot:
         self.config_data = config_data
         self.irc = socket.socket()
         self.irc.settimeout(600)
-        #This is for previous issues with irc.twitch.tv failing to connect, will only use backups if neccessary
         self.twitch_host = "irc.twitch.tv"
         self.port = 6667
         self.twitch_nick = config_data['general']['twitch_nick']
         self.twitch_oauth = config_data['general']['twitch_oauth']
         self.channel = config_data['general']['channel']
-        #Initialize game/title so it doesn't crash because using stream objects
         self.game = ''
         self.title = ''
         self.time_start = ''
@@ -88,19 +86,16 @@ class SaltyBot:
 
     def twitch_connect(self):
         #Connect to Twitch IRC
-        connected = False
         if self.__DB:
             print "Joining {} as {}.\n".format(self.channel,self.twitch_nick)
-        while connected == False:
-            try:
-                #If it fails to conenct try again in 60 seconds
-                self.irc.connect((self.twitch_host, self.port))
-                connected = True
-                break
-            except:
-                print '{} failed to connect.'.format(self.channel)
-            if connected == False:
-                time.sleep(60)
+        try:
+            #If it fails to conenct try again in 60 seconds
+            self.irc.connect((self.twitch_host, self.port))
+        except:
+            print '{} failed to connect.'.format(self.channel)
+            print sys.exc_info()[0]
+            time.sleep(60)
+            self.twitch_connect()
 
         self.irc.sendall('PASS {}\r\n'.format(self.twitch_oauth))
         self.irc.sendall('NICK {}\r\n'.format(self.twitch_nick))
@@ -142,7 +137,7 @@ class SaltyBot:
         if self.config_data['general']['toobou']['on'] == True:
             self.t_trig = self.config_data['general']['toobou']['trigger']
             self.command_times['toobou'] = {'trigger' : self.config_data['general']['toobou']['trigger'],
-                                            'last' : int(time.time()),
+                                            'last' : 0,
                                             'limit' : self.config_data['general']['toobou']['limit']}
 
         if self.config_data['general']['custom']['on'] == True:
@@ -361,7 +356,7 @@ class SaltyBot:
             self.twitch_send_message("I'm sorry, I could not retrieve the user id from splits.io")
             return
         user_id = user_id['id']
-        url = "https://splits.io/api/v1/runs?user_id=" + user_id
+        url = "https://splits.io/api/v2/runs?user_id=" + user_id
         user = self.api_caller(url)
         if not user:
             self.twitch_send_message("I'm sorry, I could not retrieve the users runs from splits.io")
@@ -428,7 +423,7 @@ class SaltyBot:
         if s < 10:
             s = '0' + str(s)
         time = '{}:{}:{}'.format(int(h), int(m), s)
-        link = 'http://splits.io/{}'.format(splits['nick'])
+        link = 'https://splits.io/{}'.format(splits['path'])
         response = 'Splits with a time of {} {}'.format(time, link)
         self.twitch_send_message(response, '!splits')
 
@@ -530,38 +525,19 @@ class SaltyBot:
                     self.twitch_send_message(response, '!race')
                     return
 
-    def youtube_video_check(self, message):
+    def youtube_video_check(self, vid_type, message):
         #Links the title and uploader of the youtube video in chat
-        url_values = urlparse.parse_qs(urlparse.urlparse(message).query)
-        try:
-            youtube_video_id = url_values['v'][0]
-        except:
-            return
-
-        if ' ' in youtube_video_id:
-            youtube_video_id = youtube_video_id.split(' ')[0]
-
-        url = 'https://www.googleapis.com/youtube/v3/videos?part=snippet&id={}&key={}'.format(youtube_video_id, youtube_api_key)
-        data_decode = self.api_caller(url)
-
-        if data_decode == False:
-            return
-
-        if len(data_decode['items']) != 0:
-            data_items = data_decode['items']
-            youtube_title = data_items[0]['snippet']['title'].encode("utf-8")
-            youtube_uploader = data_items[0]['snippet']['channelTitle'].encode("utf-8")
-            response = '{} uploaded by {}'.format(youtube_title, youtube_uploader)
-            self.twitch_send_message(response)
+        if vid_type == 'short':
+            video_id = message.split('youtu.be/')[-1]
         else:
-            return
+            url_values = urlparse.parse_qs(urlparse.urlparse(message).query)
+            try:
+                video_id = url_values['v'][0]
+            except:
+                return
 
-    def youtube_short_check(self, message):
-        #Links the title and uploader of the youtube video in chat
-        video_id = message.split('youtu.be/')[-1]
-        
         if ' ' in video_id:
-            video_id.split(' ')[0]
+            video_id = video_id.split(' ')[0]
 
         url = 'https://www.googleapis.com/youtube/v3/videos?part=snippet&id={}&key={}'.format(video_id, youtube_api_key)
         data_decode = self.api_caller(url)
@@ -1001,12 +977,12 @@ class SaltyBot:
                 #Link youtube info
                 if self.message_body.find('youtube.com/watch?v=') != -1:
                     if self.config_data['general']['youtube_link']:
-                        self.youtube_video_check(self.message_body)
+                        self.youtube_video_check('long', self.message_body)
 
                 #Link youtube info
                 if self.message_body.find('youtu.be/') != -1:
                     if self.config_data['general']['youtube_link']:
-                        self.youtube_short_check(self.message_body)
+                        self.youtube_video_check('short', self.message_body)
 
                 #Toobou trigger check
                 try:
@@ -1138,6 +1114,7 @@ class SaltyBot:
                 #Adds users to the mod list
                 #Currently never removes them, I assume if they got modded once they are trust worthy to use all commands
                 #TMI also loves to drop mod status, which would break mod commands if it removed them as it de-op'd
+                # THIS IS GOING TO BE RE-WRITTEN FOR IRCv3 ONCE IT IS RELEASED
                 if '+o ' in self.message:
                     admin = self.message.split('+o ')[-1]
                     if admin not in self.admin_file:
@@ -1206,7 +1183,7 @@ def twitch_info_grab(bots):
             for i in data_decode['streams']:
                 for k, v in bots.iteritems():
                     if i['channel']['name'] == k:
-                        v.twitch_info(i['channel']['game'], i['channel']['status'],i["created_at"])
+                        v.twitch_info(i['channel']['game'], i['channel']['status'], i["created_at"])
         else:
             pass
     except:
@@ -1259,19 +1236,7 @@ def automated_main_loop(bot_dict):
             
             time_to_check_twitch = int(time.time()) + 60
 
-        # if time_to_restart < int(time.time()):
-        #     print "Restarting all bots"
-        #     for bot_name, bot_inst in bot_dict.items():
-        #         bot_inst.running == False
-        #         bot_inst.thread.join()
-        #         restart_bot(bot_inst.channel, bot_dict)
-        #         time.sleep(2)
-
-        #     time_to_restart = int(time.time()) + 86400
-
-
 def main():
-
 
     bot_dict = {} #Bot instances go in here
     channels_dict = {} #All channels go in here from the JSON file
