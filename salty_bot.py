@@ -923,7 +923,15 @@ class SaltyBot:
     def highlight(self, message):
         current_object, live_object = self.get_time_objects()
         time_to_highlight = current_object - live_object
-        self.to_highlight.append({'time' : time_to_highlight, 'desc' : message.split('highlight ')[-1]})
+        self.to_highlight.append({'time' : time_to_highlight, 'desc' : message.split('highlight')[-1]})
+        self.twitch_send_message("Current time added to the highlight queue. Use !show_highlight to view them.")
+
+    def show_highlight(self):
+        msg = "Things you need to highligh: "
+        for i in self.to_highlight:
+            msg += i['time'] + " @ " + i['desc'] + ", "
+        self.twitch_send_message(msg[:-2])
+        self.to_highlight = []
 
 
     def twitch_run(self):
@@ -1085,6 +1093,9 @@ class SaltyBot:
                     elif self.message_body.startswith('highlight'):
                         if self.command_check('!highlight'):
                             self.highlight(self.message_body)
+
+                    elif self.message_body == "show_highlight":
+                        self.show_highlight()
                         
                     elif self.message_body == 'commands':
                         if self.time_check('!commands'):
@@ -1148,7 +1159,7 @@ class SaltyBot:
             interface.put([call,self])
     
     def stop(self):
-        self.irc.sendall("QUIT")
+        self.irc.sendall("QUIT\r\n")
         self.irc.close()
         
 #@@BOT END@@#
@@ -1186,6 +1197,7 @@ def twitch_info_grab(bots):
             pass
     except:
         print "Getting twitch data threw an exception"
+        print sys.exc_info()[0]
 
 def restart_bot(bot_name, bot_dict):
     with open(Config_file_name, 'r') as data_file:
