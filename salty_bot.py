@@ -39,8 +39,6 @@ osu_irc_pass = general_config['general_info']['osu']['osu_irc_pass']
 #super users are used for bot breaking commands and beta commands
 SUPER_USER = general_config['general_info']['super_users']
 
-games = general_config['games']
-
 class SaltyBot:
 
     running = True
@@ -157,7 +155,7 @@ class SaltyBot:
         #Remove any commands that would not currently work when !commands is used
         active_commands = list(self.commands)
 
-        if self.game == None:
+        if self.game == '':
             try:
                 active_commands.remove('!wr')
             except:
@@ -265,11 +263,15 @@ class SaltyBot:
         #Call JSON api's for other functions
         if self.__DB: print url
 
-        data = requests.get(url, headers = headers)
-        if data.status_code == 200:
-            data_decode = data.json()
-            return data_decode
-        else:
+        try:
+            data = requests.get(url, headers = headers)
+            if data.status_code == 200:
+                data_decode = data.json()
+                return data_decode
+            else:
+                return False
+        except:
+            print sys.exc_info()[0]
             return False
 
     def osu_api_user(self):
@@ -291,6 +293,13 @@ class SaltyBot:
         response = '{} is level {} with {}% accuracy and ranked {}.'.format(username, level, accuracy, pp_rank)
         self.twitch_send_message(response)
 
+    def osu_song_display(self):
+        osu_nick = self.config_data['general']['osu']['osu_nick']
+        url = 'https://leagueofnewbs.com/api/user/{}/songs'.format(self.channel)
+        data_decode = self.api_caller(url)
+        if data_decode:
+            print data_decode
+
     def osu_link(self):
         #Sends beatmaps linked in chat to you on osu, and then displays the map title and author in chat
         osu_nick = self.config_data['general']['osu']['osu_nick']
@@ -311,43 +320,74 @@ class SaltyBot:
         response = '{} - {}, mapped by {}'.format(data_decode['artist'], data_decode['title'], data_decode['creator'])
         self.twitch_send_message(response)
 
+    def active_category(self, cats_array):
+        categories_in_title = []
+        category_position = {}
+        
+    def format_sr_time(self, f_time):
+        m, s = divmod(float(f_time), 60)
+        h, m = divmod(m, 60)
+        if s < 10:
+            s = '0' + str(s)
+        if m < 10:
+            s = '0' + str(m)
+        time = '{}:{}:{}'.format(int(h), int(m), s)
+        return time
+
     def wr_retrieve(self):
         #Find the categories that are on file in the title, and then if more than one exist pick the one located earliest in the title
         categories_in_title = []
         category_position = {}
-        if self.game in games:
-            for keys in games[self.game]['categories'].keys():
-                if keys in self.title:
-                    categories_in_title.append(keys)
+        url = 'http://www.speedrun.com/api_records.php?game=' + self.game
+        game_records = self.api_caller(url)
+        sr_game = dict(game_records).keys()[0]
+        if game_records == False:
+            self.twitch_send_message("I'm sorry, I couldn't retrieve the game's records from speedrun.com BibleThump", '!wr')
+            return
+        else:
+            if sr_game.lower() == self.game:
+                for i in dict(game_records).itervalues():
+                    for cats in i.keys():
+                        if cats in self.title:
+                            categories_in_title.append(cats)
+            else:
+                return
 
             if len(categories_in_title) == 0:
-                self.twitch_send_message("I'm sorry, but I do not have this category on file.", '!wr')
+                self.twitch_send_message("I'm sorry, but this category does not exist on speedrun.com", '!wr')
                 return
+            elif len(categories_in_title) > 1:
+                categories_in_title = list(set(categories_in_title))
+
             if len(categories_in_title) > 1:
-                for i in categories_in_title:
-                    for j in categories_in_title:
-                        if j == i:
-                            continue
-                        if j in i:
-                            categories_in_title.remove(j)
-                        category_position[j] = self.title.find(j)
-                if len(categories_in_title) > 1:
-                    first_cat = min(category_position, key = category_position.get)
-                    wr = games[self.game]['categories'][first_cat]
-                else:
-                    wr = games[self.game]['categories'][categories_in_title[0]]
+                active_cat = min(category_position, key = category_position.get)
             else:
-                wr = games[self.game]['categories'][categories_in_title[0]]
-            self.twitch_send_message(wr, '!wr')
+                active_cat = categories_in_title[0]
+            cat_record = game_records[sr_game][active_cat]
+            wr_time = self.format_sr_time(cat_record['time'])[:-2]
+            msg = "The current WR is {} by {}.".format(wr_time, cat_record['player'])
+            if cat_record['video']:
+                msg += "  The video can be found here: " + cat_record['video']
+            self.twitch_send_message(msg, '!wr')
 
     def leaderboard_retrieve(self):
         #Retrieve leaderboard for game as set on Twitch
-        if self.game in games:
-            leaderboard = games[self.game]['leaderboard']
-            self.twitch_send_message(leaderboard, '!leaderboard')
+        url = 'http://api.speedrunslive.com/games?search=' + self.game
+        srl_response = self.api_caller(url)
+        if srl_response == False:
+            return
+        else:
+            for i in srl_response['games']:
+                if i['name'].lower() == self.game:
+                    abbrev = i['abbrev']
+                    break
+            try:
+                self.twitch_send_message('http://speedrun.com/' + abbrev, '!leaderboard')
+            except:
+                self.twitch_send_message('It appears that SRL does not have that game in their system.', '!leaderboard')
+
 
     def splits_check(self):
-        #Slowest of all the commands (sometimes ~6 seconds)
         #Get user JSON object from splits.io, find the categories, find the fastest run for said category, and then link
         #it in chat for people to see the time/download
         url = "https://splits.io/api/v2/users?name=" + self.channel
@@ -415,12 +455,7 @@ class SaltyBot:
         if best_time == 0:
             return
 
-        m, s = divmod(float(splits['time']), 60)
-        h, m = divmod(m, 60)
-        s = round(s, 2)
-        if s < 10:
-            s = '0' + str(s)
-        time = '{}:{}:{}'.format(int(h), int(m), s)
+        time = self.format_sr_time(splits['time'])
         link = 'https://splits.io/{}'.format(splits['path'])
         response = 'Splits with a time of {} {}'.format(time, link)
         self.twitch_send_message(response, '!splits')
@@ -927,7 +962,7 @@ class SaltyBot:
         self.twitch_send_message("Current time added to the highlight queue. Use !show_highlight to view them.")
 
     def show_highlight(self):
-        msg = "Things you need to highligh: "
+        msg = "Things you need to highlight: "
         for i in self.to_highlight:
             msg += i['time'] + " @ " + i['desc'] + ", "
         self.twitch_send_message(msg[:-2])
@@ -1022,16 +1057,19 @@ class SaltyBot:
                         self.lister(self.message_body, 'white')
 
                     elif self.message_body.startswith('wr'):
-                        if self.command_check('!wr'):
-                            self.wr_retrieve()
+                        if self.game != '':
+                            if self.command_check('!wr'):
+                                self.wr_retrieve()
 
                     elif self.message_body.startswith('leaderboard'):
-                        if self.command_check('!leaderboard'):
-                                self.leaderboard_retrieve()
+                        if self.game != '':
+                            if self.command_check('!leaderboard'):
+                                    self.leaderboard_retrieve()
 
                     elif self.message_body == 'splits':
-                        if self.command_check('!splits'):
-                            self.splits_check()
+                        if self.game != '':
+                            if self.command_check('!splits'):
+                                self.splits_check()
 
                     elif self.message_body.startswith('addquote'):
                         if self.command_check('!addquote'):
@@ -1053,6 +1091,11 @@ class SaltyBot:
                         if self.game == 'osu!':
                             if self.command_check('!rank'):
                                 self.osu_api_user()
+
+                    elif self.message_body == 'song':
+                        if self.game == 'osu!':
+                            if self.command_check('!song'):
+                                self.osu_song_display()
 
                     elif self.message_body == 'race':
                         if 'race' in self.title or 'races' in self.title or 'racing' in self.title:
