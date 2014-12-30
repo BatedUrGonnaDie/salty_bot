@@ -348,7 +348,7 @@ class SaltyBot:
             if sr_game.lower() == self.game:
                 for i in dict(game_records).itervalues():
                     for cats in i.keys():
-                        if cats in self.title:
+                        if cats.lower() in self.title:
                             categories_in_title.append(cats)
             else:
                 return
@@ -360,6 +360,12 @@ class SaltyBot:
                 categories_in_title = list(set(categories_in_title))
 
             if len(categories_in_title) > 1:
+                for i in categories_in_title:
+                    for j in categories_in_title:
+                        if j in i:
+                            categories_in_title.remove(j)
+                            continue
+                        category_position[j] = self.title.find(j.lower)
                 active_cat = min(category_position, key = category_position.get)
             else:
                 active_cat = categories_in_title[0]
@@ -968,6 +974,8 @@ class SaltyBot:
         self.twitch_send_message(msg[:-2])
         self.to_highlight = []
 
+    def sub_msg(self, msg):
+        pass
 
     def twitch_run(self):
         #Main loop for running the bot
@@ -1009,6 +1017,13 @@ class SaltyBot:
                 if self.message_body.find('­') != -1:
                     continue
 
+                if self.__DB:
+                    print datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ') + '#' + self.channel + ' ' + self.sender + ": " + self.message_body.decode('utf-8')
+
+                #Sub Message
+                if self.sender == 'twitchnotify':
+                    self.sub_msg(self.message)
+
                 #Link osu maps
                 if self.message_body.find('osu.ppy.sh/b/') != -1 or self.message_body.find('osu.ppy.sh/s/') != -1:
                     if self.game == 'osu!':
@@ -1034,12 +1049,7 @@ class SaltyBot:
                                 self.command_times['toobou']['last'] = int(time.time())
                 except:
                     pass
-
-                if self.__DB:
-                    print datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ') + '#' + self.channel + ' ' + self.sender + ": " + self.message_body.decode('utf-8')
                     
-
-
                 if self.message_body.startswith('!'):
                     #Dirty work around to allow text to have more !'s in them
                     find_ex = self.message_body.count('!')
