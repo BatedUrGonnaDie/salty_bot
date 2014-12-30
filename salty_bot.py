@@ -79,6 +79,7 @@ class SaltyBot:
     def twitch_info(self, game, title, live):
         #Game can be nil (None) if left blank on Twitch, therefore check is neccessary
         self.game = game.lower() if game != None else game
+        self.game_normal = game
         self.title = title.lower() if game != None else title
         self.time_start = live
 
@@ -378,20 +379,9 @@ class SaltyBot:
 
     def leaderboard_retrieve(self):
         #Retrieve leaderboard for game as set on Twitch
-        url = 'http://api.speedrunslive.com/games?search=' + self.game
-        srl_response = self.api_caller(url)
-        if srl_response == False:
-            return
-        else:
-            for i in srl_response['games']:
-                if i['name'].lower() == self.game:
-                    abbrev = i['abbrev']
-                    break
-            try:
-                self.twitch_send_message('http://speedrun.com/' + abbrev, '!leaderboard')
-            except:
-                self.twitch_send_message('It appears that SRL does not have that game in their system.', '!leaderboard')
-
+        game_no_spec = re.sub(' ', '_', self.game_normal)
+        url = 'http://speedrun.com/' + game_no_spec
+        self.twitch_send_message(url, '!leaderboard')
 
     def splits_check(self):
         #Get user JSON object from splits.io, find the categories, find the fastest run for said category, and then link
