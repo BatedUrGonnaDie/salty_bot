@@ -2,3 +2,4 @@
 *.json
 *.txt
 json test.py
+textutils/*
