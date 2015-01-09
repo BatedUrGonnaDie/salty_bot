@@ -55,6 +55,7 @@ class db_connection:
                 pass      
 
     def disconnect(self):
+        print "Disconnecting "
         self.cursor.close()
         self.connection.close()
         self.connected = False
@@ -180,7 +181,7 @@ class textutils:
         del self.cursor #Anyway this cleans up the cursor
         
     #Public methods
-    def send_dict(self, txt_obj):
+    def send_dict(self, txt_obj, server_actual_insert=True):
         if "twitch_name" in txt_obj and "user_id" not in txt_obj:
             print "Looking up twitch name..."
             txt_obj["user_id"] = self.get_user_id(txt_obj["twitch_name"])
@@ -193,9 +194,9 @@ class textutils:
 
         #print txt_obj Debug call
 
-        return self.send(txt_obj["user_id"], txt_obj["type"], txt_obj["reviewed"], txt_obj["text"], txt_obj["created_at"], txt_obj["updated_at"])
+        return self.send(txt_obj["user_id"], txt_obj["type"], txt_obj["reviewed"], txt_obj["text"], txt_obj["created_at"], txt_obj["updated_at"], server_actual_insert)
 
-    def send(self, _user_id, text_type, is_reviewed, _text, creation_time, update_time):
+    def send(self, _user_id, text_type, is_reviewed, _text, creation_time, update_time, server_actual_insert=True):
         if text_type not in ["Quote", "Pun"]:
             raise NameError("Text type must be either \"Quote\" or \"Pun\"")
             
@@ -203,8 +204,11 @@ class textutils:
         query_string = """INSERT INTO {_TABLE_NAME}(user_id, type, reviewed, text, created_at, updated_at)
         VALUES (%s,%s,%s,%s,%s,%s)
         """.format(_TABLE_NAME=self.TABLE_NAME)
-        
-        return self.q_cursor.execute(query_string, (_user_id, text_type, is_reviewed, _text, creation_time, update_time))
+
+        if server_actual_insert:
+            return self.q_cursor.execute(query_string, (_user_id, text_type, is_reviewed, _text, creation_time, update_time))
+        else:   
+            return self.q_cursor.cursor_link.mogrify(query_string, (_user_id, text_type, is_reviewed, _text, creation_time, update_time))
         
     def get_user_id(self, twitch_name):
         #TODO
@@ -213,10 +217,10 @@ class textutils:
 
     #Contant utilites section
     ##I made this function to add quotes to the DB if it gets cleared by accadent or on purpose (from files)
-    def INSERT_ALL_QUOTES(self):
+    def INSERT_ALL_TEXTS(self):
         ##Temporary
         files_directory_location = "../textutils/"
-        totalUserDict = {}
+        totalUserDict = []
 
         with self.cursor("""SELECT twitch_name, id FROM users ORDER BY id ASC""") as users_request:
 
@@ -230,73 +234,59 @@ class textutils:
                                 #print fin Debug print
                                 for text_line in fin:
                                     user_dict = {
+                                        'twitch_name': user["twitch_name"],
                                         'user_id'    : user["id"],
                                         'type'       : text_type.title(),
                                         'reviewed'   : (True if switch == "" else False),
-                                        'text'       : unicode(text_line[:-1], errors="ignore"),
+                                        'text'       : unicode(text_line.strip(), errors="ignore"),
                                         'created_at' : datetime.utcnow(),
                                         'updated_at' : datetime.utcnow()
                                     }
-
+                                    user_dict["query_string"] = self.send_dict(user_dict,False)
+                                    totalUserDict.append(user_dict)
                                     #print user_dict
                                     print self.send_dict(user_dict)
+
+
 
                         except IOError, e:
                             print e.filename, "failed to open...\nContinuing...\n"
 
+        with open("../JSON_DOCS/"+"textutils.json", 'w') as fout:
+            fout.write(json.dumps(totalUserDict, default=str))
         self.DB_LINK.commit_changes()
                     
-    def READ_ALL_QUOTES(self, twitch_name = None, format = None, write_to_file=False):
+    def READ_ALL_TEXTS(self, write_to_file=False,  twitch_name = ''):
         files_directory_location = "../JSON_DOCS/"
 
-        tmp = self.cursor()
-        tmp.execute("SELECT * FROM textutils")
+        if twitch_name is not '':
+            with self.cursor("SELECT id FROM users WHERE twitch_name={}".format(twitch_name)) as query:
+                twitch_name = "WHERE user_id={}".format(query.get()["id"])
+        
 
-        if write_to_file:
-            with open(files_directory_location+"textutils.json", 'w') as fout:
-                fout.write(json.dumps(tmp.get_all(), default=str))
+        with self.cursor("SELECT * FROM textutils {}".format(twitch_name)) as tmp:
+            if write_to_file==file:
+                with open(files_directory_location+"textutils.json", 'w') as fout:
+                    fout.write(json.dumps(tmp.get_all(), default=str))
 
-        else:
-            for i in tmp.get_all(True):
-                print i
-                print
+            elif write_to_file==iter:
+                return tmp.get_all(True)
 
-def insertAllQuotes():
-    TotalJsonDict = {}
+            elif write_to_file==list:
+                returnList = []
+                for i in tmp.get_all(True):
+                    returnList.append(i)
 
-    listOfUsers = dbcon.getall("""SELECT twitch_name, id FROM users""")
+                return returnList
 
-    for user in listOfUsers:
-        try:
-            print  "Printing for", user["twitch_name"]
+            else:
+                for i in tmp.get_all(True):
+                    print i
+                    print
 
-            for mtype,ztype,tftype in zip(["quote","quote_review","pun","pun_review"],["Quote","Quote","Pun","Pun"],[True,False,True,False]):
-                usertext = []
-                for line in open("../textutils/{}_{}.txt".format(user["twitch_name"], mtype)):
-                    
-                    user_dict = {
-                        'user_name' : user["twitch_name"],
-                        'user_id' : user['id'],
-                        'type' : ztype,
-                        'reviewed' : tftype,
-                        'text' : unicode(line[:-2], errors='ignore'),
-                        'created_at' : datetime.utcnow(),
-                        'updated_at' : datetime.utcnow()
-                    }
-                    print "{user_name}".format(user_name = user_dict["user_name"])
-                    
-                    usertext.append(user_dict)
-                    table.send_dict(user_dict)
+class settings:
+    pass
 
-
-                    #dbcon.cursor.execute("""INSERT INTO quotes(user_id, type, reviewed, text, created_at, updated_at) VALUES(%s,%s,%s,%s,%s,%s)""",
-                    #with open('tmp.txt','w') as fout:
-                    #    fout.write(str(user['id'], ztype, tftype, unicode(line[:-2], errors='ignore'), datetime.utcnow(),datetime.utcnow()))
-                TotalJsonDict[user['twitch_name']] = usertext
-        except IOError, e:
-            print "Error [",e,"]"
-    with open('tmp.json', 'w') as fout:
-        fout.write(json.dumps(TotalJsonDict, default=str, indent = 4))
-    
 main_connection = db_connection()
 textTable = textutils(main_connection)
+textTable.READ_ALL_TEXTS()
