@@ -466,9 +466,9 @@ class SaltyBot:
 
     def add_text(self, text_type, text_add):
         #Add a pun or quote to the review file
-        print text_add
-        text = text_add[len(text_type):]
+        text = text_add[(len(text_type) + 4):]
         text = text.strip()
+        print text
 
         if text == 'add{}'.format(text_type) or text == 'add{} '.format(text_type):
             self.twitch_send_message('Please input a {}.'.format(text_type))
