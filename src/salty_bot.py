@@ -98,7 +98,15 @@ class SaltyBot:
 
         self.irc.sendall('PASS {}\r\n'.format(self.twitch_oauth))
         self.irc.sendall('NICK {}\r\n'.format(self.twitch_nick))
-        self.irc.sendall('JOIN #{}\r\n'.format(self.channel))
+        initial_msg = self.irc.recv(4096)
+        if initial_msg == ':tmi.twitch.tv NOTICE * :Login unsuccessful\r\n':
+            self.irc.sendall('QUIT\r\n')
+            self.running = False
+            del self
+            print "{} has failed to use legitimate authentication.".format(self.channel)
+        else:
+            self.irc.sendall('JOIN #{}\r\n'.format(self.channel))
+
 
     def twitch_commands(self):
         #Set up all the limits, if its admin, if its on, quote and pun stuff, and anything else that needs setting up for a command
@@ -458,7 +466,9 @@ class SaltyBot:
 
     def add_text(self, text_type, text_add):
         #Add a pun or quote to the review file
+        print text_add
         text = text_add.split('{} '.format(text_type))[-1]
+        text = text.strip()
 
         if text == 'add{}'.format(text_type) or text == 'add{} '.format(text_type):
             self.twitch_send_message('Please input a {}.'.format(text_type))
@@ -750,7 +760,7 @@ class SaltyBot:
                         if line[1] == 1:
                             data_file.write(line[0] + '\n')
                 self.review[text_type] = []
-                self.twitch_send_message('Approved {}s moved to the live file.'.format(text_type))
+                self.twitch_send_message('Approved {}s moved to the live file. Rejected quotes have been discarded.'.format(text_type))
         else:
             if self.review[text_type]:
                 for text in self.review[text_type]:
@@ -1043,7 +1053,7 @@ class SaltyBot:
                 if self.message_body.startswith('!'):
                     #Dirty work around to allow text to have more !'s in them
                     find_ex = self.message_body.count('!')
-                    self.message_body = self.message_body.split('!')[-find_ex]
+                    self.message_body = '!'.join(self.message_body.split('!')[-find_ex:])
 
                     #All commands go here
 
