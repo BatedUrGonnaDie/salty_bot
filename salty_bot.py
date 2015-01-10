@@ -467,7 +467,7 @@ class SaltyBot:
     def add_text(self, text_type, text_add):
         #Add a pun or quote to the review file
         print text_add
-        text = text_add[(text_type.length() - 1):]
+        text = text_add[text_type.length():]
         text = text.strip()
 
         if text == 'add{}'.format(text_type) or text == 'add{} '.format(text_type):
