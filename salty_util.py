@@ -5,7 +5,7 @@ import psycopg2.extras as pge
 import urlparse
 from datetime import datetime
 
-class db_connection:
+class db_connection(object):
     #Class to handle interactions with the DB itself
     #Variable members
     connected = False
@@ -17,7 +17,9 @@ class db_connection:
     #python methods
     def __init__(self):
         urlparse.uses_netloc.append("postgres")
+        #TODO Add keys file URL get
         self.url = urlparse.urlparse("")
+        print self.url
         self.connect()
 
     def __del__(self):
@@ -51,8 +53,11 @@ class db_connection:
                 )
                 self.cursor = self.connection.cursor()
                 self.connected = True
-            except:
-                pass      
+
+            except pg.OperationalError:
+                print "[ERROR] Either there is no url or the database url failed to parse correctally"
+                self.connected = False
+                return True
 
     def disconnect(self):
         print "Disconnecting "
@@ -159,7 +164,7 @@ class salty_cursor:
         else:
             return self.cursor_link.fetchall()
 
-class textutils:
+class textutils(object):
     #Class is intended to be used to send things into the textutils table
     #Constant members
     TABLE_NAME = "textutils"
@@ -193,11 +198,11 @@ class textutils:
                 print "[Error] user \"{}\" not found".format(txt_obj["twitch_name"])
 
         #print txt_obj Debug call
+        #cool python unpacking syntax
+        return self.send(**txt_obj, server_actual_insert)
 
-        return self.send(txt_obj["user_id"], txt_obj["type"], txt_obj["reviewed"], txt_obj["text"], txt_obj["created_at"], txt_obj["updated_at"], server_actual_insert)
-
-    def send(self, _user_id, text_type, is_reviewed, _text, creation_time, update_time, server_actual_insert=True):
-        if text_type not in ["Quote", "Pun"]:
+    def send(self, user_id, type, reviewed, text, created_at, updated_at, server_actual_insert=True):
+        if type not in ["Quote", "Pun"]:
             raise NameError("Text type must be either \"Quote\" or \"Pun\"")
             
 
@@ -206,9 +211,9 @@ class textutils:
         """.format(_TABLE_NAME=self.TABLE_NAME)
 
         if server_actual_insert:
-            return self.q_cursor.execute(query_string, (_user_id, text_type, is_reviewed, _text, creation_time, update_time))
+            return self.q_cursor.execute(query_string, (user_id, type, reviewed, text, created_at, updated_at))
         else:   
-            return self.q_cursor.cursor_link.mogrify(query_string, (_user_id, text_type, is_reviewed, _text, creation_time, update_time))
+            return self.q_cursor.cursor_link.mogrify(query_string, (user_id, type, reviewed, text, created_at, updated_at))
         
     def get_user_id(self, twitch_name):
         #TODO
@@ -217,12 +222,14 @@ class textutils:
 
     #Contant utilites section
     ##I made this function to add quotes to the DB if it gets cleared by accadent or on purpose (from files)
-    def INSERT_ALL_TEXTS(self):
+    def INSERT_ALL_TEXTS(self, user_name=''):
         ##Temporary
         files_directory_location = "../textutils/"
         totalUserDict = []
+        if user_name is not '':
+            user_name = "WHERE twitch_name='{}' ".format(user_name)
 
-        with self.cursor("""SELECT twitch_name, id FROM users ORDER BY id ASC""") as users_request:
+        with self.cursor("""SELECT twitch_name, id FROM users {} ORDER BY id ASC""".format(user_name)) as users_request:
 
             for user in users_request.get_all(True):
                 print user["twitch_name"],"ID is :",user["id"]
@@ -289,4 +296,4 @@ class settings:
 
 main_connection = db_connection()
 textTable = textutils(main_connection)
-textTable.READ_ALL_TEXTS()
+

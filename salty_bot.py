@@ -13,7 +13,7 @@ import json
 import urlparse
 import Queue as Q
 import re
-
+import salty_util
 debuging = True
 Config_file_name = 'dConfig.json' if debuging else 'config.json'
 Config_file_name = 'config.json'
@@ -472,6 +472,10 @@ class SaltyBot:
 
         if text == 'add{}'.format(text_type) or text == 'add{} '.format(text_type):
             self.twitch_send_message('Please input a {}.'.format(text_type))
+        elif True:
+            #DB connection insert into database!
+            
+            #Keeping this else to store quotes incase something really goes wrong
         else:
             if self.sender == self.channel:
                 #If person adding is channel owner, it goes straight to the live file
