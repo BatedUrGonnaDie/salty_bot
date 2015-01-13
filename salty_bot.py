@@ -544,22 +544,16 @@ class SaltyBot:
                     response = 'Game: {}, Category: {}, Status: {}'.format(srl_race_game, srl_race_category, srl_race_status)
                     if srl_race_time > 0:
                         if user_time > 0:
-                            m, s = divmod(user_time, 60)
-                            h, m = divmod(m, 60)
-                            if s < 10:
-                                s = '0' + str(s)
-                            response += ', Finished {} with a time of {}:{}:{}'.format(user_place, h, m, s)
+                            time_formatted = self.format_sr_time(user_time)
+                            response += ', Finished {} with a time of {}'.format(user_place, time_formatted)
                         else:
                             real_time = (int(time.time()) - srl_race_time)
-                            m, s = divmod(real_time, 60)
-                            h, m = divmod(m, 60)
-                            if s < 10:
-                                s = '0' + str(s)
-                            response += ', RaceBot Time: {}:{}:{}'.format(h, m, s)
+                            time_formatted = self.format_sr_time(real_time)
+                            response += ', RaceBot Time: {}'.format(time)
                     live_length = len(srl_live_entrants)
                     if srl_race_status == 'Complete':
                         response += '.  {}'.format(srl_race_link)
-                    elif live_length <= 6 and live_length != 0 and live_length != 1:
+                    elif live_length <= 6 and live_length > 1:
                         for j in srl_live_entrants:
                             multitwitch_link += j + '/'
                         response += '.  {}'.format(multitwitch_link)
