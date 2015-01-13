@@ -349,17 +349,19 @@ class SaltyBot:
         category_position = {}
         url = 'http://www.speedrun.com/api_records.php?game=' + self.game
         game_records = self.api_caller(url)
-        sr_game = dict(game_records).keys()[0]
         if game_records == False:
             self.twitch_send_message("I'm sorry, I couldn't retrieve the game's records from speedrun.com BibleThump", '!wr')
             return
         else:
-            if sr_game.lower() == self.game:
-                for i in dict(game_records).itervalues():
-                    for cats in i.keys():
-                        if cats.lower() in self.title:
-                            categories_in_title.append(cats)
+            sr_game = dict(game_records).keys()[0]
+            if sr_game.lower() == self.game.lower():
+                sr_game_cats = game_records[sr_game].keys()
+                for i in sr_game_cats:
+                    if i.lower() in self.title:
+                        categories_in_title.append(i)
+                categories_in_title = list(set(categories_in_title))
             else:
+                self.twitch_send_message("It appears the game is not on speedrun.com BibleThump", "!wr")
                 return
 
             if len(categories_in_title) == 0:
@@ -369,18 +371,16 @@ class SaltyBot:
                 categories_in_title = list(set(categories_in_title))
 
             if len(categories_in_title) > 1:
-                for i in categories_in_title:
-                    for j in categories_in_title:
-                        if j in i:
-                            categories_in_title.remove(j)
-                            continue
-                        category_position[j] = self.title.find(j.lower)
-                active_cat = min(category_position, key = category_position.get)
+                for j in categories_in_title:
+                    category_position[j] = self.title.find(j.lower())
+                min_value = min(category_position.itervalues())
+                min_keys = [k for k in category_position if category_position[k] == min_value]
+                active_cat = sorted(min_keys, key = len)[-1]
             else:
                 active_cat = categories_in_title[0]
             cat_record = game_records[sr_game][active_cat]
             wr_time = self.format_sr_time(cat_record['time'])[:-2]
-            msg = "The current WR is {} by {}.".format(wr_time, cat_record['player'])
+            msg = "The current world record for {} {} is {} by {}.".format(sr_game, active_cat, wr_time, cat_record['player'])
             if cat_record['video']:
                 msg += "  The video can be found here: " + cat_record['video']
             self.twitch_send_message(msg, '!wr')
