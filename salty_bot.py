@@ -339,7 +339,7 @@ class SaltyBot:
         if s < 10:
             s = '0' + str(s)
         if m < 10:
-            s = '0' + str(m)
+            m = '0' + str(m)
         time = '{}:{}:{}'.format(int(h), int(m), s)
         return time
 
