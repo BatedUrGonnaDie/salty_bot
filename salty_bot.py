@@ -550,7 +550,7 @@ class SaltyBot:
                         else:
                             real_time = (int(time.time()) - srl_race_time)
                             time_formatted = self.format_sr_time(real_time)
-                            response += ', RaceBot Time: {}'.format(time)
+                            response += ', RaceBot Time: {}'.format(time_formatted[:-2])
                     live_length = len(srl_live_entrants)
                     if srl_race_status == 'Complete':
                         response += '.  {}'.format(srl_race_link)
