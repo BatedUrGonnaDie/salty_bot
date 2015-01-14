@@ -337,10 +337,10 @@ class SaltyBot:
         m, s = divmod(float(f_time), 60)
         h, m = divmod(m, 60)
         if s < 10:
-            s = '0' + str(s)
+            s = '0' + str(int(s))
         if m < 10:
-            m = '0' + str(m)
-        time = '{}:{}:{}'.format(int(h), int(m), s)
+            m = '0' + str(int(m))
+        time = '{}:{}:{}'.format(int(h), m, s)
         return time
 
     def wr_retrieve(self):
