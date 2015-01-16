@@ -385,7 +385,7 @@ class SaltyBot:
             else:
                 active_cat = categories_in_title[0]
             cat_record = game_records[sr_game][active_cat]
-            wr_time = self.format_sr_time(cat_record['time'])[:-2]
+            wr_time = self.format_sr_time(cat_record['time'])
             msg = "The current world record for {} {} is {} by {}.".format(sr_game, active_cat, wr_time, cat_record['player'])
             if cat_record['video']:
                 msg += "  The video can be found here: " + cat_record['video']
