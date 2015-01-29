@@ -1,3 +1,4 @@
 salty_bot
 requests>=2.3.0
 psycopg2>=2.5.4
+egenix-mx-base>=3.2.8
