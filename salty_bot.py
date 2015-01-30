@@ -13,7 +13,6 @@ import json
 import urlparse
 import Queue as Q
 import re
-from moon import MoonPhase
 #import salty_util
 debuging = True
 Config_file_name = 'dConfig.json' if debuging else 'config.json'
@@ -255,9 +254,9 @@ class SaltyBot:
         #Return the current time minus the time the command was last used (used to make sure its off cooldown)
         return int(time.time()) - self.command_times[command]['last'] >= self.command_times[command]['limit']
 
-    def is_live(self):
+    def is_live(self, user):
         #Checks to see if the racer on SRL is streaming to twitch and is live to build the multitwitch link
-        url = 'https://api.twitch.tv/kraken/streams/' + self.channel
+        url = 'https://api.twitch.tv/kraken/streams/' + user
         headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
         data_decode = self.api_caller(url, headers)
         if data_decode == False:
@@ -963,12 +962,9 @@ class SaltyBot:
 
     def uptime(self):
         if self.time_start != '':
-            if self.is_live() or (self.channel == 'glacials' and MoonPhase().phase_text != 'full'):
-                current_object, live_object = self.get_time_objects()
-                total_live_object = current_object - live_object
-                self.twitch_send_message("The current stream has been live for " + str(total_live_object), '!uptime')
-            else:
-                self.twitch_send_message("The stream isn't live right now.", '!uptime')
+            current_object, live_object = self.get_time_objects()
+            total_live_object = current_object - live_object
+            self.twitch_send_message("The current stream has been live for " + str(total_live_object), '!uptime')
 
     def highlight(self, message):
         current_object, live_object = self.get_time_objects()
