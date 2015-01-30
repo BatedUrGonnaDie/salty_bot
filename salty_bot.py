@@ -164,6 +164,12 @@ class SaltyBot:
         #Remove any commands that would not currently work when !commands is used
         active_commands = list(self.commands)
 
+        if not self.time_start:
+            try:
+                active_commands.remove('!uptime')
+            except:
+                pass
+
         if self.game == '':
             try:
                 active_commands.remove('!wr')
@@ -961,16 +967,21 @@ class SaltyBot:
         return current_object, live_object
 
     def uptime(self):
-        if self.time_start != '':
+        if not self.time_start:
             current_object, live_object = self.get_time_objects()
             total_live_object = current_object - live_object
             self.twitch_send_message("The current stream has been live for " + str(total_live_object), '!uptime')
+        else:
+            self.twitch_send_message("The stream is not currently live.", '!uptime')
 
     def highlight(self, message):
-        current_object, live_object = self.get_time_objects()
-        time_to_highlight = current_object - live_object
-        self.to_highlight.append({'time' : time_to_highlight, 'desc' : message.split('highlight')[-1]})
-        self.twitch_send_message("Current time added to the highlight queue. Use !show_highlight to view them.")
+        if not self.time_start:
+            current_object, live_object = self.get_time_objects()
+            time_to_highlight = current_object - live_object
+            self.to_highlight.append({'time' : time_to_highlight, 'desc' : message.split('highlight')[-1]})
+            self.twitch_send_message("Current time added to the highlight queue. Use !show_highlight to view them.")
+        else:
+            self.twitch_send_message("Please use the command when the stream is live.")
 
     def show_highlight(self):
         msg = "Things you need to highlight: "
@@ -1149,11 +1160,12 @@ class SaltyBot:
                             self.uptime()
 
                     elif self.message_body.startswith('highlight'):
-                        if self.command_check('!highlight'):
+                        if self.sender == self.channel or self.sender in SUPER_USER:
                             self.highlight(self.message_body)
 
                     elif self.message_body == "show_highlight":
-                        self.show_highlight()
+                        if self.sender == self.channel or self.sender in SUPER_USER:
+                            self.show_highlight()
                         
                     elif self.message_body == 'commands':
                         if self.time_check('!commands'):
@@ -1239,6 +1251,9 @@ def twitch_info_grab(bots):
         channel_configs = json.load(data_file, encoding = 'utf-8')
 
     channels = channel_configs.keys()
+    new_info = {}
+    for i in channels:
+        new_info[i] = {"game" : None, "title" : None, "start" : None}
     url = 'https://api.twitch.tv/kraken/streams?channel=' + ','.join(channels)
     headers = {'Accept' : 'application/vnd.twitchtv.v3+json'}
     try:
@@ -1248,12 +1263,15 @@ def twitch_info_grab(bots):
             if not data_decode['streams']:
                 return
             for i in data_decode['streams']:
-                for k, v in bots.iteritems():
-                    if i['channel']['name'] == k:
-                        v.twitch_info(i['channel']['game'], i['channel']['status'], i["created_at"])
+                new_info[i['channel']['name']] = {"game" : i['channel']['game'],
+                                                "title" : i['channel']['status'],
+                                                "start" : i["created_at"]}
+            for k, v in new_info.iteritems():
+                bots[k].twitch_info(v["game"], v["title"], v["start"])
+
         else:
             pass
-    except:
+    except Exception:
         print "Getting twitch data threw an exception"
         print sys.exc_info()[0]
 
