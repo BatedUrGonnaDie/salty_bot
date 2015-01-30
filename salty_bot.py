@@ -123,6 +123,7 @@ class SaltyBot:
 
         if '!highlight' in self.commands:
             self.to_highlight = []
+        self.to_highlight = []
 
         if '!quote' in self.commands or '!pun' in self.commands:
             self.review = {}
@@ -967,7 +968,7 @@ class SaltyBot:
         return current_object, live_object
 
     def uptime(self):
-        if not self.time_start:
+        if self.time_start != None:
             current_object, live_object = self.get_time_objects()
             total_live_object = current_object - live_object
             self.twitch_send_message("The current stream has been live for " + str(total_live_object), '!uptime')
@@ -975,10 +976,10 @@ class SaltyBot:
             self.twitch_send_message("The stream is not currently live.", '!uptime')
 
     def highlight(self, message):
-        if not self.time_start:
+        if self.time_start != None:
             current_object, live_object = self.get_time_objects()
             time_to_highlight = current_object - live_object
-            self.to_highlight.append({'time' : time_to_highlight, 'desc' : message.split('highlight')[-1]})
+            self.to_highlight.append({'time' : str(time_to_highlight), 'desc' : message.split('highlight')[-1]})
             self.twitch_send_message("Current time added to the highlight queue. Use !show_highlight to view them.")
         else:
             self.twitch_send_message("Please use the command when the stream is live.")
@@ -986,7 +987,7 @@ class SaltyBot:
     def show_highlight(self):
         msg = "Things you need to highlight: "
         for i in self.to_highlight:
-            msg += i['time'] + " @ " + i['desc'] + ", "
+            msg += i['desc'] + " @ " + i['time'] + ", "
         self.twitch_send_message(msg[:-2])
         self.to_highlight = []
 
