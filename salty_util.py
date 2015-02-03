@@ -1,3 +1,5 @@
+#! /usr/bin/env python2.7
+
 import os
 import json
 import psycopg2 as pg

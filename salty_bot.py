@@ -1,4 +1,4 @@
-#! /usr/bin/python2.7
+#! /usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
 import os
@@ -260,20 +260,6 @@ class SaltyBot:
     def time_check(self, command):
         #Return the current time minus the time the command was last used (used to make sure its off cooldown)
         return int(time.time()) - self.command_times[command]['last'] >= self.command_times[command]['limit']
-
-    def is_live(self, user):
-        #Checks to see if the racer on SRL is streaming to twitch and is live to build the multitwitch link
-        url = 'https://api.twitch.tv/kraken/streams/' + user
-        headers = {'Accept' : 'application/vnd.twitchtv.v2+json'}
-        data_decode = self.api_caller(url, headers)
-        if data_decode == False:
-            #If it fails to retrieve a json object, I give benefit of the doubt and say he is streaming
-            return True
-        data_stream = data_decode['stream']
-        if data_stream == None:
-            return False
-        else:
-            return True
 
     def api_caller(self, url, headers = None):
         #Call JSON api's for other functions
@@ -590,7 +576,7 @@ class SaltyBot:
         if ' ' in video_id:
             video_id = video_id.split(' ')[0]
 
-        url = 'https://www.googleapis.com/youtube/v3/videos?part=snippet&id={}&key={}'.format(video_id, youtube_api_key)
+        url = 'https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id={}&key={}'.format(video_id, youtube_api_key)
         data_decode = self.api_caller(url)
 
         if data_decode == False:
@@ -598,9 +584,15 @@ class SaltyBot:
 
         if len(data_decode['items']) != 0:
             data_items = data_decode['items']
-            youtube_title = data_items[0]['snippet']['title'].encode("utf-8")
-            youtube_uploader = data_items[0]['snippet']['channelTitle'].encode("utf-8")
-            response = '{} uploaded by {}'.format(youtube_title, youtube_uploader)
+            video_title = data_items[0]['snippet']['title'].encode("utf-8")
+            uploader = data_items[0]['snippet']['channelTitle'].encode("utf-8")
+            view_count = data_items[0]['statistics']['viewCount']
+            duration = (data_items[0]['contentDetails']['duration'])[2:-1]
+            duration = duration.split('M')
+            if int(duration[1]) < 10:
+                duration[1] = '0' + duration[1]
+            duration = "{}:{}".format(duration[0], duration[1])
+            response = '[{}] {} uploaded by {}. Views: {}'.format(duration, video_title, uploader, view_count)
             self.twitch_send_message(response)
         else:
             return
@@ -649,11 +641,11 @@ class SaltyBot:
             try:
                 winning_key = max(self.votes['options'], key = self.votes['options'].get)
                 winning_value = self.votes['options'][winning_key]
-                self.votes.clear()
                 response = '{} has won with {} votes.'.format(winning_key, str(winning_value))
             except ValueError:
-                self.votes.clear()
                 response = ''
+            finally:
+                self.votes.clear()
             self.twitch_send_message(response)
 
     def vote(self, message, sender):
@@ -1254,7 +1246,7 @@ def twitch_info_grab(bots):
     channels = channel_configs.keys()
     new_info = {}
     for i in channels:
-        new_info[i] = {"game" : None, "title" : None, "start" : None}
+        new_info[i] = {"game" : '', "title" : '', "start" : None}
     url = 'https://api.twitch.tv/kraken/streams?channel=' + ','.join(channels)
     headers = {'Accept' : 'application/vnd.twitchtv.v3+json'}
     try:
