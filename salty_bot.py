@@ -588,10 +588,8 @@ class SaltyBot:
             uploader = data_items[0]['snippet']['channelTitle'].encode("utf-8")
             view_count = data_items[0]['statistics']['viewCount']
             duration = (data_items[0]['contentDetails']['duration'])[2:-1]
-            duration = duration.split('M')
-            if int(duration[1]) < 10:
-                duration[1] = '0' + duration[1]
-            duration = "{}:{}".format(duration[0], duration[1])
+            duration = re.split("[HMS]", duration)
+            duration = ':'.join(duration)
             response = '[{}] {} uploaded by {}. Views: {}'.format(duration, video_title, uploader, view_count)
             self.twitch_send_message(response)
         else:
