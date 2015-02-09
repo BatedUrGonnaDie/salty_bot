@@ -77,10 +77,10 @@ class SaltyBot:
         return self.thread
 
     def twitch_info(self, game, title, live):
-        #Game can be nil (None) if left blank on Twitch, therefore check is neccessary
-        self.game = game.lower() if game != None else game
+        #Game and title need to be a string to work
+        self.game = game.lower()
         self.game_normal = game
-        self.title = title.lower() if game != None else title
+        self.title = title.lower()
         self.time_start = live
 
     def twitch_connect(self):
@@ -90,9 +90,9 @@ class SaltyBot:
         try:
             #If it fails to conenct try again in 60 seconds
             self.irc.connect((self.twitch_host, self.port))
-        except:
+        except Exception, e:
             print '{} failed to connect.'.format(self.channel)
-            print sys.exc_info()[0]
+            print e
             time.sleep(60)
             self.twitch_connect()
 
@@ -213,7 +213,7 @@ class SaltyBot:
         else:
             self.twitch_send_message(command_string, '!commands')
 
-    def twitch_send_message(self, response, command = ''):
+    def twitch_send_message(self, response, command = None):
 
         #Sending any message to chat goes through this function
         try:
@@ -238,7 +238,7 @@ class SaltyBot:
             except:
                 print("Message contained unicode, could not display in terminal\n\n")
 
-        if command != '':
+        if command:
             #Update when the command was last used for rate limiting
             self.command_times[command]['last'] = int(time.time())
 
