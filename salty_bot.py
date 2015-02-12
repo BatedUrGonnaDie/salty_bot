@@ -13,7 +13,11 @@ import json
 import urlparse
 import Queue as Q
 import re
-#import salty_util
+import psycopg2
+import psycopg2.extras
+
+#import salty_config
+
 debuging = True
 Config_file_name = 'dConfig.json' if debuging else 'config.json'
 Config_file_name = 'config.json'
@@ -36,6 +40,7 @@ youtube_api_key = general_config['general_info']['youtube_api_key']
 osu_api_key = general_config['general_info']['osu']['osu_api_key']
 osu_irc_nick = general_config['general_info']['osu']['osu_irc_nick']
 osu_irc_pass = general_config['general_info']['osu']['osu_irc_pass']
+db_url = general_config['general_info']['db_url']
 #super users are used for bot breaking commands and beta commands
 SUPER_USER = general_config['general_info']['super_users']
 
@@ -46,19 +51,23 @@ class SaltyBot:
 
     def __init__(self, config_data, debug = False):
         self.__DB = debug
+        self.session = config_data["session"]
         self.config_data = config_data
         self.irc = socket.socket()
         self.irc.settimeout(600)
         self.twitch_host = "irc.twitch.tv"
-        self.port = 6667
-        self.twitch_nick = config_data['general']['twitch_nick']
-        self.twitch_oauth = config_data['general']['twitch_oauth']
-        self.channel = config_data['general']['channel']
+        self.port = 443
+        self.twitch_nick = config_data["bot_nick"]
+        self.twitch_oauth = config_data["bot_oauth"]
+        if not self.twitch_oauth.startswith("oauth:"):
+            self.twitch_oauth = "oauth:" + self.twitch_oauth
+        self.channel = config_data["twitch_name"]
         self.game = ''
         self.title = ''
         self.time_start = ''
         self.commands = []
         self.admin_commands = []
+        self.custom_commands = []
         self.blacklist = []
         self.t_trig = None
         with open('{}_blacklist.txt'.format(self.channel), 'a+') as data_file:
@@ -66,6 +75,7 @@ class SaltyBot:
         for i in blacklist:
             self.blacklist.append(i.split('\n')[0])
         self.command_times = {}
+        self.custom_command_times = {}
         with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
             self.admin_file = data_file.read()
 
@@ -99,31 +109,25 @@ class SaltyBot:
         self.irc.sendall('PASS {}\r\n'.format(self.twitch_oauth))
         self.irc.sendall('NICK {}\r\n'.format(self.twitch_nick))
         initial_msg = self.irc.recv(4096)
-        if initial_msg == ':tmi.twitch.tv NOTICE * :Login unsuccessful\r\n':
-            self.irc.sendall('QUIT\r\n')
-            self.running = False
-            del self
-            print "{} has failed to use legitimate authentication.".format(self.channel)
-        else:
-            self.irc.sendall('JOIN #{}\r\n'.format(self.channel))
+        self.irc.sendall('JOIN #{}\r\n'.format(self.channel))
 
 
     def twitch_commands(self):
         #Set up all the limits, if its admin, if its on, quote and pun stuff, and anything else that needs setting up for a command
-        for keys in self.config_data['commands']:
-            if self.config_data['commands'][keys]['on']:
-                self.commands.append(keys)
-            if self.config_data['commands'][keys]['admin']:
-                self.admin_commands.append(keys)
-            self.command_times[keys] = {'last' : 0,
-                                        'limit' : self.config_data['commands'][keys]['limit']}
+        for i in self.config_data["commands"]:
+            if i["on"]:
+                curr_com = "!" + i["name"]
+                if i["admin"]:
+                    self.admin_commands.append(curr_com)
+                else:
+                    self.commands.append(curr_com)
+                self.command_times[curr_com] = {"last": 0, "limit": i["limit"]}
 
         if '!vote' in self.commands:
             self.votes = {}
 
         if '!highlight' in self.commands:
             self.to_highlight = []
-        self.to_highlight = []
 
         if '!quote' in self.commands or '!pun' in self.commands:
             self.review = {}
@@ -135,31 +139,23 @@ class SaltyBot:
                 self.review['pun'] = []
                 self.last_text['pun'] = ''
 
-        if self.config_data['general']['social']['text'] != '':
-            self.command_times['social'] = {'time_last' : int(time.time()),
-                                            'messages' : self.config_data['general']['social']['messages'],
-                                            'messages_last' : self.messages_received,
-                                            'time' : self.config_data['general']['social']['time']}
-            self.social_text = self.config_data['general']['social']['text']
+        if self.config_data["social_active"]:
+            self.command_times["social"] = {"time_last": int(time.time()),
+                                            "messages": self.config_data["messages"],
+                                            "messages_last": self.messages_received,
+                                            "time": self.config_data["social_time"]}
+            self.social_text = self.config_data["social_output"]
 
-        if self.config_data['general']['toobou']['on'] == True:
-            self.t_trig = self.config_data['general']['toobou']['trigger']
-            self.command_times['toobou'] = {'trigger' : self.config_data['general']['toobou']['trigger'],
-                                            'last' : 0,
-                                            'limit' : self.config_data['general']['toobou']['limit']}
+        if self.config_data["toobou_active"]:
+            self.t_trig = self.config_data["toobou_trigger"]
+            self.command_times["toobou"] = {"trigger": self.t_trig,
+                                            "last": 0,
+                                            "limit": self.config_data["toobou_limit"]}
 
-        if self.config_data['general']['custom']['on'] == True:
-            self.command_times['custom'] = {'triggers' : self.config_data['general']['custom']['triggers'],
-                                            'outputs' : self.config_data['general']['custom']['output'],
-                                            'admins' : self.config_data['general']['custom']['admins'],
-                                            'limits' : self.config_data['general']['custom']['limits'],
-                                            'lasts' : []}
-            for i in self.command_times['custom']['triggers']:
-                self.command_times['custom']['lasts'].append(0)
-                self.commands.append(('!' + i))
-            for i in self.command_times['custom']['admins']:
-                if self.command_times['custom']['admins'][i] == True:
-                    self.admin_commands.append(self.command_times['custom']['admins'][i])
+        for i in self.config_data["custom_commands"]:
+            if i["on"]:
+                self.custom_commands.append("!{}".format(i["trigger"]))
+                self.custom_command_times["!{}".format(i["trigger"])] = {"last": 0, "limit": i["limit"], "output": i["output"], "admin": i["admin"]}
 
     def live_commands(self):
         #Remove any commands that would not currently work when !commands is used
@@ -220,7 +216,7 @@ class SaltyBot:
             response = response.encode('utf-8')
         except:
             pass
-        if response.startswith('/me'):
+        if response.startswith('/me') or response.startswith('.me'):
             #Grant exception for /me because it can't do any harm
             pass
         elif response.startswith('.') or response.startswith('/'):
@@ -249,13 +245,10 @@ class SaltyBot:
             if command in self.admin_commands:
                 if self.sender in self.admin_file or self.sender == self.channel:
                     return True
-                else:
-                    return False
             else:
                 if self.time_check(command):
                     return True
-                else:
-                    return False
+        return False
 
     def time_check(self, command):
         #Return the current time minus the time the command was last used (used to make sure its off cooldown)
@@ -272,13 +265,13 @@ class SaltyBot:
                 return data_decode
             else:
                 return False
-        except:
-            print sys.exc_info()[0]
+        except Exception, e:
+            print e
             return False
 
     def osu_api_user(self):
         #Perform a simple check of basic user stats on osu
-        osu_nick = self.config_data['general']['osu']['osu_nick']
+        osu_nick = self.config_data["osu_nick"]
         url = 'https://osu.ppy.sh/api/get_user?k={}&u={}'.format(osu_api_key, osu_nick)
         data_decode = self.api_caller(url)
         if data_decode == False:
@@ -296,7 +289,7 @@ class SaltyBot:
         self.twitch_send_message(response)
 
     def osu_song_display(self):
-        osu_nick = self.config_data['general']['osu']['osu_nick']
+        osu_nick = self.config_data["osu_nick"]
         url = 'https://leagueofnewbs.com/api/user/{}/songs'.format(self.channel)
         data_decode = self.api_caller(url)
         if data_decode:
@@ -304,7 +297,7 @@ class SaltyBot:
 
     def osu_link(self):
         #Sends beatmaps linked in chat to you on osu, and then displays the map title and author in chat
-        osu_nick = self.config_data['general']['osu']['osu_nick']
+        osu_nick = self.config_data["osu_nick"]
 
         if self.message_body.find('osu.ppy.sh/s/') != -1:
             osu_number = 's=' + self.message_body.split('osu.ppy.sh/s/')[-1].split(' ')[0]
@@ -467,44 +460,39 @@ class SaltyBot:
         #Add a pun or quote to the review file
         text = text_add[(len(text_type) + 4):]
         text = text.strip()
-        print text
 
         if text == 'add{}'.format(text_type) or text == 'add{} '.format(text_type):
             self.twitch_send_message('Please input a {}.'.format(text_type))
-        elif False:
-            #DB connection insert into database!
-            pass
-        
-            #Keeping this else to store quotes incase something really goes wrong.
         else:
-            if self.sender == self.channel:
-                #If person adding is channel owner, it goes straight to the live file
-                with open('{}_{}.txt'.format(self.channel, text_type), 'a+') as data_file:
-                    data_file.write('{}\n'.format(text))
-                response = 'Your {} has been added.'.format(text_type)
-                self.twitch_send_message(response)
-            else:
-                with open('{}_{}_review.txt'.format(self.channel, text_type), 'a+') as data_file:
-                    data_file.write('{}\n'.format(text))
-                response = 'Your {} has been added for review.'.format(text_type)
-                self.twitch_send_message(response)
+            url = "https://leagueofnewbs.com/api/user/{}/{}s".format(self.channel, text_type)
+            print url
+            data = {"reviewed": 1 if self.sender == self.channel else 0,
+                    "text": text,
+                    "user_id": self.channel}
+            cookies = {"session": self.session}
+            
+            success = requests.post(url, data=data, cookies=cookies)
+            try:
+                success.raise_for_status()
+                reviewed = "to the database" if self.sender == self.channel else "for review"
+                response = "Your {} has been added {}.".format(text_type, reviewed)
+            except:
+                response = "I had problems adding this to the database."
+            self.twitch_send_message(response, "!add" + text_type)
 
     def text_retrieve(self, text_type):
-        #Pull a random pun/quote from the live file
+        #Pull a random pun/quote from the database
         #Will not pull the same one twice in a row
-        with open('{}_{}.txt'.format(self.channel, text_type), 'a+') as data_file:
-            lines_read = data_file.readlines()
-        lines = sum(1 for line in lines_read)
-        if lines == 0:
-            response = 'No {}s have been added.'.format(text_type)
-            self.this_retrieve = response
-        elif lines == 1:
-            response = lines_read[0].encode('utf-8')
-            self.this_retrieve = response
+        text_type_plural = text_type + 's'
+        url = "https://leagueofnewbs.com/api/user/{}/{}?limit=2".format(self.channel, text_type_plural)
+        text_lines = self.api_caller(url)
+        if text_lines:
+            if text_lines[text_type_plural][0]["text"] != self.last_text[text_type]:
+                response = text_lines[text_type_plural][0]["text"]
+            else:
+                response = text_lines[text_type_plural][1]["text"]
         else:
-            response = lines_read[random.randint(0, lines -1 )]
-            while response == self.last_text[text_type]:
-                response = lines_read[random.randint(0, lines - 1)]
+            response = "There was a problem retrieving {}.".format(text_type_plural)
 
         self.twitch_send_message(response, '!' + text_type)
         self.last_text[text_type] = response
@@ -512,7 +500,7 @@ class SaltyBot:
     def srl_race_retrieve(self):
         #Goes through all races, finds the race the user is in, gathers all other users in the race, prints the game, the 
         #category people are racing, the time racebot has, and either a multitwitch link or a SRL race room link
-        self.srl_nick = self.config_data['general']['srl_nick']
+        self.srl_nick = self.config_data["srl_nick"]
         url = 'http://api.speedrunslive.com/races'
         data_decode = self.api_caller(url)
         if data_decode == False:
@@ -821,18 +809,14 @@ class SaltyBot:
         else:
             command = message.split(' ')[0]
             param = message.split(' ')[-space_count]
-        if command not in self.command_times['custom']['triggers']:
+        if command not in self.custom_commands:
             return
-        if command in self.admin_commands and sender not in self.admin_file:
+
+        if self.custom_command_times[command]["admin"] and sender not in self.admin_file:
             return
-        location = self.command_times['custom']['triggers'].index(command)
-        if int(time.time()) - self.command_times['custom']['lasts'][location] <= self.command_times['custom']['limits'][location]:
-            return
-        output = self.command_times['custom']['outputs'][location]
-        output = re.sub('\$sender', sender, output)
-        output = re.sub('\$param', param, output)
-        self.twitch_send_message(output)
-        self.command_times['custom']['lasts'][location] = int(time.time())
+
+        self.twitch_send_message(self.custom_command_times[command]["output"])
+        self.custom_command_times[command]["last"] = int(time.time())
 
     def lol_masteries(self):
         #Pull the summoners active mastery page and adds up what trees they are in
@@ -1034,25 +1018,25 @@ class SaltyBot:
                 #Link osu maps
                 if self.message_body.find('osu.ppy.sh/b/') != -1 or self.message_body.find('osu.ppy.sh/s/') != -1:
                     if self.game == 'osu!':
-                        if self.config_data['general']['osu']['song_link']:
+                        if self.config_data["osu_link"]:
                             self.osu_link()
 
                 #Link youtube info
                 if self.message_body.find('youtube.com/watch?v=') != -1:
-                    if self.config_data['general']['youtube_link']:
+                    if self.config_data["youtube_link"]:
                         self.youtube_video_check('long', self.message_body)
 
                 #Link youtube info
                 if self.message_body.find('youtu.be/') != -1:
-                    if self.config_data['general']['youtube_link']:
+                    if self.config_data["youtube_link"]:
                         self.youtube_video_check('short', self.message_body)
 
                 #Toobou trigger check
                 try:
                     if self.message_body.lower().find(self.t_trig) != -1:
-                        if 'toobou' in self.command_times:
+                        if 'toobou' in self.command_times and self.config_data["toobou_output"] != "":
                             if self.time_check('toobou'):
-                                self.twitch_send_message(self.config_data['general']['toobou']['insult'])
+                                self.twitch_send_message(self.config_data["toobou_output"])
                                 self.command_times['toobou']['last'] = int(time.time())
                 except:
                     pass
@@ -1064,7 +1048,7 @@ class SaltyBot:
 
                     #All commands go here
 
-                    if self.config_data['general']['custom']['on'] == True:
+                    if self.custom_commands:
                         self.custom_command(self.message_body, self.sender)
 
                     if self.message_body.startswith('blacklist ') and self.sender == self.channel:
@@ -1159,11 +1143,8 @@ class SaltyBot:
                             self.show_highlight()
                         
                     elif self.message_body == 'commands':
-                        if self.time_check('!commands'):
+                        if self.command_check("!commands"):
                             self.live_commands()
-
-                    elif self.message_body == 'bot_info':
-                        self.twitch_send_message('Powered by SaltyBot, for a full list of commands check out https://github.com/batedurgonnadie/salty_bot#readme')
 
                     elif self.message_body == 'restart' and self.sender in SUPER_USER:
                         if self.__DB:
@@ -1194,7 +1175,7 @@ class SaltyBot:
                             self.admin_file = data_file.read()
 
             #Check the social down here, so that even if ping happens social can go off if the minimum time/messages are met but no one is talking
-            if self.config_data['general']['social']['text'] != '':
+            if self.config_data["social_active"]:
                 if self.messages_received >= (self.command_times['social']['messages'] + self.command_times['social']['messages_last']):
                     if int(time.time()) >= ((self.command_times['social']['time'] * 60) + self.command_times['social']['time_last']):
                         self.twitch_send_message(self.social_text)
@@ -1238,10 +1219,8 @@ def osu_send_message(osu_irc_pass, osu_nick, request_url):
 
 def twitch_info_grab(bots):
     #Grab all the people using the bots data in one call using stream objects
-    with open(Config_file_name, 'r') as data_file:
-        channel_configs = json.load(data_file, encoding = 'utf-8')
 
-    channels = channel_configs.keys()
+    channels = bots.keys()
     new_info = {}
     for i in channels:
         new_info[i] = {"game" : '', "title" : '', "start" : None}
@@ -1264,20 +1243,17 @@ def twitch_info_grab(bots):
 
         else:
             pass
-    except Exception:
-        print "Getting twitch data threw an exception"
-        print sys.exc_info()[0]
+    except Exception, e:
+        print e
 
-def restart_bot(bot_name, bot_dict):
-    with open(Config_file_name, 'r') as data_file:
-        bot_config = json.load(data_file, encoding = 'utf-8')[bot_name]
-        
+def restart_bot(bot_name, bot_config, bot_dict):
     del bot_dict[bot_name]
-    bot_dict[bot_name] = SaltyBot(bot_config, debuging)
+    bot_dict[bot_name] = SaltyBot(bot_config[bot_name], debuging)
     bot_dict[bot_name].start()
         
-def automated_main_loop(bot_dict):
+def automated_main_loop(bot_dict, config_dict):
     time_to_check_twitch = 0
+
     #time_to_restart = int(time.time()) + 86400 #Restart every 24 hours
     while True:
         try:
@@ -1285,7 +1261,7 @@ def automated_main_loop(bot_dict):
 
             if register: 
                 if register[TYPE] == RESTART:
-                    restart_bot(register[DATA].channel, bot_dict)
+                    restart_bot(register[DATA].channel, config_dict, bot_dict)
 
                 if register[TYPE] == STOP:
                     raise 
@@ -1309,7 +1285,7 @@ def automated_main_loop(bot_dict):
                 else:
                     if debuging == True:
                         print '#' + bot_name + ' Had to restart'
-                    restart_bot(bot_inst.channel, bot_dict)
+                    restart_bot(bot_inst.channel, config_dict, bot_dict)
 
             twitch_info_grab(bot_dict)
             
@@ -1320,20 +1296,65 @@ def main():
     bot_dict = {} #Bot instances go in here
     channels_dict = {} #All channels go in here from the JSON file
     
-    with open(Config_file_name, 'r') as data_file: #Get file data
-        channels_dict = json.load(data_file, encoding = 'utf-8')
+    urlparse.uses_netloc.append("postgres")
+    url = urlparse.urlparse(db_url)
+    db = url.path[1:]
+    user = url.username
+    password = url.password
+    host = url.hostname
+    port = url.port
 
-    for channel_name,channel_data in channels_dict.items(): #Start bots
+    try:
+        conn = psycopg2.connect(database=db, user=user, host=host, password=password, port=port)
+    except Exception, e:
+        print e
+
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""SELECT * from users u
+                JOIN Settings s on u.id=s.user_id
+                WHERE s.active=true""")
+    users = cur.fetchall()
+
+    cur.execute("""SELECT * FROM commands c
+                WHERE c.user_id in (SELECT s.user_id FROM Settings s WHERE s.active=true)""")
+    commands = cur.fetchall()
+
+    cur.execute("""SELECT * from custom_commands c
+                WHERE c.user_id in (SELECT s.user_id FROM Settings s WHERE s.active=true)""")
+    custom_commands = cur.fetchall()
+    cur.close()
+    conn.close()
+    users_dict = {}
+    for i in users:
+        users_dict[i["id"]] = i
+        users_dict[i["id"]]["commands"] = []
+        users_dict[i["id"]]["custom_commands"] = []
+
+    for i in commands:
+        users_dict[i["user_id"]]["commands"].append(i)
+
+    for i in custom_commands:
+        users_dict[i["user_id"]]["custom_commands"].append(i)
+    for k, v in users_dict.iteritems():
+        channels_dict[v["twitch_name"]] = v
+
+    for channel_name, channel_data in channels_dict.items(): #Start bots
         # Create bot and put it by name into a dictionary 
+
         bot_dict[channel_name] = SaltyBot(channel_data, debuging)
+
+        info = bot_dict[channel_name].api_caller("https://api.twitch.tv/kraken/", headers={"Authorization" : "OAuth " + bot_dict[channel_name].twitch_oauth[6:]})
+        if not (info["token"]["valid"] and "chat_login" in info["token"]["authorization"]["scopes"] and info["token"]["user_name"] == bot_dict[channel_name].twitch_nick.lower()):
+            del bot_dict[channel_name]
+            continue
         
         # Look up bot and start the thread
         bot_dict[channel_name].start()
         
         # Wait for twitch limit
-        time.sleep(2)
+        time.sleep(1)
 
-    otherT = threading.Thread(target = automated_main_loop, args = [bot_dict])
+    otherT = threading.Thread(target = automated_main_loop, args = (bot_dict, channels_dict))
     otherT.setDaemon(True)
     otherT.start()
 
