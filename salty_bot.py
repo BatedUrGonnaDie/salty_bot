@@ -141,7 +141,7 @@ class SaltyBot:
 
         if self.config_data["social_active"]:
             self.command_times["social"] = {"time_last": int(time.time()),
-                                            "messages": self.config_data["messages"],
+                                            "messages": self.config_data["social_messages"],
                                             "messages_last": self.messages_received,
                                             "time": self.config_data["social_time"]}
             self.social_text = self.config_data["social_output"]
@@ -159,7 +159,7 @@ class SaltyBot:
 
     def live_commands(self):
         #Remove any commands that would not currently work when !commands is used
-        active_commands = list(self.commands)
+        active_commands = list(self.commands) + list(self.custom_commands)
 
         if not self.time_start:
             try:
@@ -809,13 +809,18 @@ class SaltyBot:
         else:
             command = message.split(' ')[0]
             param = message.split(' ')[-space_count]
-        if command not in self.custom_commands:
+        command = '!' + command
+        if (command) not in self.custom_commands:
             return
 
         if self.custom_command_times[command]["admin"] and sender not in self.admin_file:
             return
 
-        self.twitch_send_message(self.custom_command_times[command]["output"])
+        response = self.custom_command_times[command]["output"]
+        response = response.replace("$sender", sender)
+        response = response.replace("$param", param)
+
+        self.twitch_send_message(response)
         self.custom_command_times[command]["last"] = int(time.time())
 
     def lol_masteries(self):
