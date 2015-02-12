@@ -52,6 +52,7 @@ class SaltyBot:
     def __init__(self, config_data, debug = False):
         self.__DB = debug
         self.session = config_data["session"]
+        self.user_id = config_data["id"]
         self.config_data = config_data
         self.irc = socket.socket()
         self.irc.settimeout(600)
@@ -465,7 +466,6 @@ class SaltyBot:
             self.twitch_send_message('Please input a {}.'.format(text_type))
         else:
             url = "https://leagueofnewbs.com/api/user/{}/{}s".format(self.channel, text_type)
-            print url
             data = {"reviewed": 1 if self.sender == self.channel else 0,
                     "text": text,
                     "user_id": self.channel}
