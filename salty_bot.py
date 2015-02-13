@@ -198,7 +198,7 @@ class SaltyBot:
             except:
                 pass
         
-        if 'race' not in self.title and 'races' not in self.title and 'racing' not in self.title:
+        if 'race' not in self.title and 'racing' not in self.title:
             try:
                 active_commands.remove('!race')
             except:
@@ -243,8 +243,10 @@ class SaltyBot:
         #Finds if the user can use said command, and then if the command is off cooldown
         #Will only return True if it's off cooldown and the user has the priviledges for the command
         if command in self.commands:
+            if self.sender == self.channel or self.sender in SUPER_USER:
+                return True
             if command in self.admin_commands:
-                if self.sender in self.admin_file or self.sender == self.channel:
+                if self.sender in self.admin_file:
                     return True
             else:
                 if self.time_check(command):
@@ -305,7 +307,7 @@ class SaltyBot:
         elif self.message_body.find('osu.ppy.sh/b/') != -1:
             osu_number = 'b=' + self.message_body.split('osu.ppy.sh/b/')[-1].split(' ')[0]
 
-        osu_send_message(osu_irc_pass, osu_nick, self.message_body)
+        osu_send_message(osu_irc_pass, osu_nick, self.message_body, self.sender)
 
         url = 'https://osu.ppy.sh/api/get_beatmaps?k={}&{}'.format(osu_api_key, osu_number)
         data_decode = self.api_caller(url)
@@ -612,12 +614,16 @@ class SaltyBot:
                 return
 
             for i in options:
-                i = i.lower()
-                self.votes['options'][i] = 0
+                vote_option = i.lower()
+                self.votes['options'][vote_option] = 0
             response = 'You may now vote for this poll using only the supplied options.'
 
         elif poll_type == 'loose':
             response = 'You may now vote for this poll with whatever choice you like.'
+
+        else:
+            response = "Please specify a poll type."
+            self.votes.clear()
 
         self.twitch_send_message(response)
 
@@ -625,14 +631,20 @@ class SaltyBot:
         #Ending a current poll will display the winning vote of the poll and close it
         if self.votes:
             try:
-                winning_key = max(self.votes['options'], key = self.votes['options'].get)
-                winning_value = self.votes['options'][winning_key]
-                response = '{} has won with {} votes.'.format(winning_key, str(winning_value))
-            except ValueError:
-                response = ''
+                winning_amount = max(self.votes['options'].values())
+                winning_keys = [key for key, value in self.votes["options"] if value == winning_amount]
+                if len(winning_keys) == 0:
+                    response = ""
+                elif len(winning_keys) == 1:
+                    response = response = "{} has won with {} votes.".format(winning_keys[0], winning_amount)
+                else:
+                    combined_keys = ", ".join(winning_keys)
+                    "{} have all tied with {} votes!".format(combined_keys, winning_amount)
             finally:
                 self.votes.clear()
-            self.twitch_send_message(response)
+
+            if response:
+                self.twitch_send_message(response)
 
     def vote(self, message, sender):
         #Allows viewers to vote in a poll created by mods/broadcaster
@@ -682,15 +694,14 @@ class SaltyBot:
         if not self.votes:
             return
 
+        response = 'Current poll: "{}".  '.format(self.votes["name"])
         if not self.votes['options']:
-            response = 'No one has bet yet.'
-
+            response += "No one has bet yet.  "
         else:
-            winning_key = max(self.votes['options'], key = self.votes['options'].get)
-            winning_value = self.votes['options'][winning_key]
-            response = '{} is winning with {} votes for it.'.format(winning_key, winning_value)
+            for k, v in self.votes["options"].items():
+                response += "{}: {}; ".format(k, v)
 
-        self.twitch_send_message(response, '!vote')
+        self.twitch_send_message(response[:-2], '!vote')
 
     def text_review(self, message, last_r = 'none'):
         #Review puns/quotes through chat (spammy as shit), better implementation will be available in the website
@@ -1104,7 +1115,7 @@ class SaltyBot:
                                 self.osu_song_display()
 
                     elif self.message_body == 'race':
-                        if 'race' in self.title or 'races' in self.title or 'racing' in self.title:
+                        if 'race' in self.title or 'racing' in self.title:
                             if self.command_check('!race'):
                                 self.srl_race_retrieve()
 
@@ -1118,7 +1129,7 @@ class SaltyBot:
                         if self.command_check('!vote'):
                             self.vote(self.message_body, self.sender)
 
-                    elif self.message_body == 'votes':
+                    elif self.message_body == 'checkvotes':
                         if self.command_check('!vote'):
                             self.check_votes(self.message_body)
 
@@ -1211,15 +1222,17 @@ class SaltyBot:
         
 #@@BOT END@@#
 
-def osu_send_message(osu_irc_pass, osu_nick, request_url):
+def osu_send_message(osu_irc_pass, osu_nick, msg, sender):
     #Send the message through IRC to the person playing osu
+    full_msg = "{}: {}".format(sender, msg)
     irc = socket.socket()
     osu_host = 'irc.ppy.sh'
     osu_port = 6667
     irc.connect((osu_host, osu_port))
     irc.sendall('PASS {}\r\n'.format(osu_irc_pass))
     irc.sendall('NICK {}\r\n'.format(osu_irc_nick))
-    irc.sendall('PRIVMSG {} :{}\r\n'.format(osu_nick, request_url))
+    irc.sendall('PRIVMSG {} :{}\r\n'.format(osu_nick, full_msg))
+    irc.sendall('QUIT\r\n')
     irc.close()
 
 def twitch_info_grab(bots):
