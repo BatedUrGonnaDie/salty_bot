@@ -535,7 +535,8 @@ class SaltyBot:
                     if srl_race_time > 0:
                         if user_time > 0:
                             time_formatted = self.format_sr_time(user_time)
-                            response += ', Finished {} with a time of {}'.format(user_place, time_formatted)
+                            position_suffix = 'th' if 11 <= user_place <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(user_place % 10, 'th')
+                            response += ', Finished {}{} with a time of {}'.format(user_place, position_suffix, time_formatted)
                         else:
                             real_time = (int(time.time()) - srl_race_time)
                             time_formatted = self.format_sr_time(real_time)
@@ -1059,8 +1060,7 @@ class SaltyBot:
                     
                 if self.message_body.startswith('!'):
                     #Dirty work around to allow text to have more !'s in them
-                    find_ex = self.message_body.count('!')
-                    self.message_body = '!'.join(self.message_body.split('!')[-find_ex:])
+                    self.message_body = self.message_body.split('!', 1)[1]
 
                     #All commands go here
 
