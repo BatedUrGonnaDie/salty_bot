@@ -1,18 +1,20 @@
 #! /usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
-import os
-import sys
-import time
-from datetime import datetime
-import random
-import threading
-import socket
-import requests
+import datetime
 import json
-import urlparse
+import logging
+import os
 import Queue as Q
+import random
 import re
+import socket
+import sys
+import threading
+import time
+import urlparse
+
+import requests
 import psycopg2
 import psycopg2.extras
 
@@ -55,7 +57,6 @@ class SaltyBot:
         self.user_id = config_data["id"]
         self.config_data = config_data
         self.irc = socket.socket()
-        self.irc.settimeout(600)
         self.twitch_host = "irc.twitch.tv"
         self.port = 443
         self.twitch_nick = config_data["bot_nick"]
@@ -100,6 +101,7 @@ class SaltyBot:
             print "Joining {} as {}.\n".format(self.channel,self.twitch_nick)
         try:
             #If it fails to conenct try again in 60 seconds
+            self.irc.settimeout(600)
             self.irc.connect((self.twitch_host, self.port))
         except Exception, e:
             print '{} failed to connect.'.format(self.channel)
@@ -231,7 +233,7 @@ class SaltyBot:
             try:
                 db_message = '#' + self.channel + ' ' + self.twitch_nick + ": " + response.decode('utf-8')
                 db_message = db_message.encode('utf-8')
-                print datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ') + db_message
+                print datetime.datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ') + db_message
             except:
                 print("Message contained unicode, could not display in terminal\n\n")
 
@@ -267,6 +269,7 @@ class SaltyBot:
                 data_decode = data.json()
                 return data_decode
             else:
+                print data
                 return False
         except Exception, e:
             print e
@@ -340,15 +343,34 @@ class SaltyBot:
 
     def wr_retrieve(self):
         #Find the categories that are on file in the title, and then if more than one exist pick the one located earliest in the title
-        categories_in_title = []
-        category_position = {}
-        url = 'http://www.speedrun.com/api_records.php?game=' + self.game
+        msg_split = self.message_body.split(' ', 2)
+
+        try:
+            url = "http://www.speedrun.com/api_records.php?game=" + msg_split[1]
+            try:
+                msg_split[2]
+            except IndexError:
+                self.twitch_send_message("Please provide a category to search for.", '!wr')
+                return
+        except IndexError:
+            if self.game != '':
+                url = "http://www.speedrun.com/api_records.php?game=" + self.game
+            else:
+                self.twitch_send_message("Please either provide a game and category or wait for the streamer to go live.", '!wr')
+                return
+
         game_records = self.api_caller(url)
         if game_records == False:
-            self.twitch_send_message("I'm sorry, I couldn't retrieve the game's records from speedrun.com BibleThump", '!wr')
+            self.twitch_send_message("There was an error fetching info from speedrun.com", '!wr')
             return
-        else:
+        try:
             sr_game = dict(game_records).keys()[0]
+        except TypeError:
+            self.twitch_send_message("This game does not seem to exist on speedrun.com", '!wr')
+
+        if len(msg_split) == 1:
+            categories_in_title = []
+            category_position = {}
             if sr_game.lower() == self.game.lower():
                 sr_game_cats = game_records[sr_game].keys()
                 for i in sr_game_cats:
@@ -373,12 +395,25 @@ class SaltyBot:
                 active_cat = sorted(min_keys, key = len)[-1]
             else:
                 active_cat = categories_in_title[0]
-            cat_record = game_records[sr_game][active_cat]
-            wr_time = self.format_sr_time(cat_record['time'])
-            msg = "The current world record for {} {} is {} by {}.".format(sr_game, active_cat, wr_time, cat_record['player'])
-            if cat_record['video']:
-                msg += "  The video can be found here: " + cat_record['video']
-            self.twitch_send_message(msg, '!wr')
+
+        elif len(msg_split) == 3:
+            game_cats = game_records[sr_game].keys()
+            for i in game_cats:
+                if msg_split[2].lower() == i.lower():
+                    active_cat = i
+                    break
+            try:
+                active_cat
+            except NameError:
+                self.twitch_send_message("Please specify a category that is available on speedrun.com", '!wr')
+                return
+
+        cat_record = game_records[sr_game][active_cat]
+        wr_time = self.format_sr_time(cat_record['time'])
+        msg = "The current world record for {} {} is {} by {}.".format(sr_game, active_cat, wr_time, cat_record['player'])
+        if cat_record['video']:
+            msg += "  The video can be found here: " + cat_record['video']
+        self.twitch_send_message(msg, '!wr')
 
     def leaderboard_retrieve(self):
         #Retrieve leaderboard for game as set on Twitch
@@ -478,7 +513,8 @@ class SaltyBot:
                 success.raise_for_status()
                 reviewed = "to the database" if self.sender == self.channel else "for review"
                 response = "Your {} has been added {}.".format(text_type, reviewed)
-            except:
+            except Exception, e:
+                print e
                 response = "I had problems adding this to the database."
             self.twitch_send_message(response, "!add" + text_type)
 
@@ -949,12 +985,12 @@ class SaltyBot:
 
     def get_time_objects(self):
         current_time = time.gmtime()
-        current_object = datetime(current_time[0], current_time[1], current_time[2], current_time[3], current_time[4], current_time[5])
+        current_object = datetime.datetime(current_time[0], current_time[1], current_time[2], current_time[3], current_time[4], current_time[5])
 
         time_live_split = re.split("(\d{4}?)-(\d{2}?)-(\d{2}?)T(\d{2}?):(\d{2}?):(\d{2}?)Z", self.time_start)[1:-1]
         for i, s in enumerate(time_live_split):
             time_live_split[i] = int(s)
-        live_object = datetime(time_live_split[0], time_live_split[1], time_live_split[2], time_live_split[3], time_live_split[4], time_live_split[5])
+        live_object = datetime.datetime(time_live_split[0], time_live_split[1], time_live_split[2], time_live_split[3], time_live_split[4], time_live_split[5])
         
         return current_object, live_object
 
@@ -1012,7 +1048,7 @@ class SaltyBot:
                 self.action = self.message.split(' ')[1]
             except:
                 if self.message:
-                    print datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ') + self.message
+                    print datetime.datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ') + self.message
                 self.action = ''
 
             if self.action == 'PRIVMSG':
@@ -1026,7 +1062,7 @@ class SaltyBot:
                     continue
 
                 if self.__DB:
-                    print datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ') + '#' + self.channel + ' ' + self.sender + ": " + self.message_body.decode('utf-8')
+                    print datetime.datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ') + '#' + self.channel + ' ' + self.sender + ": " + self.message_body.decode('utf-8')
 
                 #Sub Message
                 if self.sender == 'twitchnotify':
@@ -1074,9 +1110,8 @@ class SaltyBot:
                         self.lister(self.message_body, 'white')
 
                     elif self.message_body.startswith('wr'):
-                        if self.game != '':
-                            if self.command_check('!wr'):
-                                self.wr_retrieve()
+                        if self.command_check('!wr'):
+                            self.wr_retrieve()
 
                     elif self.message_body.startswith('leaderboard'):
                         if self.game != '':
