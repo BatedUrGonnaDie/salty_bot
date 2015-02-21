@@ -367,6 +367,7 @@ class SaltyBot:
             sr_game = dict(game_records).keys()[0]
         except TypeError:
             self.twitch_send_message("This game does not seem to exist on speedrun.com", '!wr')
+            return
 
         if len(msg_split) == 1:
             categories_in_title = []
@@ -418,6 +419,7 @@ class SaltyBot:
     def leaderboard_retrieve(self):
         #Retrieve leaderboard for game as set on Twitch
         game_no_spec = re.sub(' ', '_', self.game_normal)
+        game_no_spec = re.sub("[:]", '', game_no_spec)
         url = 'http://speedrun.com/' + game_no_spec
         self.twitch_send_message(url, '!leaderboard')
 
