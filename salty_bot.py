@@ -50,6 +50,7 @@ class SaltyBot:
 
     running = True
     messages_received = 0
+    rate_limit = 0
 
     def __init__(self, config_data, debug = False):
         self.__DB = debug
@@ -117,6 +118,11 @@ class SaltyBot:
 
     def twitch_commands(self):
         #Set up all the limits, if its admin, if its on, quote and pun stuff, and anything else that needs setting up for a command
+        self.command_times["!bot_info"]["on"] = True
+        self.command_times["!bot_info"]["admin"] = False
+        self.command_times["!bot_info"]["last"] = 0
+        self.command_times["!bot_info"]["limit"] = 30
+
         for i in self.config_data["commands"]:
             if i["on"]:
                 curr_com = "!" + i["name"]
@@ -212,6 +218,9 @@ class SaltyBot:
         else:
             self.twitch_send_message(command_string, '!commands')
 
+    def clear_limiter(self):
+        self.rate_limit = 0
+
     def twitch_send_message(self, response, command = None):
 
         #Sending any message to chat goes through this function
@@ -227,7 +236,11 @@ class SaltyBot:
             response = "Please stop trying to abuse me BibleThump"
             command = ''
         to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
-        self.irc.sendall(to_send)
+        if self.rate_limit < 110:
+            self.irc.sendall(to_send)
+            self.rate_limit += 1
+        else: 
+            return
 
         if self.__DB == True: 
             try:
@@ -1044,7 +1057,7 @@ class SaltyBot:
             self.message = self.message.strip()
 
             if self.message.startswith('PING'):
-                self.irc.sendall('PONG tmi.twitch.tv\r\n')
+                self.irc.sendall(self.message.replace("PING", "PONG"))
 
             try:
                 self.action = self.message.split(' ')[1]
@@ -1199,6 +1212,13 @@ class SaltyBot:
                         if self.command_check("!commands"):
                             self.live_commands()
 
+                    elif self.message_body == "bot_info":
+                        self.commands.append("!bot_info")
+                        if self.command_check("!bot_info"):
+                            msg = "Powered by SaltyBot, for a full list of command check out the github repo (http://bombch.us/z3x) or to get it in your channel go here http://bombch.us/z3y"
+                            self.twitch_send_message(msg, "!bot_info")
+                        self.commands.remove("!bot_info")
+
                     elif self.message_body == 'restart' and self.sender in SUPER_USER:
                         if self.__DB:
                             print('{} is restarting, called by {}'.format(self.channel + ' ' + self.twitch_nick, self.sender))
@@ -1308,6 +1328,7 @@ def restart_bot(bot_name, bot_config, bot_dict):
         
 def automated_main_loop(bot_dict, config_dict):
     time_to_check_twitch = 0
+    next_buffer_clear = 0
 
     #time_to_restart = int(time.time()) + 86400 #Restart every 24 hours
     while True:
@@ -1330,7 +1351,14 @@ def automated_main_loop(bot_dict, config_dict):
         except:
             pass
 
-        if time_to_check_twitch < int(time.time()):
+        current_time = int(time.time())
+
+        if next_buffer_clear < current_time:
+            for bot_name, bot_inst in bot_dict.items():
+                bot_inst.clear_limiter()
+            next_buffer_clear = int(time.time()) + 30
+
+        if time_to_check_twitch < current_time:
             for bot_name, bot_inst in bot_dict.items():
                 if bot_inst.thread.isAlive():
                     if debuging == True:
