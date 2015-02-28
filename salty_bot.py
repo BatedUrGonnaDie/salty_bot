@@ -115,13 +115,9 @@ class SaltyBot:
         initial_msg = self.irc.recv(4096)
         self.irc.sendall('JOIN #{}\r\n'.format(self.channel))
 
-
     def twitch_commands(self):
         #Set up all the limits, if its admin, if its on, quote and pun stuff, and anything else that needs setting up for a command
-        self.command_times["!bot_info"]["on"] = True
-        self.command_times["!bot_info"]["admin"] = False
-        self.command_times["!bot_info"]["last"] = 0
-        self.command_times["!bot_info"]["limit"] = 30
+        self.command_times["!bot_info"] = {"last": 0, "limit": 30}
 
         for i in self.config_data["commands"]:
             if i["on"]:
@@ -353,6 +349,10 @@ class SaltyBot:
         if self.__DB:
             print time
         return time
+
+    def pb_retrieve(self):
+        msg_split = self.message_body.split(' ', 3)
+
 
     def wr_retrieve(self):
         #Find the categories that are on file in the title, and then if more than one exist pick the one located earliest in the title
