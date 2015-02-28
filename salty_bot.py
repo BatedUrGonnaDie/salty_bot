@@ -79,8 +79,7 @@ class SaltyBot:
             self.blacklist.append(i.split('\n')[0])
         self.command_times = {}
         self.custom_command_times = {}
-        with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
-            self.admin_file = data_file.read()
+        self.elevated_user = ["staff", "admin", "global_mod", "mod"]
 
     def start(self):
         self.thread = threading.Thread(target=self.twitch_run)
@@ -113,11 +112,14 @@ class SaltyBot:
         self.irc.sendall('PASS {}\r\n'.format(self.twitch_oauth))
         self.irc.sendall('NICK {}\r\n'.format(self.twitch_nick))
         initial_msg = self.irc.recv(4096)
+        self.irc.sendall("CAP REQ :twitch.tv/tags twitch.tv/commands\r\n")
+        self.irc.recv(1024)
         self.irc.sendall('JOIN #{}\r\n'.format(self.channel))
 
     def twitch_commands(self):
         #Set up all the limits, if its admin, if its on, quote and pun stuff, and anything else that needs setting up for a command
         self.command_times["!bot_info"] = {"last": 0, "limit": 30}
+        self.commands.append("!bot_info")
 
         for i in self.config_data["commands"]:
             if i["on"]:
@@ -169,6 +171,11 @@ class SaltyBot:
         if not self.time_start:
             try:
                 active_commands.remove('!uptime')
+            except:
+                pass
+        if not self.votes:
+            try:
+                active_commands.remove("!vote")
             except:
                 pass
 
@@ -250,14 +257,14 @@ class SaltyBot:
             #Update when the command was last used for rate limiting
             self.command_times[command]['last'] = int(time.time())
 
-    def command_check(self, command):
+    def command_check(self, c_msg, command):
         #Finds if the user can use said command, and then if the command is off cooldown
         #Will only return True if it's off cooldown and the user has the priviledges for the command
         if command in self.commands:
-            if self.sender == self.channel or self.sender in SUPER_USER:
+            if c_msg["sender"] == self.channel or c_msg["sender"] in SUPER_USER:
                 return True
             if command in self.admin_commands:
-                if self.sender in self.admin_file:
+                if c_msg["tags"]["user_type"] in self.elevated_user:
                     return True
             else:
                 if self.time_check(command):
@@ -310,16 +317,16 @@ class SaltyBot:
         if data_decode:
             print data_decode
 
-    def osu_link(self):
+    def osu_link(self, c_msg):
         #Sends beatmaps linked in chat to you on osu, and then displays the map title and author in chat
         osu_nick = self.config_data["osu_nick"]
 
-        if self.message_body.find('osu.ppy.sh/s/') != -1:
-            osu_number = 's=' + self.message_body.split('osu.ppy.sh/s/')[-1].split(' ')[0]
-        elif self.message_body.find('osu.ppy.sh/b/') != -1:
-            osu_number = 'b=' + self.message_body.split('osu.ppy.sh/b/')[-1].split(' ')[0]
+        if c_msg["message"].find('osu.ppy.sh/s/') != -1:
+            osu_number = 's=' + c_msg["message"].split('osu.ppy.sh/s/')[-1].split(' ')[0]
+        elif c_msg["message"].find('osu.ppy.sh/b/') != -1:
+            osu_number = 'b=' + c_msg["message"].split('osu.ppy.sh/b/')[-1].split(' ')[0]
 
-        osu_send_message(osu_irc_pass, osu_nick, self.message_body, self.sender)
+        osu_send_message(osu_irc_pass, osu_nick, c_msg["message"], c_msg["sender"])
 
         url = 'https://osu.ppy.sh/api/get_beatmaps?k={}&{}'.format(osu_api_key, osu_number)
         data_decode = self.api_caller(url)
@@ -350,13 +357,13 @@ class SaltyBot:
             print time
         return time
 
-    def pb_retrieve(self):
-        msg_split = self.message_body.split(' ', 3)
+    def pb_retrieve(self, c_msg):
+        msg_split = c_msg["message"].split(' ', 3)
 
 
-    def wr_retrieve(self):
+    def wr_retrieve(self, c_msg):
         #Find the categories that are on file in the title, and then if more than one exist pick the one located earliest in the title
-        msg_split = self.message_body.split(' ', 2)
+        msg_split = c_msg["message"].split(' ', 2)
 
         try:
             url = "http://www.speedrun.com/api_records.php?game=" + msg_split[1]
@@ -509,16 +516,16 @@ class SaltyBot:
         response = 'Splits with a time of {} {}'.format(time, link)
         self.twitch_send_message(response, '!splits')
 
-    def add_text(self, text_type, text_add):
+    def add_text(self, c_msg, text_type):
         #Add a pun or quote to the review file
-        text = text_add[(len(text_type) + 4):]
+        text = c_msg["message"][(len(text_type) + 4):]
         text = text.strip()
 
         if text == 'add{}'.format(text_type) or text == 'add{} '.format(text_type):
             self.twitch_send_message('Please input a {}.'.format(text_type))
         else:
             url = "https://leagueofnewbs.com/api/user/{}/{}s".format(self.channel, text_type)
-            data = {"reviewed": 1 if self.sender == self.channel else 0,
+            data = {"reviewed": 1 if c_msg["sender"] == self.channel else 0,
                     "text": text,
                     "user_id": self.channel}
             cookies = {"session": self.session}
@@ -526,7 +533,7 @@ class SaltyBot:
             success = requests.post(url, data=data, cookies=cookies)
             try:
                 success.raise_for_status()
-                reviewed = "to the database" if self.sender == self.channel else "for review"
+                reviewed = "to the database" if c_msg["sender"] == self.channel else "for review"
                 response = "Your {} has been added {}.".format(text_type, reviewed)
             except Exception, e:
                 print e
@@ -604,12 +611,12 @@ class SaltyBot:
                     self.twitch_send_message(response, '!race')
                     return
 
-    def youtube_video_check(self, vid_type, message):
+    def youtube_video_check(self, vid_type, c_msg):
         #Links the title and uploader of the youtube video in chat
         if vid_type == 'short':
-            video_id = message.split('youtu.be/')[-1]
+            video_id = c_msg["message"].split('youtu.be/')[-1]
         else:
-            url_values = urlparse.parse_qs(urlparse.urlparse(message).query)
+            url_values = urlparse.parse_qs(urlparse.urlparse(c_msg["message"]).query)
             try:
                 video_id = url_values['v'][0]
             except:
@@ -637,17 +644,17 @@ class SaltyBot:
         else:
             return
 
-    def create_vote(self, message):
+    def create_vote(self, c_msg):
         #Used to create polls in chat
         #Creating polls requires a pretty specific syntax, but makes it easy to have different types
         if self.votes:
             self.twitch_send_message('There is already an open poll, please close it first.')
             return
         
-        poll_type = message.split(' ')[1]
+        poll_type = c_msg["message"].split(' ')[1]
 
         try:
-            poll = re.findall('"(.+)"', message)[0]
+            poll = re.findall('"(.+)"', c_msg["message"])[0]
         except:
             self.twitch_send_message('Please give the poll a name.')
             return
@@ -658,7 +665,7 @@ class SaltyBot:
                         'voters' : {}}
 
         if poll_type == 'strict':
-            options = re.findall('\((.+?)\)', message)
+            options = re.findall('\((.+?)\)', c_msg["message"])
 
             if not options:
                 self.twitch_send_message('You did not supply any options, poll will be closed.')
@@ -698,10 +705,10 @@ class SaltyBot:
             if response:
                 self.twitch_send_message(response)
 
-    def vote(self, message, sender):
+    def vote(self, c_msg):
         #Allows viewers to vote in a poll created by mods/broadcaster
         try:
-            sender_bet = message.split('vote ')[-1]
+            sender_bet = c_msg["message"].split('vote ')[-1]
             sender_bet = sender_bet.lower()
         except:
             return
@@ -713,11 +720,11 @@ class SaltyBot:
                 self.twitch_send_message('You must vote for one of the options specified: ' + ', '.join(self.votes['options'].keys()), '!vote')
                 return
 
-        if sender in self.votes['voters']:
-            if sender_bet == self.votes['voters'][sender]:
-                response = 'You have already voted for that {}.'.format(sender)
+        if c_msg["sender"] in self.votes['voters']:
+            if sender_bet == self.votes['voters'][c_msg["sender"]]:
+                response = 'You have already voted for that {}.'.format(c_msg["sender"])
             else:
-                previous = self.votes['voters'][sender]
+                previous = self.votes['voters'][c_msg["sender"]]
                 self.votes['options'][previous] -= 1
 
                 if self.votes['options'][previous] == 0 and self.votes['type'] == 'loose':
@@ -728,20 +735,20 @@ class SaltyBot:
                 except KeyError:
                     self.votes['options'][sender_bet] = 1
 
-                self.votes['voters'][sender] = sender_bet
-                response = '{} has changed their vote to {}'.format(sender, sender_bet)
+                self.votes['voters'][c_msg["sender"]] = sender_bet
+                response = '{} has changed their vote to {}'.format(c_msg["sender"], sender_bet)
         else:
             try:
                 self.votes['options'][sender_bet] += 1
             except KeyError:
                 self.votes['options'][sender_bet] = 1
 
-            self.votes['voters'][sender] = sender_bet
+            self.votes['voters'][c_msg["sender"]] = sender_bet
             response = '{} now has {} votes for it.'.format(sender_bet, str(self.votes['options'][sender_bet]))
 
         self.twitch_send_message(response, '!vote')
 
-    def check_votes(self, message):
+    def check_votes(self, c_msg):
         #Allows you to see what is currently winning in the current poll w/o closing it
         if not self.votes:
             return
@@ -755,17 +762,17 @@ class SaltyBot:
 
         self.twitch_send_message(response[:-2], '!vote')
 
-    def text_review(self, message, last_r = 'none'):
-        #Review puns/quotes through chat (spammy as shit), better implementation will be available in the website
+    def text_review(self, c_msg, last_r = 'none'):
+        #Review puns/quotes through chat (spammy as shit)
         try:
-            text_type = message.split(' ')[1]
+            text_type = c_msg["message"].split(' ')[1]
             if text_type != 'quote' and text_type != 'pun':
                 return
         except:
             self.twitch_send_message('Please specify a type to review.')
             return
         try:
-            decision = message.split(' ')[2]
+            decision = c_msg["message"].split(' ')[2]
         except:
             decision = ''
         if decision == 'start':
@@ -841,10 +848,10 @@ class SaltyBot:
                 else:
                     self.twitch_send_message('Nothing {}s to review.'.format(text_type))
 
-    def lister(self, message, s_list):
+    def lister(self, c_msg, s_list):
         #Add user to blacklist or remove them from it
         #Blacklist will cause bot to completely ignore the blacklisted user
-        user = message.split(' ')[-1]
+        user = c_msg["message"].split(' ')[-1]
         worked = False
         if s_list == 'black':
             self.blacklist.append(user)
@@ -863,24 +870,24 @@ class SaltyBot:
         if worked == True:
             self.twitch_send_message('{} has been {}listed'.format(user, s_list))
 
-    def custom_command(self, message, sender):
+    def custom_command(self, c_msg):
         #Shitty custom command implementation, 
-        space_count = message.count(' ')
+        space_count = c_msg["message"].count(' ')
         if space_count == 0:
-            command = message
+            command = c_msg["message"]
             param = ''
         else:
-            command = message.split(' ')[0]
-            param = message.split(' ')[-space_count]
+            command = c_msg["message"].split(' ')[0]
+            param = c_msg["message"].split(' ')[-space_count]
         command = '!' + command
         if (command) not in self.custom_commands:
             return
 
-        if self.custom_command_times[command]["admin"] and sender not in self.admin_file:
+        if self.custom_command_times[command]["admin"] and c_msg["tags"]["user_type"] not in self.elevated_user:
             return
 
         response = self.custom_command_times[command]["output"]
-        response = response.replace("$sender", sender)
+        response = response.replace("$sender", c_msg["sender"])
         response = response.replace("$param", param)
 
         self.twitch_send_message(response)
@@ -1017,11 +1024,11 @@ class SaltyBot:
         else:
             self.twitch_send_message("The stream is not currently live.", '!uptime')
 
-    def highlight(self, message):
+    def highlight(self, c_msg):
         if self.time_start != None:
             current_object, live_object = self.get_time_objects()
             time_to_highlight = current_object - live_object
-            self.to_highlight.append({'time' : str(time_to_highlight), 'desc' : message.split('highlight')[-1]})
+            self.to_highlight.append({'time' : str(time_to_highlight), 'desc' : c_msg["message"].split('highlight')[-1]})
             self.twitch_send_message("Current time added to the highlight queue. Use !show_highlight to view them.")
         else:
             self.twitch_send_message("Please use the command when the stream is live.")
@@ -1033,7 +1040,7 @@ class SaltyBot:
         self.twitch_send_message(msg[:-2])
         self.to_highlight = []
 
-    def sub_msg(self, msg):
+    def sub_msg(self, c_msg):
         pass
 
     def twitch_run(self):
@@ -1044,64 +1051,78 @@ class SaltyBot:
         while self.running:
 
             try:
-                self.message = self.irc.recv(4096)
+                message = self.irc.recv(4096)
             except socket.timeout:
                 print self.channel + ' timed out.'
                 self.socket_error_restart()
 
-            if self.message == "":
+            if message == "":
                 print self.channel + ' returned empty string.'
                 self.socket_error_restart()
 
-            self.message = self.message.split('\r\n')[0]
-            self.message = self.message.strip()
-
-            if self.message.startswith('PING'):
-                self.irc.sendall(self.message.replace("PING", "PONG"))
+            if message.startswith('PING'):
+                self.irc.sendall(message.replace("PING", "PONG"))
 
             try:
-                self.action = self.message.split(' ')[1]
-            except:
-                if self.message:
-                    print datetime.datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ') + self.message
-                self.action = ''
+                message = message.strip()
+                msg_parts = message.split(' ')
+                if message.startswith(' '):
+                    action = msg_parts[1]
+                    msg_parts.insert(0, '')
+                elif message.startswith('@'):
+                    action = msg_parts[2]
+                else:
+                    try:
+                        print message
+                        continue
+                    except Exception, e:
+                        print e
+                        continue
+            except Exception, e:
+                print e
+                continue
 
-            if self.action == 'PRIVMSG':
+            if action == 'PRIVMSG':
                 #Messages to channel are PRIVMSG's, just aimed at a channel instead of a user
                 self.messages_received += 1
-                self.sender = self.message.split(':')[1].split('!')[0]
-                self.message_body = ':'.join(self.message.split(':')[2:])
-                if self.sender in self.blacklist:
-                    continue
-                if self.message_body.find('­') != -1:
-                    continue
+                c_msg = {}
+                if msg_parts[0]:
+                    c_msg["tags"] = dict(item.split('=') for item in msg_parts[0][1:].split(';'))
+                else:
+                    c_msg["tags"] = {"color": "", "emotes": {}, "subscriber": 0, "turbo": 0, "user_type": ""}
+                c_msg["sender"] = msg_parts[1][1:].split('!')[0]
+                c_msg["action"] = msg_parts[2]
+                c_msg["channel"] = msg_parts[3]
+                c_msg["message"] = ' '.join(msg_parts[4:])[1:]
 
-                if self.__DB:
-                    print datetime.datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ') + '#' + self.channel + ' ' + self.sender + ": " + self.message_body.decode('utf-8')
+                if c_msg["sender"] in self.blacklist:
+                    continue
+                if c_msg["message"].find('­') != -1:
+                    continue
 
                 #Sub Message
-                if self.sender == 'twitchnotify':
-                    self.sub_msg(self.message)
+                if c_msg["sender"] == 'twitchnotify':
+                    self.sub_msg(c_msg)
 
                 #Link osu maps
-                if self.message_body.find('osu.ppy.sh/b/') != -1 or self.message_body.find('osu.ppy.sh/s/') != -1:
+                if c_msg["message"].find('osu.ppy.sh/b/') != -1 or c_msg["message"].find('osu.ppy.sh/s/') != -1:
                     if self.game == 'osu!':
                         if self.config_data["osu_link"]:
-                            self.osu_link()
+                            self.osu_link(c_msg)
 
                 #Link youtube info
-                if self.message_body.find('youtube.com/watch?v=') != -1:
+                if c_msg["message"].find('youtube.com/watch?v=') != -1:
                     if self.config_data["youtube_link"]:
-                        self.youtube_video_check('long', self.message_body)
+                        self.youtube_video_check('long', c_msg)
 
                 #Link youtube info
-                if self.message_body.find('youtu.be/') != -1:
+                if c_msg["message"].find('youtu.be/') != -1:
                     if self.config_data["youtube_link"]:
-                        self.youtube_video_check('short', self.message_body)
+                        self.youtube_video_check('short', c_msg)
 
                 #Toobou trigger check
                 try:
-                    if self.message_body.lower().find(self.t_trig) != -1:
+                    if c_msg["message"].lower().find(self.t_trig) != -1:
                         if 'toobou' in self.command_times and self.config_data["toobou_output"] != "":
                             if self.time_check('toobou'):
                                 self.twitch_send_message(self.config_data["toobou_output"])
@@ -1109,143 +1130,128 @@ class SaltyBot:
                 except:
                     pass
                     
-                if self.message_body.startswith('!'):
+                if c_msg["message"].startswith('!'):
                     #Dirty work around to allow text to have more !'s in them
-                    self.message_body = self.message_body.split('!', 1)[1]
+                    c_msg["message"] = c_msg["message"].split('!', 1)[1]
 
                     #All commands go here
 
                     if self.custom_commands:
-                        self.custom_command(self.message_body, self.sender)
+                        self.custom_command(c_msg)
 
-                    if self.message_body.startswith('blacklist ') and self.sender == self.channel:
-                        self.lister(self.message_body, 'black')
+                    if c_msg["message"].startswith('blacklist ') and c_msg["sender"] == self.channel:
+                        self.lister(c_msg, 'black')
 
-                    elif self.message_body.startswith('whitelist ') and self.sender == self.channel:
-                        self.lister(self.message_body, 'white')
+                    elif c_msg["message"].startswith('whitelist ') and c_msg["sender"] == self.channel:
+                        self.lister(c_msg, 'white')
 
-                    elif self.message_body.startswith('wr'):
-                        if self.command_check('!wr'):
-                            self.wr_retrieve()
+                    elif c_msg["message"].startswith('wr'):
+                        if self.command_check(c_msg, '!wr'):
+                            self.wr_retrieve(c_msg)
 
-                    elif self.message_body.startswith('leaderboard'):
+                    elif c_msg["message"].startswith('leaderboard'):
                         if self.game != '':
-                            if self.command_check('!leaderboard'):
+                            if self.command_check(c_msg, '!leaderboard'):
                                     self.leaderboard_retrieve()
 
-                    elif self.message_body == 'splits':
+                    elif c_msg["message"] == 'splits':
                         if self.game != '':
-                            if self.command_check('!splits'):
+                            if self.command_check(c_msg, '!splits'):
                                 self.splits_check()
 
-                    elif self.message_body.startswith('addquote'):
-                        if self.command_check('!addquote'):
-                            self.add_text('quote', self.message_body)
+                    elif c_msg["message"].startswith('addquote'):
+                        if self.command_check(c_msg, '!addquote'):
+                            self.add_text('quote', c_msg)
 
-                    elif self.message_body == 'quote':
-                        if self.command_check('!quote'):
+                    elif c_msg["message"] == 'quote':
+                        if self.command_check(c_msg, '!quote'):
                             self.text_retrieve('quote')
 
-                    elif self.message_body.startswith('addpun'):
-                        if self.command_check('!addpun'):
-                            self.add_text('pun', self.message_body)
+                    elif c_msg["message"].startswith('addpun'):
+                        if self.command_check(c_msg, '!addpun'):
+                            self.add_text('pun', c_msg)
 
-                    elif self.message_body == 'pun':
-                        if self.command_check('!pun'):
+                    elif c_msg["message"] == 'pun':
+                        if self.command_check(c_msg, '!pun'):
                             self.text_retrieve('pun')
 
-                    elif self.message_body == 'rank':
+                    elif c_msg["message"] == 'rank':
                         if self.game == 'osu!':
-                            if self.command_check('!rank'):
+                            if self.command_check(c_msg, '!rank'):
                                 self.osu_api_user()
 
-                    elif self.message_body == 'song':
+                    elif c_msg["message"] == 'song':
                         if self.game == 'osu!':
-                            if self.command_check('!song'):
+                            if self.command_check(c_msg, '!song'):
                                 self.osu_song_display()
 
-                    elif self.message_body == 'race':
+                    elif c_msg["message"] == 'race':
                         if 'race' in self.title or 'racing' in self.title:
-                            if self.command_check('!race'):
+                            if self.command_check(c_msg, '!race'):
                                 self.srl_race_retrieve()
 
-                    elif self.message_body.startswith('createvote ') and self.sender in self.admin_file:
-                        self.create_vote(self.message_body)
+                    elif c_msg["message"].startswith('createvote ') and c_msg["tags"]["user_type"] in self.elevated_user:
+                        self.create_vote(c_msg)
 
-                    elif self.message_body == 'endvote' and self.sender in self.admin_file:
+                    elif c_msg["message"] == 'endvote' and c_msg["tags"]["user_type"] in self.elevated_user:
                         self.end_vote()
 
-                    elif self.message_body.startswith('vote '):
-                        if self.command_check('!vote'):
-                            self.vote(self.message_body, self.sender)
+                    elif c_msg["message"].startswith('vote '):
+                        if self.command_check(c_msg, '!vote'):
+                            self.vote(c_msg)
 
-                    elif self.message_body == 'checkvotes':
-                        if self.command_check('!vote'):
-                            self.check_votes(self.message_body)
+                    elif c_msg["message"] == 'checkvotes':
+                        if self.command_check(c_msg, '!vote'):
+                            self.check_votes(c_msg)
 
-                    elif self.message_body.startswith('review') and self.sender == self.channel:
-                        self.text_review(self.message_body)
+                    elif c_msg["message"].startswith('review') and c_msg["sender"] == self.channel:
+                        self.text_review(c_msg)
 
-                    elif self.message_body == 'runes':
+                    elif c_msg["message"] == 'runes':
                         if self.game == 'league of legends':
-                            if self.command_check('!runes'):
+                            if self.command_check(c_msg, '!runes'):
                                 self.lol_runes()
 
-                    elif self.message_body == "masteries":
+                    elif c_msg["message"] == "masteries":
                         if self.game == 'league of legends':
-                            if self.command_check('!masteries'):
+                            if self.command_check(c_msg, '!masteries'):
                                 self.lol_masteries()
 
-                    elif self.message_body == "uptime":
-                        if self.command_check('!uptime'):
+                    elif c_msg["message"] == "uptime":
+                        if self.command_check(c_msg, '!uptime'):
                             self.uptime()
 
-                    elif self.message_body.startswith('highlight'):
-                        if self.sender == self.channel or self.sender in SUPER_USER:
-                            self.highlight(self.message_body)
+                    elif c_msg["message"].startswith('highlight'):
+                        if c_msg["sender"] == self.channel or c_msg["sender"] in SUPER_USER:
+                            self.highlight(c_msg)
 
-                    elif self.message_body == "show_highlight":
-                        if self.sender == self.channel or self.sender in SUPER_USER:
+                    elif c_msg["message"] == "show_highlight":
+                        if c_msg["sender"] == self.channel or c_msg["sender"] in SUPER_USER:
                             self.show_highlight()
                         
-                    elif self.message_body == 'commands':
-                        if self.command_check("!commands"):
+                    elif c_msg["message"] == 'commands':
+                        if self.command_check(c_msg, "!commands"):
                             self.live_commands()
 
-                    elif self.message_body == "bot_info":
-                        self.commands.append("!bot_info")
-                        if self.command_check("!bot_info"):
+                    elif c_msg["message"] == "bot_info":
+                        if self.command_check(c_msg, "!bot_info"):
                             msg = "Powered by SaltyBot, for a full list of command check out the github repo (http://bombch.us/z3x) or to get it in your channel go here http://bombch.us/z3y"
                             self.twitch_send_message(msg, "!bot_info")
-                        self.commands.remove("!bot_info")
 
-                    elif self.message_body == 'restart' and self.sender in SUPER_USER:
+                    elif c_msg["message"] == 'restart' and c_msg["sender"] in SUPER_USER:
                         if self.__DB:
-                            print('{} is restarting, called by {}'.format(self.channel + ' ' + self.twitch_nick, self.sender))
+                            print('{} is restarting, called by {}'.format(self.channel + ' ' + self.twitch_nick, c_msg["sender"]))
                         self.admin(RESTART)
                         self.twitch_send_message('Restarting the bot.')
                         break
 
-                    elif self.message_body == 'check' and self.sender in SUPER_USER:
+                    elif c_msg["message"] == 'check' and c_msg["sender"] in SUPER_USER:
                         self.admin(CHECK)
                         
-                    elif self.message_body == 'crash' and self.sender in SUPER_USER:
+                    elif c_msg["message"] == 'crash' and c_msg["sender"] in SUPER_USER:
                         self.running = False
 
-                    #Commands end heree
-
-            elif self.action == 'MODE':
-                #Adds users to the mod list
-                #Currently never removes them, I assume if they got modded once they are trust worthy to use all commands
-                #TMI also loves to drop mod status, which would break mod commands if it removed them as it de-op'd
-                # THIS IS GOING TO BE RE-WRITTEN FOR IRCv3 ONCE IT IS RELEASED
-                if '+o ' in self.message:
-                    admin = self.message.split('+o ')[-1]
-                    if admin not in self.admin_file:
-                        with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
-                            data_file.write('{}\n'.format(admin))
-                        with open('{}_admins.txt'.format(self.channel), 'a+') as data_file:
-                            self.admin_file = data_file.read()
+                    #Commands end here
 
             #Check the social down here, so that even if ping happens social can go off if the minimum time/messages are met but no one is talking
             if self.config_data["social_active"]:
