@@ -179,7 +179,7 @@ class SaltyBot:
                     active_commands.remove("!vote")
                 except:
                     pass
-        except NameError, e:
+        except AttributeError, e:
             pass
 
         if self.game == '':
