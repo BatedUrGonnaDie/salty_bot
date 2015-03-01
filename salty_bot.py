@@ -334,15 +334,12 @@ class SaltyBot:
         url = 'https://osu.ppy.sh/api/get_beatmaps?k={}&{}'.format(osu_api_key, osu_number)
         data_decode = self.api_caller(url)
         if data_decode == False:
+            self.twitch_send_message("There was a problem retrieving the map info from the Osu! API")
             return
         data_decode = data_decode[0]
 
         response = '{} - {}, mapped by {}'.format(data_decode['artist'], data_decode['title'], data_decode['creator'])
         self.twitch_send_message(response)
-
-    def active_category(self, cats_array):
-        categories_in_title = []
-        category_position = {}
         
     def format_sr_time(self, f_time):
         m, s = divmod(float(f_time), 60)
@@ -1298,14 +1295,14 @@ class SaltyBot:
                             self.uptime()
 
                     elif c_msg["message"].startswith('highlight'):
-                        if c_msg["sender"] == self.channel or c_msg["sender"] in SUPER_USER:
+                        if self.command_check(c_msg, "!highlight"):
                             self.highlight(c_msg)
 
                     elif c_msg["message"] == "show_highlight":
                         if c_msg["sender"] == self.channel or c_msg["sender"] in SUPER_USER:
                             self.show_highlight()
                         
-                    elif c_msg["message"] == 'commands':
+                    elif c_msg["message"] == "commands":
                         if self.command_check(c_msg, "!commands"):
                             self.live_commands()
 
@@ -1314,18 +1311,20 @@ class SaltyBot:
                             msg = "Powered by SaltyBot, for a full list of command check out the github repo (http://bombch.us/z3x) or to get it in your channel go here http://bombch.us/z3y"
                             self.twitch_send_message(msg, "!bot_info")
 
-                    elif c_msg["message"] == 'restart' and c_msg["sender"] in SUPER_USER:
+                    elif c_msg["message"] == "restart" and c_msg["sender"] in SUPER_USER:
                         if self.__DB:
-                            print('{} is restarting, called by {}'.format(self.channel + ' ' + self.twitch_nick, c_msg["sender"]))
+                            print("{} is restarting, called by {}".format(self.channel + ' ' + self.twitch_nick, c_msg["sender"]))
                         self.admin(RESTART)
-                        self.twitch_send_message('Restarting the bot.')
+                        self.twitch_send_message("Restarting the bot.")
                         break
 
-                    elif c_msg["message"] == 'check' and c_msg["sender"] in SUPER_USER:
-                        self.admin(CHECK)
+                    elif c_msg["message"] == "check":
+                        if c_msg["sender"] in SUPER_USER:
+                            self.admin(CHECK)
                         
-                    elif c_msg["message"] == 'crash' and c_msg["sender"] in SUPER_USER:
-                        self.running = False
+                    elif c_msg["message"] == "crash":
+                        if c_msg["sender"] in SUPER_USER:
+                            self.running = False
 
                     #Commands end here
 
