@@ -1140,13 +1140,6 @@ class SaltyBot:
                     msg_parts.insert(0, '')
                 elif message.startswith('@'):
                     action = msg_parts[2]
-                else:
-                    try:
-                        print message
-                        continue
-                    except Exception, e:
-                        print e
-                        continue
             except Exception, e:
                 print e
                 continue
