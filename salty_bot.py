@@ -357,9 +357,98 @@ class SaltyBot:
             print time
         return time
 
+    def get_number_suffix(self, number):
+        return 'th' if 11 <= number <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(number % 10, 'th')
+
+    def find_active_cat(self, sr_game, game_records):
+        # Returns True or False depending on if success or failure, and a string
+        # String will be the error message to send to chat if failure or the actice cat if success
+        categories_in_title = []
+        category_position = {}
+        if sr_game.lower() == self.game.lower():
+            sr_game_cats = game_records[sr_game].keys()
+            for i in sr_game_cats:
+                if i.lower() in self.title:
+                    categories_in_title.append(i)
+            categories_in_title = list(set(categories_in_title))
+        else:
+            response = "It appears the game is not on speedrun.com BibleThump"
+            return False, response
+
+        if len(categories_in_title) == 0:
+            response = "I'm sorry, but this category does not exist on speedrun.com"
+            return False, response
+        elif len(categories_in_title) > 1:
+            categories_in_title = list(set(categories_in_title))
+
+        if len(categories_in_title) > 1:
+            for j in categories_in_title:
+                category_position[j] = self.title.find(j.lower())
+            min_value = min(category_position.itervalues())
+            min_keys = [k for k in category_position if category_position[k] == min_value]
+            active_cat = sorted(min_keys, key = len)[-1]
+        else:
+            active_cat = categories_in_title[0]
+
     def pb_retrieve(self, c_msg):
         msg_split = c_msg["message"].split(' ', 3)
+        try:
+            url = "http://www.speedrun.com/api_records.php?user={}".format(msg_split[1])
+            try:
+                url += "&game=" + msg_split[2]
+                try:
+                    msg_split[3]
+                except IndexError, e:
+                    response = "Please specify a category to look up."
+                    self.twitch_send_message(response, "!pb")
+                    return
+            except IndexError, e:
+                response = "Please specify a game shortcode to look up on speedrun.com"
+                self.twitch_send_message(response, "!pb")
+                return
+        except IndexError, e:
+            if self.game != '':
+                url = "http://speedrun.com/api_records.php?user={}&game={}".format(self.channel, self.game)
+            else:
+                response = "Please either provide a player, game, and category or wait for the streamer to go live."
+                self.twitch_send_message(response, "!pb")
+                return
 
+        game_data = self.api_caller(url)
+        if game_data == False:
+            self.twitch_send_message("There was an error fetching info from speedrun.com", "!pb")
+        try:
+            sr_game = dict(game_data).keys()[0]
+        except TypeError, e:
+            self.twitch_send_message("This game does not seem to exist on speedrun.com", "!pb")
+            return
+
+        if len(msg_split) == 1:
+            success, response_string = self.find_active_cat(sr_game, game_data)
+            if success == False:
+                self.twitch_send_message(response_string, "!pb")
+                return
+            else:
+                active_cat = response_string
+                user_name = self.channel
+        elif len(msg_split) == 4:
+            user_name = msg_split[1]
+            game_cats = game_data[sr_game].keys()
+            for i in game_cats:
+                if msg_split[3].lower() == i.lower():
+                    active_cat = i
+                    break
+            try:
+                active_cat
+            except NameError, e:
+                self.twitch_send_message("Please specify a category that is available on speedrun.com", "!pb")
+                return
+
+        cat_record = game_data[sr_game][active_cat]
+        pb_time = self.format_sr_time(cat_record["time"])
+        place = str(cat_record["place"]) + self.get_number_suffix(int(cat_record["place"]))
+        msg = "{}'s pb for {} {} is {}.  They are ranked {} on speedrun.com".format(user_name.capitalize(), sr_game, active_cat, pb_time, place)
+        self.twitch_send_message(msg, "!pb")
 
     def wr_retrieve(self, c_msg):
         #Find the categories that are on file in the title, and then if more than one exist pick the one located earliest in the title
@@ -390,32 +479,12 @@ class SaltyBot:
             return
 
         if len(msg_split) == 1:
-            categories_in_title = []
-            category_position = {}
-            if sr_game.lower() == self.game.lower():
-                sr_game_cats = game_records[sr_game].keys()
-                for i in sr_game_cats:
-                    if i.lower() in self.title:
-                        categories_in_title.append(i)
-                categories_in_title = list(set(categories_in_title))
-            else:
-                self.twitch_send_message("It appears the game is not on speedrun.com BibleThump", "!wr")
+            success, response_string = self.find_active_cat(sr_game, game_records)
+            if success == False:
+                self.twitch_send_message(response_string, "!wr")
                 return
-
-            if len(categories_in_title) == 0:
-                self.twitch_send_message("I'm sorry, but this category does not exist on speedrun.com", '!wr')
-                return
-            elif len(categories_in_title) > 1:
-                categories_in_title = list(set(categories_in_title))
-
-            if len(categories_in_title) > 1:
-                for j in categories_in_title:
-                    category_position[j] = self.title.find(j.lower())
-                min_value = min(category_position.itervalues())
-                min_keys = [k for k in category_position if category_position[k] == min_value]
-                active_cat = sorted(min_keys, key = len)[-1]
             else:
-                active_cat = categories_in_title[0]
+                active_cat = response_string
 
         elif len(msg_split) == 3:
             game_cats = game_records[sr_game].keys()
@@ -593,7 +662,7 @@ class SaltyBot:
                     if srl_race_time > 0:
                         if user_time > 0:
                             time_formatted = self.format_sr_time(user_time)
-                            position_suffix = 'th' if 11 <= user_place <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(user_place % 10, 'th')
+                            position_suffix = str(self.get_number_suffix(user_place))
                             response += ', Finished {}{} with a time of {}'.format(user_place, position_suffix, time_formatted)
                         else:
                             real_time = (int(time.time()) - srl_race_time)
@@ -1144,6 +1213,10 @@ class SaltyBot:
 
                     elif c_msg["message"].startswith('whitelist ') and c_msg["sender"] == self.channel:
                         self.lister(c_msg, 'white')
+
+                    elif c_msg["message"].startswith("pb"):
+                        if self.command_check(c_msg, "!pb"):
+                            self.pb_retrieve(c_msg)
 
                     elif c_msg["message"].startswith('wr'):
                         if self.command_check(c_msg, '!wr'):
