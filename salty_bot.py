@@ -173,11 +173,14 @@ class SaltyBot:
                 active_commands.remove('!uptime')
             except:
                 pass
-        if not self.votes:
-            try:
-                active_commands.remove("!vote")
-            except:
-                pass
+        try:
+            if not self.votes:
+                try:
+                    active_commands.remove("!vote")
+                except:
+                    pass
+        except NameError, e:
+            pass
 
         if self.game == '':
             try:
