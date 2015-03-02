@@ -1164,6 +1164,9 @@ class SaltyBot:
                 if c_msg["message"].find('­') != -1:
                     continue
 
+                if self.__DB:
+                    print datetime.datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ') + '#' + self.channel + ' ' + c_msg["sender"] + ": " + c_msg["message"].decode('utf-8')
+
                 #Sub Message
                 if c_msg["sender"] == 'twitchnotify':
                     self.sub_msg(c_msg)
