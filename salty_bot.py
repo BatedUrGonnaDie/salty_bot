@@ -392,23 +392,31 @@ class SaltyBot:
 
     def pb_retrieve(self, c_msg):
         msg_split = c_msg["message"].split(' ', 3)
+        infer_category = False
         try:
             url = "http://www.speedrun.com/api_records.php?user={}".format(msg_split[1])
+            user_name = msg_split[1]
             try:
                 url += "&game=" + msg_split[2]
                 try:
                     msg_split[3]
                 except IndexError, e:
-                    response = "Please specify a category to look up."
-                    self.twitch_send_message(response, "!pb")
-                    return
+                    if self.title != '':
+                        infer_category = True
+                    else:
+                        self.twitch_send_message("Please specify a category to look up.")
+                        return
             except IndexError, e:
-                response = "Please specify a game shortcode to look up on speedrun.com"
-                self.twitch_send_message(response, "!pb")
-                return
+                if self.game != '':
+                    url += "&game=" + self.game
+                else:
+                    self.twitch_send_message("Please specify a game shortcode to look up on speedrun.com")
+                    return
         except IndexError, e:
             if self.game != '':
                 url = "http://speedrun.com/api_records.php?user={}&game={}".format(self.channel, self.game)
+                user_name = self.channel
+                infer_category = True
             else:
                 response = "Please either provide a player, game, and category or wait for the streamer to go live."
                 self.twitch_send_message(response, "!pb")
@@ -417,22 +425,22 @@ class SaltyBot:
         game_data = self.api_caller(url)
         if game_data == False:
             self.twitch_send_message("There was an error fetching info from speedrun.com", "!pb")
+            return
+
         try:
             sr_game = dict(game_data).keys()[0]
         except TypeError, e:
             self.twitch_send_message("This game does not seem to exist on speedrun.com", "!pb")
             return
 
-        if len(msg_split) == 1:
+        if infer_category:
             success, response_string = self.find_active_cat(sr_game, game_data)
             if success == False:
                 self.twitch_send_message(response_string, "!pb")
                 return
             else:
                 active_cat = response_string
-                user_name = self.channel
-        elif len(msg_split) == 4:
-            user_name = msg_split[1]
+        else:
             game_cats = game_data[sr_game].keys()
             for i in game_cats:
                 if msg_split[3].lower() == i.lower():
