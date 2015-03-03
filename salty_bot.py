@@ -390,6 +390,8 @@ class SaltyBot:
         else:
             active_cat = categories_in_title[0]
 
+        return True, active_cat
+
     def pb_retrieve(self, c_msg):
         msg_split = c_msg["message"].split(' ', 3)
         infer_category = False
@@ -688,38 +690,38 @@ class SaltyBot:
                     self.twitch_send_message(response, '!race')
                     return
 
-    def youtube_video_check(self, vid_type, c_msg):
+    def youtube_video_check(self, c_msg):
         #Links the title and uploader of the youtube video in chat
-        if vid_type == 'short':
-            video_id = c_msg["message"].split('youtu.be/')[-1]
-        else:
-            url_values = urlparse.parse_qs(urlparse.urlparse(c_msg["message"]).query)
-            try:
-                video_id = url_values['v'][0]
-            except:
+        video_ids = re.findall("(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})", c_msg["message"])
+        if not video_ids:
+            return
+
+        final_list = []
+        for i in video_ids:
+            url = 'https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id={}&key={}'.format(i, youtube_api_key)
+            data_decode = self.api_caller(url)
+
+            if data_decode == False:
                 return
 
-        if ' ' in video_id:
-            video_id = video_id.split(' ')[0]
+            if len(data_decode['items']) != 0:
+                data_items = data_decode['items']
+                video_title = data_items[0]['snippet']['title'].encode("utf-8")
+                uploader = data_items[0]['snippet']['channelTitle'].encode("utf-8")
+                view_count = data_items[0]['statistics']['viewCount']
+                duration = (data_items[0]['contentDetails']['duration'])[2:-1]
+                duration_list = re.split("[HMS]", duration)
+                if len(duration_list) == 1:
+                    duration_string = "0:" + duration_list[0]
+                else:
+                    duration_string = ':'.join(duration_list)
 
-        url = 'https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id={}&key={}'.format(video_id, youtube_api_key)
-        data_decode = self.api_caller(url)
+                final_list.append("[{}] {} uploaded by {}. Views: {}".format(duration_string, video_title, uploader, view_count))
+            else:
+                continue
 
-        if data_decode == False:
-            return
-
-        if len(data_decode['items']) != 0:
-            data_items = data_decode['items']
-            video_title = data_items[0]['snippet']['title'].encode("utf-8")
-            uploader = data_items[0]['snippet']['channelTitle'].encode("utf-8")
-            view_count = data_items[0]['statistics']['viewCount']
-            duration = (data_items[0]['contentDetails']['duration'])[2:-1]
-            duration = re.split("[HMS]", duration)
-            duration = ':'.join(duration)
-            response = '[{}] {} uploaded by {}. Views: {}'.format(duration, video_title, uploader, view_count)
-            self.twitch_send_message(response)
-        else:
-            return
+        self.twitch_send_message(" | ".join(final_list))
+        return
 
     def create_vote(self, c_msg):
         #Used to create polls in chat
@@ -1155,7 +1157,6 @@ class SaltyBot:
                 continue
 
             if action == 'PRIVMSG':
-                #Messages to channel are PRIVMSG's, just aimed at a channel instead of a user
                 self.messages_received += 1
                 c_msg = {}
                 if msg_parts[0]:
@@ -1186,14 +1187,8 @@ class SaltyBot:
                             self.osu_link(c_msg)
 
                 #Link youtube info
-                if c_msg["message"].find('youtube.com/watch?v=') != -1:
-                    if self.config_data["youtube_link"]:
-                        self.youtube_video_check('long', c_msg)
-
-                #Link youtube info
-                if c_msg["message"].find('youtu.be/') != -1:
-                    if self.config_data["youtube_link"]:
-                        self.youtube_video_check('short', c_msg)
+                if self.config_data["youtube_link"]:
+                    self.youtube_video_check(c_msg)
 
                 #Toobou trigger check
                 try:
@@ -1319,7 +1314,7 @@ class SaltyBot:
 
                     elif c_msg["message"] == "restart" and c_msg["sender"] in SUPER_USER:
                         if self.__DB:
-                            print("{} is restarting, called by {}".format(self.channel + ' ' + self.twitch_nick, c_msg["sender"]))
+                            print "{} is restarting, called by {}".format(self.channel + ' ' + self.twitch_nick, c_msg["sender"])
                         self.admin(RESTART)
                         self.twitch_send_message("Restarting the bot.")
                         break
