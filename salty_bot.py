@@ -21,7 +21,6 @@ import psycopg2.extras
 #import salty_config
 
 debuging = True
-Config_file_name = 'dConfig.json' if debuging else 'config.json'
 Config_file_name = 'config.json'
 
 RESTART = "<restart>"
@@ -50,6 +49,7 @@ class SaltyBot:
 
     running = True
     messages_received = 0
+    message_limit = 100
     rate_limit = 0
 
     def __init__(self, config_data, debug = False):
@@ -184,10 +184,6 @@ class SaltyBot:
 
         if self.game == '':
             try:
-                active_commands.remove('!wr')
-            except:
-                pass
-            try:
                 active_commands.remove('!leaderboard')
             except:
                 pass
@@ -242,7 +238,7 @@ class SaltyBot:
             response = "Please stop trying to abuse me BibleThump"
             command = ''
         to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
-        if self.rate_limit < 110:
+        if self.rate_limit < self.message_limit:
             self.irc.sendall(to_send)
             self.rate_limit += 1
         else: 
