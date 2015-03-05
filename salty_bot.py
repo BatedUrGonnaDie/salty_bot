@@ -44,6 +44,7 @@ osu_irc_pass = general_config['general_info']['osu']['osu_irc_pass']
 db_url = general_config['general_info']['db_url']
 web_listen_ip = general_config['general_info']["web_listen_ip"]
 web_listen_port = general_config['general_info']["web_listen_port"]
+web_secret = general_config["general_info"]["web_secret"]
 #super users are used for bot breaking commands and beta commands
 SUPER_USER = general_config['general_info']['super_users']
 
@@ -1470,7 +1471,7 @@ def main():
 
     bot_dict = {} #Bot instances go in here
     
-    online_info = SaltyListener.WebRetrieve(db_url, web_listen_ip, web_listen_port)
+    online_info = SaltyListener.WebRetrieve(db_url, web_listen_ip, web_listen_port, web_secret)
     channels_dict = online_info.initial_retrieve() #All channels go in here from the JSON file
 
     for channel_name, channel_data in channels_dict.items(): #Start bots

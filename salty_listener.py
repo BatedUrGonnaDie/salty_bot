@@ -9,9 +9,10 @@ import psycopg2.extras
 
 class WebRetrieve:
 
-    def __init__(self, db_url, web_ip, web_port):
+    def __init__(self, db_url, web_ip, web_port, web_secret):
         self.db_url = db_url
         self.web_secret = ""
+        self.web_secret = web_secret
         self.web_port = web_port
         self.web_host = web_ip
         self.web_s = socket.socket()
