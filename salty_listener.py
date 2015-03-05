@@ -97,11 +97,11 @@ class WebRetrieve:
     def main_listen(self):
         self.web_s.listen(1)
         connection, address = self.web_s.accept()
-        secret = self.web_s.recv(1024)
+        secret = connection.recv(1024)
         if secret != self.web_secret:
             connection.close()
             raise ValueError
         else:
-            to_update = self.web_s.recv(4096)
+            to_update = connection.recv(4096)
             connection.close()
             return to_update
