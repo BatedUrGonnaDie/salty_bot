@@ -9,13 +9,13 @@ import psycopg2.extras
 
 class WebRetrieve:
 
-    def __init__(self, db_url, web_port):
+    def __init__(self, db_url, web_ip, web_port):
         self.db_url = db_url
         self.web_secret = ""
         self.web_port = web_port
-        self.web_host = socket.gethostbyname(socket.gethostname())
+        self.web_host = web_ip
         self.web_s = socket.socket()
-        self.web_s.bind((self.web_host, 6666))
+        self.web_s.bind((self.web_host, self.web_port))
         self.disect_url()
 
     def disect_url(self):
