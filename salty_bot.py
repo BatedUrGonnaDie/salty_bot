@@ -1475,12 +1475,7 @@ def main():
         # Create bot and put it by name into a dictionary 
 
         bot_dict[channel_name] = SaltyBot(channel_data, debuging)
-
-        info = bot_dict[channel_name].api_caller("https://api.twitch.tv/kraken/", headers={"Authorization" : "OAuth " + bot_dict[channel_name].twitch_oauth[6:]})
-        if not (info["token"]["valid"] and "chat_login" in info["token"]["authorization"]["scopes"] and info["token"]["user_name"] == bot_dict[channel_name].twitch_nick.lower()):
-            del bot_dict[channel_name]
-            continue
-
+        
         # Look up bot and start the thread
         bot_dict[channel_name].start()
 
