@@ -18,7 +18,7 @@ import requests
 import psycopg2
 import psycopg2.extras
 
-#import salty_config
+import salty_listener as SaltyListener
 
 debuging = True
 Config_file_name = 'config.json'
@@ -118,7 +118,7 @@ class SaltyBot:
 
     def twitch_commands(self):
         #Set up all the limits, if its admin, if its on, quote and pun stuff, and anything else that needs setting up for a command
-        self.command_times["!bot_info"] = {"last": 0, "limit": 30}
+        self.command_times["!bot_info"] = {"last": 0, "limit": 300}
         self.commands.append("!bot_info")
 
         for i in self.config_data["commands"]:
@@ -1452,52 +1452,24 @@ def automated_main_loop(bot_dict, config_dict):
             
             time_to_check_twitch = int(time.time()) + 60
 
+def update_listen(web_inst):
+    while True:
+        try:
+            user_to_update = web_inst.main_listen()
+        except ValueError, e:
+            print "Was given wrong secret key"
+            continue
+
+        user = json.loads(user_to_update)
+        new_info = web_inst.update_retrieve(user["user_id"])
+        print new_info
+
 def main():
 
     bot_dict = {} #Bot instances go in here
-    channels_dict = {} #All channels go in here from the JSON file
     
-    urlparse.uses_netloc.append("postgres")
-    url = urlparse.urlparse(db_url)
-    db = url.path[1:]
-    user = url.username
-    password = url.password
-    host = url.hostname
-    port = url.port
-
-    try:
-        conn = psycopg2.connect(database=db, user=user, host=host, password=password, port=port)
-    except Exception, e:
-        print e
-
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("""SELECT * from users u
-                JOIN Settings s on u.id=s.user_id
-                WHERE s.active=true""")
-    users = cur.fetchall()
-
-    cur.execute("""SELECT * FROM commands c
-                WHERE c.user_id in (SELECT s.user_id FROM Settings s WHERE s.active=true)""")
-    commands = cur.fetchall()
-
-    cur.execute("""SELECT * from custom_commands c
-                WHERE c.user_id in (SELECT s.user_id FROM Settings s WHERE s.active=true)""")
-    custom_commands = cur.fetchall()
-    cur.close()
-    conn.close()
-    users_dict = {}
-    for i in users:
-        users_dict[i["id"]] = i
-        users_dict[i["id"]]["commands"] = []
-        users_dict[i["id"]]["custom_commands"] = []
-
-    for i in commands:
-        users_dict[i["user_id"]]["commands"].append(i)
-
-    for i in custom_commands:
-        users_dict[i["user_id"]]["custom_commands"].append(i)
-    for k, v in users_dict.iteritems():
-        channels_dict[v["twitch_name"]] = v
+    online_info = SaltyListener.WebRetrieve(db_url, 6666)
+    channels_dict = online_info.initial_retrieve() #All channels go in here from the JSON file
 
     for channel_name, channel_data in channels_dict.items(): #Start bots
         # Create bot and put it by name into a dictionary 
@@ -1508,16 +1480,20 @@ def main():
         if not (info["token"]["valid"] and "chat_login" in info["token"]["authorization"]["scopes"] and info["token"]["user_name"] == bot_dict[channel_name].twitch_nick.lower()):
             del bot_dict[channel_name]
             continue
-        
+
         # Look up bot and start the thread
         bot_dict[channel_name].start()
-        
+
         # Wait for twitch limit
         time.sleep(1)
 
-    otherT = threading.Thread(target = automated_main_loop, args = (bot_dict, channels_dict))
+    otherT = threading.Thread(target=automated_main_loop, args=(bot_dict, channels_dict))
     otherT.setDaemon(True)
     otherT.start()
+
+    listen_thread = threading.Thread(target=update_listen, args=(online_info,))
+    listen_thread.setDaemon(True)
+    listen_thread.start()
 
     while True:
         command = raw_input("> ")
@@ -1528,16 +1504,11 @@ def main():
         if command.startswith("/stop"):
             for bot, inst in bot_dict.items():
                 inst.stop()
-                
             sys.exit()()
-            
-            
+
+
 if __name__ == '__main__':
     try:
         main()
-        
     except KeyboardInterrupt:
         print "Shut-down initiated..."
-
-
-#make web page that doesn't suck
