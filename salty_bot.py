@@ -721,7 +721,7 @@ class SaltyBot:
                 duration_list = re.split("[HMS]", duration)
 
                 lookup_list = ['0:{:02d}', '{}:{:02d}', '{}:{:02d}:{:02d}']
-                duration_string = lookup_list[len(duration_list) - 1].format(*duration_list)
+                duration_string = lookup_list[len(duration_list) - 1].format(*map(int, duration_list))
 
                 final_list.append("[{}] {} uploaded by {}. Views: {}".format(duration_string, video_title, uploader, view_count))
             else:
@@ -1151,8 +1151,7 @@ class SaltyBot:
             if message == "":
                 print self.channel + ' returned empty string.'
                 self.socket_error_restart()
-
-            if message.startswith('PING'):
+            elif message.startswith('PING'):
                 self.irc.sendall(message.replace("PING", "PONG"))
 
             try:
