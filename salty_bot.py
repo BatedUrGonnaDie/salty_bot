@@ -1127,7 +1127,13 @@ class SaltyBot:
         self.to_highlight = []
 
     def sub_msg(self, c_msg):
-        pass
+        msg_split = c_msg.split(' ')
+        if len(msg_split) == 3:
+            msg = self.config_data["sub_message_text"]
+        else:
+            msg = self.config_data["sub_message_resub"].replace("$duration", "{} {}".format(msg_split[3], msg_split[4]))
+        self.twitch_send_message(msg)
+
 
     def twitch_run(self):
         #Main loop for running the bot
@@ -1152,7 +1158,7 @@ class SaltyBot:
             try:
                 message = message.strip()
                 msg_parts = message.split(' ')
-                if message.startswith(' '):
+                if message.startswith(':'):
                     action = msg_parts[1]
                     msg_parts.insert(0, '')
                 elif message.startswith('@'):
@@ -1185,7 +1191,8 @@ class SaltyBot:
 
                 #Sub Message
                 if c_msg["sender"] == 'twitchnotify':
-                    self.sub_msg(c_msg)
+                    if self.config_data["sub_message_active"]:
+                        self.sub_msg(c_msg)
 
                 #Link osu maps
                 if c_msg["message"].find('osu.ppy.sh/b/') != -1 or c_msg["message"].find('osu.ppy.sh/s/') != -1:
@@ -1233,7 +1240,7 @@ class SaltyBot:
                     elif c_msg["message"].startswith('leaderboard'):
                         if self.game != '':
                             if self.command_check(c_msg, '!leaderboard'):
-                                    self.leaderboard_retrieve()
+                                self.leaderboard_retrieve()
 
                     elif c_msg["message"].startswith("splits"):
                         if self.command_check(c_msg, '!splits'):
@@ -1270,18 +1277,20 @@ class SaltyBot:
                             if self.command_check(c_msg, '!race'):
                                 self.srl_race_retrieve()
 
-                    elif c_msg["message"].startswith('createvote ') and c_msg["tags"]["user_type"] in self.elevated_user:
-                        self.create_vote(c_msg)
+                    elif c_msg["message"].startswith('createvote '):
+                        if self.config_data["voting_mods"] and (c_msg["tags"]["user_type"] in self.elevated_user or c_msg["sender"] == self.channel):
+                            self.create_vote(c_msg)
 
-                    elif c_msg["message"] == 'endvote' and c_msg["tags"]["user_type"] in self.elevated_user:
-                        self.end_vote()
+                    elif c_msg["message"] == 'endvote':
+                        if self.config_data["voting_mods"] and (c_msg["tags"]["user_type"] in self.elevated_user or c_msg["sender"] == self.channel):
+                            self.end_vote()
 
                     elif c_msg["message"].startswith('vote '):
-                        if self.command_check(c_msg, '!vote'):
+                        if self.config_data["voting_active"]:
                             self.vote(c_msg)
 
                     elif c_msg["message"] == 'checkvotes':
-                        if self.command_check(c_msg, '!vote'):
+                        if self.config_data["voting_active"]:
                             self.check_votes(c_msg)
 
                     elif c_msg["message"].startswith('review') and c_msg["sender"] == self.channel:
