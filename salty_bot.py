@@ -1155,7 +1155,7 @@ class SaltyBot:
             try:
                 message = message.strip()
                 msg_parts = message.split(' ')
-                if message.startswith(' '):
+                if message.startswith(':'):
                     action = msg_parts[1]
                     msg_parts.insert(0, '')
                 elif message.startswith('@'):
@@ -1236,7 +1236,7 @@ class SaltyBot:
                     elif c_msg["message"].startswith('leaderboard'):
                         if self.game != '':
                             if self.command_check(c_msg, '!leaderboard'):
-                                    self.leaderboard_retrieve()
+                                self.leaderboard_retrieve()
 
                     elif c_msg["message"].startswith("splits"):
                         if self.command_check(c_msg, '!splits'):
