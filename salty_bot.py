@@ -468,13 +468,13 @@ class SaltyBot:
             try:
                 msg_split[2]
             except IndexError:
-                self.twitch_send_message("Please provide a category to search for.", '!wr')
+                self.twitch_send_message("Please provide a category to search for.")
                 return
         except IndexError:
             if self.game != '':
                 url = "http://www.speedrun.com/api_records.php?game=" + self.game
             else:
-                self.twitch_send_message("Please either provide a game and category or wait for the streamer to go live.", '!wr')
+                self.twitch_send_message("Please either provide a game and category or wait for the streamer to go live.")
                 return
 
         game_records = self.api_caller(url)
@@ -522,13 +522,12 @@ class SaltyBot:
         self.twitch_send_message(url, '!leaderboard')
 
     def splits_check(self, c_msg):
-        #Get user JSON object from splits.io, find the categories, find the fastest run for said category, and then link
-        #it in chat for people to see the time/download
+        # Get pbs from splits.io, find the correct category
         msg_split = c_msg["message"].split(' ', 3)
         game_type = "name"
         infer_category = False
         try:
-            url = "https://www.splits.io/api/v3/{}/pbs".format(msg_split[1])
+            url = "https://splits.io/api/v3/users/{}/pbs".format(msg_split[1])
             try:
                 input_game = msg_split[2]
                 game_type = "shortname"
@@ -548,31 +547,60 @@ class SaltyBot:
                     return
         except IndexError, e:
             if self.game != "" and self.title != "":
-                url = "https://www.splits.io/api/v3/users/{}/pbs".format(self.channel)
+                url = "https://splits.io/api/v3/users/{}/pbs".format(self.channel)
                 input_game = self.game
             else:
                 self.twitch_send_message("Please wait for the streamer to go live or specify a user, game, and title.")
                 return
 
         splits_response = self.api_caller(url)
+        if splits_response == False:
+            self.twitch_send_message("Failed to retrieve data from splits.io, please try again.")
+            return
+
+        if infer_category:
+            games_with_category = []
         for i in splits_response["pbs"]:
             if i["game"][game_type] == input_game:
                 if infer_category:
-                    pass
+                    if i["category"]["name"].lower() in self.title:
+                        games_with_category.append(i)
                 else:
-                    if category == i["category"]["name"]:
+                    if category == i["category"]["name"].lower():
                         pb_splits = i
                         break
+
+        if infer_category:
+            while True:
+                games_with_category = list(set(games_with_category))
+                if len(games_with_category) == 1:
+                    pb_splits = games_with_category[0]
+                    break
+                else:
+                    category_position = {}
+                    for j in games_with_category:
+                        category_position[j["category"]["name"]] = self.title.find(j["category"]["name"].lower())
+                    min_value = min(category_position.itervalues())
+                    min_keys = [k for k in category_position if category_position[k] == min_value]
+                    active_cat = sorted(min_keys, key = len)[-1]
+                    for i in games_with_category:
+                        if active_cat == i["category"]["name"]:
+                            pb_splits = i
+                    break
 
         try:
             pb_splits
         except NameError, e:
-            pass
+            if infer_category:
+                self.twitch_send_message("I could not find splits based on any categories in the title.", "!splits")
+                return
+            else:
+                self.twitch_send_message("I could not find splits based on the category provided.", "!splits")
+                return
 
-
-        time = self.format_sr_time(splits['time'])
-        link = 'https://splits.io/{}'.format(splits['path'])
-        response = 'Splits with a time of {} {}'.format(time, link)
+        time = self.format_sr_time(pb_splits['time'])
+        link_to_splits = 'https://splits.io/{}'.format(pb_splits['path'])
+        response = 'Splits with a time of {} {}'.format(time, link_to_splits)
         self.twitch_send_message(response, '!splits')
 
     def add_text(self, c_msg, text_type):
@@ -691,6 +719,8 @@ class SaltyBot:
                 view_count = data_items[0]['statistics']['viewCount']
                 duration = (data_items[0]['contentDetails']['duration'])[2:-1]
                 duration_list = re.split("[HMS]", duration)
+                if len(str(duration_list[-1])) == 1:
+                    duration_list[-1] = "0" + str(duration_list[-1])
                 if len(duration_list) == 1:
                     duration_string = "0:" + duration_list[0]
                 else:
@@ -1208,10 +1238,9 @@ class SaltyBot:
                             if self.command_check(c_msg, '!leaderboard'):
                                     self.leaderboard_retrieve()
 
-                    # elif c_msg["message"] == 'splits':
-                    #     if self.game != '':
-                    #         if self.command_check(c_msg, '!splits'):
-                    #             self.splits_check(c_msg)
+                    elif c_msg["message"].startswith("splits"):
+                        if self.command_check(c_msg, '!splits'):
+                            self.splits_check(c_msg)
 
                     elif c_msg["message"].startswith('addquote'):
                         if self.command_check(c_msg, '!addquote'):
