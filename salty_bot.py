@@ -414,7 +414,7 @@ class SaltyBot:
                     self.twitch_send_message("Please specify a game shortcode to look up on speedrun.com")
                     return
         except IndexError, e:
-            if self.game != '':
+            if self.game != '' and self.title != '':
                 url = "http://speedrun.com/api_records.php?user={}&game={}".format(self.channel, self.game)
                 user_name = self.channel
                 infer_category = True
@@ -521,73 +521,54 @@ class SaltyBot:
         url = 'http://speedrun.com/' + game_no_spec
         self.twitch_send_message(url, '!leaderboard')
 
-    def splits_check(self):
+    def splits_check(self, c_msg):
         #Get user JSON object from splits.io, find the categories, find the fastest run for said category, and then link
         #it in chat for people to see the time/download
-        url = "https://splits.io/api/v2/users?name=" + self.channel
-        user_id = self.api_caller(url)
-        if user_id == False:
-            self.twitch_send_message("I'm sorry, I could not retrieve the user id from splits.io")
-            return
-        user_id = user_id[0]['id']
-        url = "https://splits.io/api/v2/runs?user_id=" + user_id
-        user = self.api_caller(url)
-        if not user:
-            self.twitch_send_message("I'm sorry, I could not retrieve the users runs from splits.io")
-            return
-
-        user = user['runs']
-        if len(user) == 0:
-            self.twitch_send_message("I'm sorry, but {} has no runs on splits.io".format(self.channel), "!splits")
-            return
-        categories_in_title = []
-        category_position = {}
-
-        for i in user:
-            if i['game']['name'] == None or i['category']['name'] == None:
-                continue
-
-            if i['game']['name'].lower() == self.game:
-                if i['category']['name'].lower() in self.title:
-                    categories_in_title.append(i['category']['name'].lower())
-
-        if len(categories_in_title) == 0:
-            self.twitch_send_message("I'm sorry, but I could not find any runs matching the categories in the title.", '!splits')
-            return
-        elif len(categories_in_title) == 1:
-            current_cat = categories_in_title[0]
-        elif len(categories_in_title) > 1:
-            for i in range(len(categories_in_title)):
-                for j in range(i + 1, len(categories_in_title)):
-                    if categories_in_title[i] == categories_in_title[j]:
-                        del categories_in_title[j]
-                
+        msg_split = c_msg["message"].split(' ', 3)
+        game_type = "name"
+        infer_category = False
+        try:
+            url = "https://www.splits.io/api/v3/{}/pbs".format(msg_split[1])
+            try:
+                input_game = msg_split[2]
+                game_type = "shortname"
                 try:
-                    category_position[i] = self.title.find(categories_in_title[i])
-                except:
-                    pass
-            if len(categories_in_title) > 1:
-                current_cat = min(category_position, key = category_position.get)
+                    category = msg_split[3]
+                except IndexError, e:
+                    if self.title != "":
+                        infer_category = True
+                    else:
+                        self.twitch_send_message("Please wait for the streamer to go live or specify a category.")
+                        return
+            except IndexError, e:
+                if self.game != "":
+                    full_game = self.game
+                else:
+                    self.twitch_send_message("Please wait for the streamer to go live or specify a game.")
+                    return
+        except IndexError, e:
+            if self.game != "" and self.title != "":
+                url = "https://www.splits.io/api/v3/users/{}/pbs".format(self.channel)
+                input_game = self.game
             else:
-                current_cat = categories_in_title[0]
-        else:
-            print current_cat
-            current_cat = categories_in_title[0]
+                self.twitch_send_message("Please wait for the streamer to go live or specify a user, game, and title.")
+                return
 
-        best_time = 0
+        splits_response = self.api_caller(url)
+        for i in splits_response["pbs"]:
+            if i["game"][game_type] == input_game:
+                if infer_category:
+                    pass
+                else:
+                    if category == i["category"]["name"]:
+                        pb_splits = i
+                        break
 
-        for i in user:
-            if i['game']['name'] == None or i['category']['name'] == None:
-                continue
-            if i['game']['name'].lower() == self.game and i['category']['name'].lower() == current_cat:
-                if best_time == 0:
-                    best_time = i['time']
-                    splits = i
-                if i['time'] < best_time:
-                    splits = i
+        try:
+            pb_splits
+        except NameError, e:
+            pass
 
-        if best_time == 0:
-            return
 
         time = self.format_sr_time(splits['time'])
         link = 'https://splits.io/{}'.format(splits['path'])
@@ -1227,14 +1208,14 @@ class SaltyBot:
                             if self.command_check(c_msg, '!leaderboard'):
                                     self.leaderboard_retrieve()
 
-                    elif c_msg["message"] == 'splits':
-                        if self.game != '':
-                            if self.command_check(c_msg, '!splits'):
-                                self.splits_check()
+                    # elif c_msg["message"] == 'splits':
+                    #     if self.game != '':
+                    #         if self.command_check(c_msg, '!splits'):
+                    #             self.splits_check(c_msg)
 
                     elif c_msg["message"].startswith('addquote'):
                         if self.command_check(c_msg, '!addquote'):
-                            self.add_text('quote', c_msg)
+                            self.add_text(c_msg, "quote")
 
                     elif c_msg["message"] == 'quote':
                         if self.command_check(c_msg, '!quote'):
@@ -1242,7 +1223,7 @@ class SaltyBot:
 
                     elif c_msg["message"].startswith('addpun'):
                         if self.command_check(c_msg, '!addpun'):
-                            self.add_text('pun', c_msg)
+                            self.add_text(c_msg, "pun")
 
                     elif c_msg["message"] == 'pun':
                         if self.command_check(c_msg, '!pun'):
@@ -1462,8 +1443,11 @@ def update_listen(web_inst):
         except ValueError, e:
             print "Was given wrong secret key"
             continue
-
-        user = json.loads(user_to_update)
+        try:
+            user = json.loads(user_to_update)
+        except ValueError, e:
+            print e
+            continue
         new_info = web_inst.update_retrieve(user["user_id"])
         print new_info
 
