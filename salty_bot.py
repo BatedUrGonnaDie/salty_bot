@@ -719,12 +719,9 @@ class SaltyBot:
                 view_count = data_items[0]['statistics']['viewCount']
                 duration = (data_items[0]['contentDetails']['duration'])[2:-1]
                 duration_list = re.split("[HMS]", duration)
-                if len(str(duration_list[-1])) == 1:
-                    duration_list[-1] = "0" + str(duration_list[-1])
-                if len(duration_list) == 1:
-                    duration_string = "0:" + duration_list[0]
-                else:
-                    duration_string = ':'.join(duration_list)
+
+                lookup_list = ['0:{:02d}', '{}:{:02d}', '{}:{:02d}:{:02d}']
+                duration_string = lookup_list[len(duration_list) - 1].format(*duration_list)
 
                 final_list.append("[{}] {} uploaded by {}. Views: {}".format(duration_string, video_title, uploader, view_count))
             else:
