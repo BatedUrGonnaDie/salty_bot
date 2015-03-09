@@ -1407,12 +1407,16 @@ def restart_bot(bot_name, bot_config, bot_dict):
     del bot_dict[bot_name]
     bot_dict[bot_name] = SaltyBot(bot_config[bot_name], debuging)
     bot_dict[bot_name].start()
+
+def update_bot(bot_name, bot_config, bot_dict):
+    bot_dict[bot_name].config_data = bot_config
+    bot_dict[bot_name].commands = []
+    bot_dict[bot_name].twitch_commands()
         
 def automated_main_loop(bot_dict, config_dict):
     time_to_check_twitch = 0
     next_buffer_clear = 0
 
-    #time_to_restart = int(time.time()) + 86400 #Restart every 24 hours
     while True:
         try:
             register = interface.get(False) #returns [type of call, bot id that called it] therefore TYPE, DATA
@@ -1426,13 +1430,9 @@ def automated_main_loop(bot_dict, config_dict):
                     for bot_name,bot_inst in bot_dict.items():
                         print bot_name+': '+bot_inst.thread
                 elif register[TYPE] == UPDATE:
-                    user = register[DATA].twitch_name
-                    print "Updating " + user
-                    print bot_dict[user].config_data + '\n\n'
-                    bot_dict[user].config_data = register[DATA]
-                    print bot_dict[user].config_data
-                    bot_dict[user].commands = []
-                    bot_dict[user].twitch_commands()
+                    update_bot(register[DATA].twitch_name, register[DATA], bot_dict)
+                    config_dict[register[DATA].twitch_name] = register[DATA]
+                    print "Updated " + register[DATA].twitch_name
                 register = None
 
         except:
@@ -1470,6 +1470,7 @@ def update_listen(web_inst):
             continue
         new_info = web_inst.update_retrieve(user["user_id"])
         interface.put([UPDATE, new_info])
+        print "New info in register"
 
 def main():
 
