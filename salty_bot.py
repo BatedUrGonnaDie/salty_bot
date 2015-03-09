@@ -14,6 +14,7 @@ import threading
 import time
 import urlparse
 
+import isodate
 import requests
 import psycopg2
 import psycopg2.extras
@@ -21,6 +22,7 @@ import psycopg2.extras
 import salty_listener as SaltyListener
 
 debuging = True
+development = False
 Config_file_name = 'config.json'
 
 RESTART = "<restart>"
@@ -45,6 +47,8 @@ db_url = general_config['general_info']['db_url']
 web_listen_ip = general_config['general_info']["web_listen_ip"]
 web_listen_port = general_config['general_info']["web_listen_port"]
 web_secret = general_config["general_info"]["web_secret"]
+if development:
+    web_listen_ip = "127.0.0.1"
 #super users are used for bot breaking commands and beta commands
 SUPER_USER = general_config['general_info']['super_users']
 
@@ -717,13 +721,8 @@ class SaltyBot:
                 video_title = data_items[0]['snippet']['title'].encode("utf-8")
                 uploader = data_items[0]['snippet']['channelTitle'].encode("utf-8")
                 view_count = data_items[0]['statistics']['viewCount']
-                duration = (data_items[0]['contentDetails']['duration'])[2:-1]
-                duration_list = re.split("[HMS]", duration)
-
-                lookup_list = ['0:{:02d}', '{}:{:02d}', '{}:{:02d}:{:02d}']
-                duration_string = lookup_list[len(duration_list) - 1].format(*map(int, duration_list))
-
-                final_list.append("[{}] {} uploaded by {}. Views: {}".format(duration_string, video_title, uploader, view_count))
+                duration = isodate.parse_duration(data_items[0]["contentDetails"]["duration"])
+                final_list.append("[{}] {} uploaded by {}. Views: {}".format(str(duration), video_title, uploader, view_count))
             else:
                 continue
 
@@ -1092,14 +1091,8 @@ class SaltyBot:
         self.twitch_send_message(response, '!runes')
 
     def get_time_objects(self):
-        current_time = time.gmtime()
-        current_object = datetime.datetime(current_time[0], current_time[1], current_time[2], current_time[3], current_time[4], current_time[5])
-
-        time_live_split = re.split("(\d{4}?)-(\d{2}?)-(\d{2}?)T(\d{2}?):(\d{2}?):(\d{2}?)Z", self.time_start)[1:-1]
-        for i, s in enumerate(time_live_split):
-            time_live_split[i] = int(s)
-        live_object = datetime.datetime(time_live_split[0], time_live_split[1], time_live_split[2], time_live_split[3], time_live_split[4], time_live_split[5])
-        
+        current_object = datetime.datetime.now()
+        live_object = isodate.parse_datetime(self.time_start)
         return current_object, live_object
 
     def uptime(self):
@@ -1130,8 +1123,11 @@ class SaltyBot:
         msg_split = c_msg.split(' ')
         if len(msg_split) == 3:
             msg = self.config_data["sub_message_text"]
+            msg = msg.replace("$subscriber", msg_split[0])
         else:
-            msg = self.config_data["sub_message_resub"].replace("$duration", "{} {}".format(msg_split[3], msg_split[4]))
+            msg = self.config_data["sub_message_resub"]
+            msg = msg.replace("$duration", "{} {}".format(msg_split[3], msg_split[4]))
+            msg = msg.replace("$subscriber", )
         self.twitch_send_message(msg)
 
 
