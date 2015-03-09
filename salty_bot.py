@@ -1410,6 +1410,8 @@ def restart_bot(bot_name, bot_config, bot_dict):
 def update_bot(bot_name, bot_config, bot_dict):
     bot_dict[bot_name].config_data = bot_config
     bot_dict[bot_name].commands = []
+    bot_dict[bot_name].admin_commands = []
+    bot_dict[bot_name].custom_commands = []
     bot_dict[bot_name].twitch_commands()
         
 def automated_main_loop(bot_dict, config_dict):
@@ -1421,15 +1423,11 @@ def automated_main_loop(bot_dict, config_dict):
             register = interface.get(False) #returns [type of call, bot id that called it] therefore TYPE, DATA
 
             if register:
-                print register[TYPE]
-                print UPDATE
-                print register[TYPE] == UPDATE
-                print register[DATA]
                 if register[TYPE] == RESTART:
                     restart_bot(register[DATA].channel, config_dict, bot_dict)
                 elif register[TYPE] == CHECK:
                     for bot_name,bot_inst in bot_dict.items():
-                        print bot_name+': '+bot_inst.thread
+                        print bot_name + ': ' + bot_inst.thread
                 elif register[TYPE] == UPDATE:
                     user = dict(register[DATA].keys()[0])
                     update_bot(user, register[DATA], bot_dict)
@@ -1437,7 +1435,8 @@ def automated_main_loop(bot_dict, config_dict):
                     print "Updated " + register[DATA][user].twitch_name
                 register = None
 
-        except:
+        except Exception, e:
+            print e
             pass
 
         current_time = int(time.time())
