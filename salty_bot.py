@@ -1422,7 +1422,9 @@ def automated_main_loop(bot_dict, config_dict):
             register = interface.get(False) #returns [type of call, bot id that called it] therefore TYPE, DATA
 
             if register:
-                print register
+                print register[TYPE]
+                print UPDATE
+                print register[DATA]
                 if register[TYPE] == RESTART:
                     restart_bot(register[DATA].channel, config_dict, bot_dict)
                 elif register[TYPE] == CHECK:
