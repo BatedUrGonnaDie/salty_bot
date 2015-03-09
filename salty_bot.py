@@ -28,6 +28,7 @@ Config_file_name = 'config.json'
 RESTART = "<restart>"
 STOP = "<stop program>"
 CHECK = "<check threads>"
+UPDATE = "<update>"
 
 TYPE = 0
 DATA = 1
@@ -44,11 +45,12 @@ osu_api_key = general_config['general_info']['osu']['osu_api_key']
 osu_irc_nick = general_config['general_info']['osu']['osu_irc_nick']
 osu_irc_pass = general_config['general_info']['osu']['osu_irc_pass']
 db_url = general_config['general_info']['db_url']
-web_listen_ip = general_config['general_info']["web_listen_ip"]
-web_listen_port = general_config['general_info']["web_listen_port"]
-web_secret = general_config["general_info"]["web_secret"]
 if development:
     web_listen_ip = "127.0.0.1"
+else:
+    web_listen_ip = general_config['general_info']["web_listen_ip"]
+web_listen_port = general_config['general_info']["web_listen_port"]
+web_secret = general_config["general_info"]["web_secret"]
 #super users are used for bot breaking commands and beta commands
 SUPER_USER = general_config['general_info']['super_users']
 
@@ -79,6 +81,10 @@ class SaltyBot:
         self.admin_commands = []
         self.custom_commands = []
         self.blacklist = []
+        self.votes = {}
+        self.to_highlight = []
+        self.review = {"quote": [], "pun": []}
+        self.last_text = {"quote": "", "pun": ""}
         self.t_trig = None
         with open('{}_blacklist.txt'.format(self.channel), 'a+') as data_file:
             blacklist = data_file.readlines()
@@ -136,22 +142,6 @@ class SaltyBot:
                 else:
                     self.commands.append(curr_com)
                 self.command_times[curr_com] = {"last": 0, "limit": i["limit"]}
-
-        if '!vote' in self.commands:
-            self.votes = {}
-
-        if '!highlight' in self.commands:
-            self.to_highlight = []
-
-        if '!quote' in self.commands or '!pun' in self.commands:
-            self.review = {}
-            self.last_text = {}
-            if '!quote' in self.commands:
-                self.review['quote'] = []
-                self.last_text['quote'] = ''
-            if '!pun' in self.commands:
-                self.review['pun'] = []
-                self.last_text['pun'] = ''
 
         if self.config_data["social_active"]:
             self.command_times["social"] = {"time_last": int(time.time()),
@@ -1430,14 +1420,16 @@ def automated_main_loop(bot_dict, config_dict):
             if register: 
                 if register[TYPE] == RESTART:
                     restart_bot(register[DATA].channel, config_dict, bot_dict)
-
-                if register[TYPE] == STOP:
+                elif register[TYPE] == STOP:
                     raise 
-
-                if register[TYPE] == CHECK:
+                elif register[TYPE] == CHECK:
                     for bot_name,bot_inst in bot_dict.items():
                         print bot_name+': '+bot_inst.thread
-                        
+                elif register[TYPE] == UPDATE:
+                    user = register[DATA].twitch_name
+                    bot_dict[user].config_data = register[DATA]
+                    bot_dict[user].commands = []
+                    bot_dict[user].twitch_commands()
                 register = None
 
         except:
@@ -1452,12 +1444,7 @@ def automated_main_loop(bot_dict, config_dict):
 
         if time_to_check_twitch < current_time:
             for bot_name, bot_inst in bot_dict.items():
-                if bot_inst.thread.isAlive():
-                    if debuging == True:
-                        #print '#' + bot_name  + ': Is still running'
-                        pass
-                    
-                else:
+                if not bot_inst.thread.isAlive():
                     if debuging == True:
                         print '#' + bot_name + ' Had to restart'
                     restart_bot(bot_inst.channel, config_dict, bot_dict)
@@ -1479,7 +1466,7 @@ def update_listen(web_inst):
             print e
             continue
         new_info = web_inst.update_retrieve(user["user_id"])
-        print new_info
+        interface.put([UPDATE, new_info])
 
 def main():
 
