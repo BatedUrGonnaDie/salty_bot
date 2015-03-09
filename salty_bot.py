@@ -1429,7 +1429,7 @@ def automated_main_loop(bot_dict, config_dict):
                     for bot_name,bot_inst in bot_dict.items():
                         print bot_name + ': ' + bot_inst.thread
                 elif register[TYPE] == UPDATE:
-                    user = dict(register[DATA].keys()[0])
+                    user = dict(register[DATA]).keys()[0]
                     update_bot(user, register[DATA], bot_dict)
                     config_dict[user] = register[DATA][user]
                     print "Updated " + register[DATA][user].twitch_name
