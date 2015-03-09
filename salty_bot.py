@@ -1425,15 +1425,14 @@ def automated_main_loop(bot_dict, config_dict):
                 print register
                 if register[TYPE] == RESTART:
                     restart_bot(register[DATA].channel, config_dict, bot_dict)
-                elif register[TYPE] == STOP:
-                    raise 
                 elif register[TYPE] == CHECK:
                     for bot_name,bot_inst in bot_dict.items():
                         print bot_name+': '+bot_inst.thread
                 elif register[TYPE] == UPDATE:
-                    update_bot(register[DATA].twitch_name, register[DATA], bot_dict)
-                    config_dict[register[DATA].twitch_name] = register[DATA]
-                    print "Updated " + register[DATA].twitch_name
+                    user = dict(register[DATA].keys()[0])
+                    update_bot(user, register[DATA], bot_dict)
+                    config_dict[user] = register[DATA][user]
+                    print "Updated " + register[DATA][user].twitch_name
                 register = None
 
         except:
