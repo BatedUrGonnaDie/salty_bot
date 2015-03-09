@@ -26,7 +26,6 @@ development = False
 Config_file_name = 'config.json'
 
 RESTART = "<restart>"
-STOP = "<stop program>"
 CHECK = "<check threads>"
 UPDATE = "<update>"
 
@@ -1424,6 +1423,7 @@ def automated_main_loop(bot_dict, config_dict):
             if register:
                 print register[TYPE]
                 print UPDATE
+                print register[TYPE] == UPDATE
                 print register[DATA]
                 if register[TYPE] == RESTART:
                     restart_bot(register[DATA].channel, config_dict, bot_dict)
