@@ -1435,6 +1435,8 @@ def automated_main_loop(bot_dict, config_dict):
                     print "Updated " + register[DATA][user].twitch_name
                 register = None
 
+        except Q.Empty:
+            pass
         except Exception, e:
             print e
             pass
