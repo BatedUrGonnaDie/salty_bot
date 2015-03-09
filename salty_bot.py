@@ -1421,7 +1421,8 @@ def automated_main_loop(bot_dict, config_dict):
         try:
             register = interface.get(False) #returns [type of call, bot id that called it] therefore TYPE, DATA
 
-            if register: 
+            if register:
+                print register
                 if register[TYPE] == RESTART:
                     restart_bot(register[DATA].channel, config_dict, bot_dict)
                 elif register[TYPE] == STOP:
@@ -1468,7 +1469,11 @@ def update_listen(web_inst):
         except ValueError, e:
             print e
             continue
-        new_info = web_inst.update_retrieve(user["user_id"])
+        try:
+            new_info = web_inst.update_retrieve(user["user_id"])
+        except Exception, e:
+            print e
+            continue
         interface.put([UPDATE, new_info])
         print "New info in register"
 
