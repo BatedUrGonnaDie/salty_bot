@@ -211,7 +211,7 @@ class SaltyBot:
             except:
                 pass
 
-        command_string = ', '.join(active_commands)
+        command_string = ', '.join(sorted(active_commands))
         if command_string == '!commands':
             self.twitch_send_message('There are no current active commands.', '!commands')
         else:
@@ -1427,7 +1427,10 @@ def automated_main_loop(bot_dict, config_dict):
                         print bot_name+': '+bot_inst.thread
                 elif register[TYPE] == UPDATE:
                     user = register[DATA].twitch_name
+                    print "Updating " + user
+                    print bot_dict[user].config_data + '\n\n'
                     bot_dict[user].config_data = register[DATA]
+                    print bot_dict[user].config_data
                     bot_dict[user].commands = []
                     bot_dict[user].twitch_commands()
                 register = None
