@@ -211,6 +211,7 @@ class SaltyBot:
                 pass
 
         command_string = ', '.join(sorted(active_commands))
+        command_string += " | Mod Only Commands: " + ", ".join(sorted(self.admin_commands))
         if command_string == '!commands':
             self.twitch_send_message('There are no current active commands.', '!commands')
         else:
