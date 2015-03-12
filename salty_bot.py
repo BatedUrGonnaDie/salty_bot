@@ -337,6 +337,7 @@ class SaltyBot:
     def format_sr_time(self, f_time):
         m, s = divmod(float(f_time), 60)
         h, m = divmod(int(m), 60)
+        s = round(s, 2)
         if s < 10:
             s = '0' + str(s)
         if m < 10:
@@ -536,6 +537,7 @@ class SaltyBot:
             except IndexError, e:
                 if self.game != "":
                     input_game = self.game
+                    infer_category = True
                 else:
                     self.twitch_send_message("Please wait for the streamer to go live or specify a game.")
                     return
@@ -543,6 +545,7 @@ class SaltyBot:
             if self.game != "" and self.title != "":
                 url = "https://splits.io/api/v3/users/{}/pbs".format(self.channel)
                 input_game = self.game
+                infer_category = True
             else:
                 self.twitch_send_message("Please wait for the streamer to go live or specify a user, game, and title.")
                 return
@@ -593,7 +596,7 @@ class SaltyBot:
                 return
 
         time = self.format_sr_time(pb_splits['time'])
-        link_to_splits = 'https://splits.io/{}'.format(pb_splits['path'])
+        link_to_splits = 'https://splits.io{}'.format(pb_splits['path'])
         response = 'Splits with a time of {} {}'.format(time, link_to_splits)
         self.twitch_send_message(response, '!splits')
 
