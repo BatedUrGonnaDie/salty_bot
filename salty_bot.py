@@ -523,6 +523,7 @@ class SaltyBot:
         infer_category = False
         try:
             url = "https://splits.io/api/v3/users/{}/pbs".format(msg_split[1])
+            user_name = msg_split[1]
             try:
                 input_game = msg_split[2]
                 game_type = "shortname"
@@ -544,6 +545,7 @@ class SaltyBot:
         except IndexError, e:
             if self.game != "" and self.title != "":
                 url = "https://splits.io/api/v3/users/{}/pbs".format(self.channel)
+                user_name = self.channel
                 input_game = self.game
                 infer_category = True
             else:
@@ -560,6 +562,7 @@ class SaltyBot:
         for i in splits_response["pbs"]:
             try:
                 if i["game"][game_type].lower() == input_game:
+                    output_game = i["game"]["name"]
                     if infer_category:
                         if i["category"]["name"].lower() in self.title:
                             games_with_category.append(i["category"]["name"])
@@ -579,9 +582,12 @@ class SaltyBot:
                 elif len(games_with_category) == 1:
                     active_cat = games_with_category[0]
                     for i in splits_response["pbs"]:
-                        if input_game == i["game"][game_type].lower():
-                            if active_cat == i["category"]["name"]:
-                                pb_splits = i
+                        try:
+                            if input_game == i["game"][game_type].lower():
+                                if active_cat == i["category"]["name"]:
+                                    pb_splits = i
+                        except AttributeError, e:
+                            continue
                     break
                 else:
                     category_position = {}
@@ -607,7 +613,7 @@ class SaltyBot:
 
         time = self.format_sr_time(pb_splits['time'])
         link_to_splits = 'https://splits.io{}'.format(pb_splits['path'])
-        response = 'Splits with a time of {} {}'.format(time, link_to_splits)
+        response = "{}'s best splits for {} {} with a time of {} {}".format(user_name, output_game, active_cat, time, link_to_splits)
         self.twitch_send_message(response, '!splits')
 
     def add_text(self, c_msg, text_type):
