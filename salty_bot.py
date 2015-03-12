@@ -613,7 +613,7 @@ class SaltyBot:
 
         time = self.format_sr_time(pb_splits['time'])
         link_to_splits = 'https://splits.io{}'.format(pb_splits['path'])
-        response = "{}'s best splits for {} {} with a time of {} {}".format(user_name, output_game, active_cat, time, link_to_splits)
+        response = "{}'s best splits for {} {} is {} {}".format(user_name.capitalize(), output_game, active_cat, time, link_to_splits)
         self.twitch_send_message(response, '!splits')
 
     def add_text(self, c_msg, text_type):
