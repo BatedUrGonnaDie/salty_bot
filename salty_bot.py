@@ -55,13 +55,13 @@ SUPER_USER = general_config['general_info']['super_users']
 
 class SaltyBot:
 
-    running = True
-    messages_received = 0
     message_limit = 100
-    rate_limit = 0
 
     def __init__(self, config_data, debug = False):
         self.__DB = debug
+        self.running = True
+        self.messages_received = 0
+        self.rate_limit = 0
         self.session = config_data["session"]
         self.user_id = config_data["id"]
         self.config_data = config_data
@@ -535,7 +535,7 @@ class SaltyBot:
                         return
             except IndexError, e:
                 if self.game != "":
-                    full_game = self.game
+                    input_game = self.game
                 else:
                     self.twitch_send_message("Please wait for the streamer to go live or specify a game.")
                     return
