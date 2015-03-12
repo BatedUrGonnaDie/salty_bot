@@ -558,7 +558,7 @@ class SaltyBot:
         if infer_category:
             games_with_category = []
         for i in splits_response["pbs"]:
-            if i["game"][game_type] == input_game:
+            if i["game"][game_type].lower() == input_game:
                 if infer_category:
                     if i["category"]["name"].lower() in self.title:
                         games_with_category.append(i)
@@ -570,7 +570,10 @@ class SaltyBot:
         if infer_category:
             while True:
                 games_with_category = list(set(games_with_category))
-                if len(games_with_category) == 1:
+                if len(games_with_category) == 0:
+                    self.twitch_send_message("I could not find splits based on any categories in the title.", "!splits")
+                    return
+                elif len(games_with_category) == 1:
                     pb_splits = games_with_category[0]
                     break
                 else:
