@@ -558,14 +558,17 @@ class SaltyBot:
         if infer_category:
             games_with_category = []
         for i in splits_response["pbs"]:
-            if i["game"][game_type].lower() == input_game:
-                if infer_category:
-                    if i["category"]["name"].lower() in self.title:
-                        games_with_category.append(i["category"]["name"])
-                else:
-                    if category == i["category"]["name"].lower():
-                        pb_splits = i
-                        break
+            try:
+                if i["game"][game_type].lower() == input_game:
+                    if infer_category:
+                        if i["category"]["name"].lower() in self.title:
+                            games_with_category.append(i["category"]["name"])
+                    else:
+                        if category == i["category"]["name"].lower():
+                            pb_splits = i
+                            break
+            except AttributeError, e:
+                continue
 
         if infer_category:
             while True:
