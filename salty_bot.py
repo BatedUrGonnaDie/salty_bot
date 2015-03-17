@@ -536,11 +536,11 @@ class SaltyBot:
                         self.twitch_send_message("Please wait for the streamer to go live or specify a category.")
                         return
             except IndexError, e:
-                if self.game != "":
+                if self.game != "" and self.title != "":
                     input_game = self.game
                     infer_category = True
                 else:
-                    self.twitch_send_message("Please wait for the streamer to go live or specify a game.")
+                    self.twitch_send_message("Please wait for the streamer to go live or specify a game and category.")
                     return
         except IndexError, e:
             if self.game != "" and self.title != "":
@@ -549,7 +549,7 @@ class SaltyBot:
                 input_game = self.game
                 infer_category = True
             else:
-                self.twitch_send_message("Please wait for the streamer to go live or specify a user, game, and title.")
+                self.twitch_send_message("Please wait for the streamer to go live or specify a user, game, and category.")
                 return
 
         splits_response = self.api_caller(url)
@@ -716,6 +716,10 @@ class SaltyBot:
         video_ids = re.findall("(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})", c_msg["message"])
         if not video_ids:
             return
+        else:
+            seen_ids = set()
+            seen_add = seen_ids.add
+            video_ids = [x for x in video_ids if not (x in seen_ids or seen_add(x))]
 
         final_list = []
         for i in video_ids:
@@ -731,7 +735,8 @@ class SaltyBot:
                 uploader = data_items[0]['snippet']['channelTitle'].encode("utf-8")
                 view_count = data_items[0]['statistics']['viewCount']
                 duration = isodate.parse_duration(data_items[0]["contentDetails"]["duration"])
-                final_list.append("[{}] {} uploaded by {}. Views: {}".format(str(duration), video_title, uploader, view_count))
+                duration_string = self.format_sr_time(duration.seconds)
+                final_list.append("[{}] {} uploaded by {}. Views: {}".format(duration_string, video_title, uploader, view_count))
             else:
                 continue
 
