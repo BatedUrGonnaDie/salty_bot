@@ -688,7 +688,6 @@ class SaltyBot:
                     live_decoded = self.api_caller('https://api.twitch.tv/kraken/streams?channel=' + ','.join(srl_race_entrants))
                     for j in live_decoded['streams']:
                         srl_live_entrants.append(j['channel']['name'])
-                    multitwitch_link = 'www.multitwitch.tv/'
                     response = 'Game: {}, Category: {}, Status: {}'.format(srl_race_game, srl_race_category, srl_race_status)
                     if srl_race_time > 0:
                         if user_time > 0:
@@ -703,8 +702,8 @@ class SaltyBot:
                     if srl_race_status == 'Complete':
                         response += '.  {}'.format(srl_race_link)
                     elif live_length <= 6 and live_length > 1:
-                        for j in srl_live_entrants:
-                            multitwitch_link += j + '/'
+                        multitwitch_link = "http://kadgar.net/live/"
+                        multitwitch_link += '/'.join(srl_live_entrants)
                         response += '.  {}'.format(multitwitch_link)
                     else:
                         response += '.  {}'.format(srl_race_link)
