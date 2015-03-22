@@ -668,8 +668,8 @@ class SaltyBot:
         data_races = data_decode['races']
         srl_race_entrants = []
         for i in data_races:
-            for races in i['entrants']:
-                if self.srl_nick in races:
+            for entrants in i['entrants']:
+                if self.srl_nick.lower() in [x.lower() for x in entrants]:
                     race_channel = i
                     for values in race_channel['entrants'].values():
                         if values['statetext'] == 'Ready' or values['statetext'] == 'Entered':
