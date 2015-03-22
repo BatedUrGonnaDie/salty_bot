@@ -389,6 +389,10 @@ class SaltyBot:
     def pb_retrieve(self, c_msg):
         msg_split = c_msg["message"].split(' ', 3)
         infer_category = False
+
+        if msg_split[0] != "pb":
+            return
+
         try:
             url = "http://www.speedrun.com/api_records.php?user={}".format(msg_split[1])
             user_name = msg_split[1]
@@ -458,6 +462,9 @@ class SaltyBot:
         #Find the categories that are on file in the title, and then if more than one exist pick the one located earliest in the title
         msg_split = c_msg["message"].split(' ', 2)
 
+        if msg_split[0] != "wr":
+            return
+
         try:
             url = "http://www.speedrun.com/api_records.php?game=" + msg_split[1]
             try:
@@ -519,6 +526,10 @@ class SaltyBot:
     def splits_check(self, c_msg):
         # Get pbs from splits.io, find the correct category
         msg_split = c_msg["message"].split(' ', 3)
+
+        if msg_split[0] != "splits":
+            return
+
         game_type = "name"
         infer_category = False
         try:
@@ -660,7 +671,7 @@ class SaltyBot:
     def srl_race_retrieve(self):
         #Goes through all races, finds the race the user is in, gathers all other users in the race, prints the game, the 
         #category people are racing, the time racebot has, and either a multitwitch link or a SRL race room link
-        self.srl_nick = self.config_data["srl_nick"]
+        srl_nick = self.config_data["srl_nick"]
         url = 'http://api.speedrunslive.com/races'
         data_decode = self.api_caller(url)
         if data_decode == False:
@@ -669,15 +680,15 @@ class SaltyBot:
         srl_race_entrants = []
         for i in data_races:
             for entrants in i['entrants']:
-                if self.srl_nick.lower() in [x.lower() for x in entrants]:
+                if srl_nick.lower() in [x.lower() for x in entrants]:
                     race_channel = i
                     for values in race_channel['entrants'].values():
                         if values['statetext'] == 'Ready' or values['statetext'] == 'Entered':
                             if values['twitch'] != '':
                                 srl_race_entrants.append(values['twitch'].lower())
-                    user = i['entrants'][self.srl_nick]['twitch']
-                    user_place = race_channel['entrants'][self.srl_nick]['place']
-                    user_time = race_channel['entrants'][self.srl_nick]['time']
+                    user = i['entrants'][srl_nick]['twitch']
+                    user_place = race_channel['entrants'][srl_nick]['place']
+                    user_time = race_channel['entrants'][srl_nick]['time']
                     srl_race_game = race_channel['game']['name']
                     srl_race_category = race_channel['goal']
                     srl_race_id = '#srl-' + race_channel['id']
@@ -702,8 +713,7 @@ class SaltyBot:
                     if srl_race_status == 'Complete':
                         response += '.  {}'.format(srl_race_link)
                     elif live_length <= 6 and live_length > 1:
-                        multitwitch_link = "http://kadgar.net/live/"
-                        multitwitch_link += '/'.join(srl_live_entrants)
+                        multitwitch_link = "http://kadgar.net/live/" + '/'.join(srl_live_entrants)
                         response += '.  {}'.format(multitwitch_link)
                     else:
                         response += '.  {}'.format(srl_race_link)
