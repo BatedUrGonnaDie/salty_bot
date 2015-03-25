@@ -4,20 +4,15 @@
 import datetime
 import json
 import logging
-import os
 import Queue as Q
-import random
 import re
 import socket
 import sys
 import threading
 import time
-import urlparse
 
 import isodate
 import requests
-import psycopg2
-import psycopg2.extras
 
 import salty_listener as SaltyListener
 
@@ -123,7 +118,7 @@ class SaltyBot:
 
         self.irc.sendall('PASS {}\r\n'.format(self.twitch_oauth))
         self.irc.sendall('NICK {}\r\n'.format(self.twitch_nick))
-        initial_msg = self.irc.recv(4096)
+        self.irc.recv(4096)
         self.irc.sendall("CAP REQ :twitch.tv/tags twitch.tv/commands\r\n")
         self.irc.recv(1024)
         self.irc.sendall('JOIN #{}\r\n'.format(self.channel))
@@ -167,47 +162,47 @@ class SaltyBot:
         if not self.time_start:
             try:
                 active_commands.remove('!uptime')
-            except:
+            except Exception:
                 pass
         try:
             if not self.votes:
                 try:
                     active_commands.remove("!vote")
-                except:
+                except Exception:
                     pass
-        except AttributeError, e:
+        except AttributeError:
             pass
 
         if self.game == '':
             try:
                 active_commands.remove('!leaderboard')
-            except:
+            except Exception:
                 pass
-        
+
         if self.game != 'osu!':
             try:
                 active_commands.remove('!rank')
-            except:
+            except Exception:
                 pass
             try:
                 active_commands.remove('!song')
-            except:
+            except Exception:
                 pass
 
         if self.game != 'league of legends':
             try:
                 active_commands.remove('!runes')
-            except:
+            except Exception:
                 pass
             try:
                 active_commands.remove('!masteries')
-            except:
+            except Exception:
                 pass
-        
+
         if 'race' not in self.title and 'racing' not in self.title:
             try:
                 active_commands.remove('!race')
-            except:
+            except Exception:
                 pass
 
         command_string = ', '.join(sorted(active_commands))
@@ -225,7 +220,7 @@ class SaltyBot:
         #Sending any message to chat goes through this function
         try:
             response = response.encode('utf-8')
-        except:
+        except Exception:
             pass
         if response.startswith('/me') or response.startswith('.me'):
             #Grant exception for /me because it can't do any harm
@@ -238,15 +233,15 @@ class SaltyBot:
         if self.rate_limit < self.message_limit:
             self.irc.sendall(to_send)
             self.rate_limit += 1
-        else: 
+        else:
             return
 
-        if self.__DB == True: 
+        if self.__DB == True:
             try:
                 db_message = '#' + self.channel + ' ' + self.twitch_nick + ": " + response.decode('utf-8')
                 db_message = db_message.encode('utf-8')
                 print datetime.datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ') + db_message
-            except:
+            except Exception:
                 print("Message contained unicode, could not display in terminal\n\n")
 
         if command:
@@ -307,7 +302,6 @@ class SaltyBot:
         self.twitch_send_message(response)
 
     def osu_song_display(self):
-        osu_nick = self.config_data["osu_nick"]
         url = 'https://leagueofnewbs.com/api/user/{}/songs'.format(self.channel)
         data_decode = self.api_caller(url)
         if data_decode:
@@ -333,7 +327,7 @@ class SaltyBot:
 
         response = '{} - {}, mapped by {}'.format(data_decode['artist'], data_decode['title'], data_decode['creator'])
         self.twitch_send_message(response)
-        
+
     def format_sr_time(self, f_time):
         m, s = divmod(float(f_time), 60)
         h, m = divmod(int(m), 60)
@@ -400,19 +394,19 @@ class SaltyBot:
                 url += "&game=" + msg_split[2]
                 try:
                     msg_split[3]
-                except IndexError, e:
+                except IndexError:
                     if self.title != '':
                         infer_category = True
                     else:
                         self.twitch_send_message("Please specify a category to look up.")
                         return
-            except IndexError, e:
+            except IndexError:
                 if self.game != '':
                     url += "&game=" + self.game
                 else:
                     self.twitch_send_message("Please specify a game shortcode to look up on speedrun.com")
                     return
-        except IndexError, e:
+        except IndexError:
             if self.game != '' and self.title != '':
                 url = "http://speedrun.com/api_records.php?user={}&game={}".format(self.channel, self.game)
                 user_name = self.channel
@@ -429,7 +423,7 @@ class SaltyBot:
 
         try:
             sr_game = dict(game_data).keys()[0]
-        except TypeError, e:
+        except TypeError:
             self.twitch_send_message("This game does not seem to exist on speedrun.com", "!pb")
             return
 
@@ -448,7 +442,7 @@ class SaltyBot:
                     break
             try:
                 active_cat
-            except NameError, e:
+            except NameError:
                 self.twitch_send_message("Please specify a category that is available on speedrun.com", "!pb")
                 return
 
@@ -540,20 +534,20 @@ class SaltyBot:
                 game_type = "shortname"
                 try:
                     category = msg_split[3]
-                except IndexError, e:
+                except IndexError:
                     if self.title != "":
                         infer_category = True
                     else:
                         self.twitch_send_message("Please wait for the streamer to go live or specify a category.")
                         return
-            except IndexError, e:
+            except IndexError:
                 if self.game != "" and self.title != "":
                     input_game = self.game
                     infer_category = True
                 else:
                     self.twitch_send_message("Please wait for the streamer to go live or specify a game and category.")
                     return
-        except IndexError, e:
+        except IndexError:
             if self.game != "" and self.title != "":
                 url = "https://splits.io/api/v3/users/{}/pbs".format(self.channel)
                 user_name = self.channel
@@ -581,7 +575,7 @@ class SaltyBot:
                         if category == i["category"]["name"].lower():
                             pb_splits = i
                             break
-            except AttributeError, e:
+            except AttributeError:
                 continue
 
         if infer_category:
@@ -597,7 +591,7 @@ class SaltyBot:
                             if input_game == i["game"][game_type].lower():
                                 if active_cat == i["category"]["name"]:
                                     pb_splits = i
-                        except AttributeError, e:
+                        except AttributeError:
                             continue
                     break
                 else:
@@ -614,7 +608,7 @@ class SaltyBot:
 
         try:
             pb_splits
-        except NameError, e:
+        except NameError:
             if infer_category:
                 self.twitch_send_message("I could not find splits based on any categories in the title.", "!splits")
                 return
@@ -640,7 +634,7 @@ class SaltyBot:
                     "text": text,
                     "user_id": self.channel}
             cookies = {"session": self.session}
-            
+
             success = requests.post(url, data=data, cookies=cookies)
             try:
                 success.raise_for_status()
@@ -669,9 +663,9 @@ class SaltyBot:
         self.last_text[text_type] = response
 
     def srl_race_retrieve(self):
-        #Goes through all races, finds the race the user is in, gathers all other users in the race, prints the game, the 
+        #Goes through all races, finds the race the user is in, gathers all other users in the race, prints the game, the
         #category people are racing, the time racebot has, and either a multitwitch link or a SRL race room link
-        srl_nick = self.config_data["srl_nick"]
+        srl_nick = self.config_data["srl_nick"].lower()
         url = 'http://api.speedrunslive.com/races'
         data_decode = self.api_caller(url)
         if data_decode == False:
@@ -679,46 +673,43 @@ class SaltyBot:
         data_races = data_decode['races']
         srl_race_entrants = []
         for i in data_races:
-            for entrants in i['entrants']:
-                if srl_nick.lower() in [x.lower() for x in entrants]:
-                    race_channel = i
-                    for values in race_channel['entrants'].values():
-                        if values['statetext'] == 'Ready' or values['statetext'] == 'Entered':
-                            if values['twitch'] != '':
-                                srl_race_entrants.append(values['twitch'].lower())
-                    user = i['entrants'][srl_nick]['twitch']
-                    user_place = race_channel['entrants'][srl_nick]['place']
-                    user_time = race_channel['entrants'][srl_nick]['time']
-                    srl_race_game = race_channel['game']['name']
-                    srl_race_category = race_channel['goal']
-                    srl_race_id = '#srl-' + race_channel['id']
-                    srl_race_status = race_channel['statetext']
-                    srl_race_time = race_channel['time']
-                    srl_race_link = 'http://www.speedrunslive.com/race/?id={}'.format(race_channel['id'])
-                    srl_live_entrants = []
-                    live_decoded = self.api_caller('https://api.twitch.tv/kraken/streams?channel=' + ','.join(srl_race_entrants))
-                    for j in live_decoded['streams']:
-                        srl_live_entrants.append(j['channel']['name'])
-                    response = 'Game: {}, Category: {}, Status: {}'.format(srl_race_game, srl_race_category, srl_race_status)
-                    if srl_race_time > 0:
-                        if user_time > 0:
-                            time_formatted = self.format_sr_time(user_time)
-                            position_suffix = str(self.get_number_suffix(user_place))
-                            response += ', Finished {}{} with a time of {}'.format(user_place, position_suffix, time_formatted)
-                        else:
-                            real_time = (int(time.time()) - srl_race_time)
-                            time_formatted = self.format_sr_time(real_time)
-                            response += ', RaceBot Time: {}'.format(time_formatted)
-                    live_length = len(srl_live_entrants)
-                    if srl_race_status == 'Complete':
-                        response += '.  {}'.format(srl_race_link)
-                    elif live_length <= 6 and live_length > 1:
-                        multitwitch_link = "http://kadgar.net/live/" + '/'.join(srl_live_entrants)
-                        response += '.  {}'.format(multitwitch_link)
+            if srl_nick in [x.lower() for x in i["entrants"]]:
+                race_channel = i
+                for values in race_channel['entrants'].values():
+                    if values['statetext'] == 'Ready' or values['statetext'] == 'Entered':
+                        if values['twitch'] != '':
+                            srl_race_entrants.append(values['twitch'].lower())
+                user_place = race_channel['entrants'][srl_nick]['place']
+                user_time = race_channel['entrants'][srl_nick]['time']
+                srl_race_game = race_channel['game']['name']
+                srl_race_category = race_channel['goal']
+                srl_race_status = race_channel['statetext']
+                srl_race_time = race_channel['time']
+                srl_race_link = 'http://www.speedrunslive.com/race/?id={}'.format(race_channel['id'])
+                srl_live_entrants = []
+                live_decoded = self.api_caller('https://api.twitch.tv/kraken/streams?channel=' + ','.join(srl_race_entrants))
+                for j in live_decoded['streams']:
+                    srl_live_entrants.append(j['channel']['name'])
+                response = 'Game: {}, Category: {}, Status: {}'.format(srl_race_game, srl_race_category, srl_race_status)
+                if srl_race_time > 0:
+                    if user_time > 0:
+                        time_formatted = self.format_sr_time(user_time)
+                        position_suffix = str(self.get_number_suffix(user_place))
+                        response += ', Finished {}{} with a time of {}'.format(user_place, position_suffix, time_formatted)
                     else:
-                        response += '.  {}'.format(srl_race_link)
-                    self.twitch_send_message(response, '!race')
-                    return
+                        real_time = (int(time.time()) - srl_race_time)
+                        time_formatted = self.format_sr_time(real_time)
+                        response += ', RaceBot Time: {}'.format(time_formatted)
+                live_length = len(srl_live_entrants)
+                if srl_race_status == 'Complete':
+                    response += '.  {}'.format(srl_race_link)
+                elif live_length <= 6 and live_length > 1:
+                    multitwitch_link = "http://kadgar.net/live/" + '/'.join(srl_live_entrants)
+                    response += '.  {}'.format(multitwitch_link)
+                else:
+                    response += '.  {}'.format(srl_race_link)
+                self.twitch_send_message(response, '!race')
+                return
 
     def youtube_video_check(self, c_msg):
         #Links the title and uploader of the youtube video in chat
@@ -758,12 +749,12 @@ class SaltyBot:
         if self.votes:
             self.twitch_send_message('There is already an open poll, please close it first.')
             return
-        
+
         poll_type = c_msg["message"].split(' ')[1]
 
         try:
             poll = re.findall('"(.+)"', c_msg["message"])[0]
-        except:
+        except Exception:
             self.twitch_send_message('Please give the poll a name.')
             return
 
@@ -818,7 +809,7 @@ class SaltyBot:
         try:
             sender_bet = c_msg["message"].split('vote ')[-1]
             sender_bet = sender_bet.lower()
-        except:
+        except Exception:
             return
         if not self.votes:
             return
@@ -856,7 +847,7 @@ class SaltyBot:
 
         self.twitch_send_message(response, '!vote')
 
-    def check_votes(self, c_msg):
+    def check_votes(self):
         #Allows you to see what is currently winning in the current poll w/o closing it
         if not self.votes:
             return
@@ -876,12 +867,12 @@ class SaltyBot:
             text_type = c_msg["message"].split(' ')[1]
             if text_type != 'quote' and text_type != 'pun':
                 return
-        except:
+        except Exception:
             self.twitch_send_message('Please specify a type to review.')
             return
         try:
             decision = c_msg["message"].split(' ')[2]
-        except:
+        except Exception:
             decision = ''
         if decision == 'start':
             if not self.review[text_type]:
@@ -972,14 +963,14 @@ class SaltyBot:
                 with open('{}_blacklist.txt'.format(self.channel), 'w') as data_file:
                     try:
                         data_file.write(self.blacklist)
-                    except:
+                    except Exception:
                         pass
                 worked = True
         if worked == True:
             self.twitch_send_message('{} has been {}listed'.format(user, s_list))
 
     def custom_command(self, c_msg):
-        #Shitty custom command implementation, 
+        #Shitty custom command implementation,
         space_count = c_msg["message"].count(' ')
         if space_count == 0:
             command = c_msg["message"]
@@ -1098,7 +1089,7 @@ class SaltyBot:
                     try:
                         runes_counted[k]['value'] = v['value'] + v2 ['value']
                         del runes_counted[k2]
-                    except:
+                    except Exception:
                         pass
 
         for k, v in runes_counted.iteritems():
@@ -1229,9 +1220,9 @@ class SaltyBot:
                             if self.time_check('toobou'):
                                 self.twitch_send_message(self.config_data["toobou_output"])
                                 self.command_times['toobou']['last'] = int(time.time())
-                except:
+                except Exception:
                     pass
-                    
+
                 if c_msg["message"].startswith('!'):
                     #Dirty work around to allow text to have more !'s in them
                     c_msg["message"] = c_msg["message"].split('!', 1)[1]
@@ -1309,7 +1300,7 @@ class SaltyBot:
 
                     elif c_msg["message"] == 'checkvotes':
                         if self.config_data["voting_active"]:
-                            self.check_votes(c_msg)
+                            self.check_votes()
 
                     elif c_msg["message"].startswith('review') and c_msg["sender"] == self.channel:
                         self.text_review(c_msg)
@@ -1335,7 +1326,7 @@ class SaltyBot:
                     elif c_msg["message"] == "show_highlight":
                         if c_msg["sender"] == self.channel or c_msg["sender"] in SUPER_USER:
                             self.show_highlight()
-                        
+
                     elif c_msg["message"] == "commands":
                         if self.command_check(c_msg, "!commands"):
                             self.live_commands()
@@ -1355,7 +1346,7 @@ class SaltyBot:
                     elif c_msg["message"] == "check":
                         if c_msg["sender"] in SUPER_USER:
                             self.admin(CHECK)
-                        
+
                     elif c_msg["message"] == "crash":
                         if c_msg["sender"] in SUPER_USER:
                             self.running = False
@@ -1387,11 +1378,11 @@ class SaltyBot:
 
         else:
             interface.put([call,self])
-    
+
     def stop(self):
         self.irc.sendall("QUIT\r\n")
         self.irc.close()
-        
+
 #@@BOT END@@#
 
 def osu_send_message(osu_irc_pass, osu_nick, msg, sender):
@@ -1447,7 +1438,7 @@ def update_bot(bot_name, bot_config, bot_dict):
     bot_dict[bot_name].admin_commands = []
     bot_dict[bot_name].custom_commands = []
     bot_dict[bot_name].twitch_commands()
-        
+
 def automated_main_loop(bot_dict, config_dict):
     time_to_check_twitch = 0
     next_buffer_clear = 0
@@ -1473,7 +1464,6 @@ def automated_main_loop(bot_dict, config_dict):
             pass
         except Exception, e:
             print e
-            pass
 
         current_time = int(time.time())
 
@@ -1490,7 +1480,7 @@ def automated_main_loop(bot_dict, config_dict):
                     restart_bot(bot_inst.channel, config_dict, bot_dict)
 
             twitch_info_grab(bot_dict)
-            
+
             time_to_check_twitch = int(time.time()) + 60
 
 def update_listen(web_inst):
@@ -1516,12 +1506,12 @@ def update_listen(web_inst):
 def main():
 
     bot_dict = {} #Bot instances go in here
-    
+
     online_info = SaltyListener.WebRetrieve(db_url, web_listen_ip, web_listen_port, web_secret)
     channels_dict = online_info.initial_retrieve() #All channels go in here from the JSON file
 
     for channel_name, channel_data in channels_dict.items(): #Start bots
-        # Create bot and put it by name into a dictionary 
+        # Create bot and put it by name into a dictionary
 
         bot_dict[channel_name] = SaltyBot(channel_data, debuging)
 
@@ -1542,9 +1532,9 @@ def main():
     while True:
         command = raw_input("> ")
         if command.startswith("/brcs"):
-            for bot,inst in bot_dict.items():
+            for bot, inst in bot_dict.items():
                 inst.twitch_send_message("[Broadcast message]: "+(' '.join(command.split(' ')[1:])))
-                
+
         if command.startswith("/stop"):
             for bot, inst in bot_dict.items():
                 inst.stop()
