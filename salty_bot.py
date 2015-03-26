@@ -341,6 +341,8 @@ class SaltyBot:
             time = time[:-2]
         if time.startswith("0:"):
             time = time[2:]
+        if time.startswith("0"):
+            time = time[1:]
         if self.__DB:
             print time
         return time
