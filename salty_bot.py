@@ -18,7 +18,6 @@ import salty_listener as SaltyListener
 
 debuging = True
 development = False
-#Config_file_name = 'config.json'
 
 RESTART = "<restart>"
 CHECK = "<check threads>"
@@ -39,7 +38,8 @@ osu_api_key = general_config['general_info']['osu']['osu_api_key']
 osu_irc_nick = general_config['general_info']['osu']['osu_irc_nick']
 osu_irc_pass = general_config['general_info']['osu']['osu_irc_pass']
 db_url = general_config['general_info']['db_url']
-salty_defaults = general_config['defaults']
+default_nick = general_config['general_info']['default_nick']
+default_oauth = general_config['general_info']['default_oauth']
 
 if development:
     web_listen_ip = "127.0.0.1"
@@ -56,23 +56,12 @@ class SaltyBot:
     message_limit = 100
 
     def __init__(self, config_data, debug = False):
-        with open("info/"+config_data["twitch_name"]+'.json', 'w') as fout:
-            print "writing infofile"
-            json.dump(config_data, fout, sort_keys = True, indent = 4, ensure_ascii=False, encoding = 'utf-8', default=str)
+        if config_data["bot_oauth"] == None:
+            config_data["bot_nick"] = default_nick
+            config_data["bot_oauth"] = default_oauth
 
-
-        if config_data["bot_nick"] in ("", None) or\
-           config_data["bot_oauth"] in ("", None):
-            #If there is no oauth present or nick is absent
-            #use general config
-            tmpVar = salty_defaults
-        else:
-            #use normal config data
-            tmpVar = config_data
-
-        self.twitch_nick = tmpVar["bot_nick"]
-        self.twitch_oauth = tmpVar["bot_oauth"]
-
+        self.twitch_nick = config_data["bot_nick"]
+        self.twitch_oauth = config_data["bot_oauth"]
         if not self.twitch_oauth.startswith("oauth:"):
             self.twitch_oauth = "oauth:" + self.twitch_oauth
 
@@ -674,10 +663,16 @@ class SaltyBot:
         url = "https://leagueofnewbs.com/api/user/{}/{}?limit=2".format(self.channel, text_type_plural)
         text_lines = self.api_caller(url)
         if text_lines:
-            if text_lines[text_type_plural][0]["text"] != self.last_text[text_type]:
-                response = text_lines[text_type_plural][0]["text"]
-            else:
-                response = text_lines[text_type_plural][1]["text"]
+            try:
+                if text_lines[text_type_plural][0]["text"] != self.last_text[text_type]:
+                    response = text_lines[text_type_plural][0]["text"]
+                else:
+                    try:
+                        response = text_lines[text_type_plural][1]["text"]
+                    except IndexError:
+                        response = text_lines[text_type_plural][0]["text"]
+            except IndexError:
+                response = "Please insert {} into the database before using this command.".format(text_type_plural)
         else:
             response = "There was a problem retrieving {}.".format(text_type_plural)
 
@@ -1076,7 +1071,6 @@ class SaltyBot:
 
         runes_final = []
         runes_counted = {}
-        runes_stats = runes_list['basic']['stats']
         for rune in active_page["slots"]:
             rune_id = str(rune['runeId'])
             if rune_id not in runes_counted:
