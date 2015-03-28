@@ -260,7 +260,7 @@ class SaltyBot:
     def command_check(self, c_msg, command):
         #Finds if the user can use said command, and then if the command is off cooldown
         #Will only return True if it's off cooldown and the user has the priviledges for the command
-        if command in self.commands:
+        if command in self.commands or command in self.admin_commands:
             if c_msg["sender"] == self.channel or c_msg["sender"] in SUPER_USER:
                 return True
             if command in self.admin_commands:
