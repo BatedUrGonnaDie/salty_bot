@@ -18,7 +18,7 @@ import salty_listener as SaltyListener
 
 debuging = True
 development = False
-Config_file_name = 'config.json'
+#Config_file_name = 'config.json'
 
 RESTART = "<restart>"
 CHECK = "<check threads>"
@@ -39,10 +39,13 @@ osu_api_key = general_config['general_info']['osu']['osu_api_key']
 osu_irc_nick = general_config['general_info']['osu']['osu_irc_nick']
 osu_irc_pass = general_config['general_info']['osu']['osu_irc_pass']
 db_url = general_config['general_info']['db_url']
+salty_defaults = general_config['defaults']
+
 if development:
     web_listen_ip = "127.0.0.1"
 else:
     web_listen_ip = general_config['general_info']["web_listen_ip"]
+
 web_listen_port = general_config['general_info']["web_listen_port"]
 web_secret = general_config["general_info"]["web_secret"]
 #super users are used for bot breaking commands and beta commands
@@ -53,6 +56,26 @@ class SaltyBot:
     message_limit = 100
 
     def __init__(self, config_data, debug = False):
+        with open("info/"+config_data["twitch_name"]+'.json', 'w') as fout:
+            print "writing infofile"
+            json.dump(config_data, fout, sort_keys = True, indent = 4, ensure_ascii=False, encoding = 'utf-8', default=str)
+
+
+        if config_data["bot_nick"] in ("", None) or\
+           config_data["bot_oauth"] in ("", None):
+            #If there is no oauth present or nick is absent
+            #use general config
+            tmpVar = salty_defaults
+        else:
+            #use normal config data
+            tmpVar = config_data
+
+        self.twitch_nick = tmpVar["bot_nick"]
+        self.twitch_oauth = tmpVar["bot_oauth"]
+
+        if not self.twitch_oauth.startswith("oauth:"):
+            self.twitch_oauth = "oauth:" + self.twitch_oauth
+
         self.__DB = debug
         self.running = True
         self.messages_received = 0
@@ -63,10 +86,7 @@ class SaltyBot:
         self.irc = socket.socket()
         self.twitch_host = "irc.twitch.tv"
         self.port = 443
-        self.twitch_nick = config_data["bot_nick"]
-        self.twitch_oauth = config_data["bot_oauth"]
-        if not self.twitch_oauth.startswith("oauth:"):
-            self.twitch_oauth = "oauth:" + self.twitch_oauth
+
         self.channel = config_data["twitch_name"]
         self.game = ''
         self.title = ''
