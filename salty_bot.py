@@ -5,6 +5,7 @@ import datetime
 import json
 import logging
 import Queue as Q
+import random
 import re
 import socket
 import sys
@@ -1150,6 +1151,32 @@ class SaltyBot:
         self.twitch_send_message(msg[:-2])
         self.to_highlight = []
 
+    def eight_ball(self):
+        answers = [
+            "It is certain",
+            "It is decidedly so",
+            "Without a doubt",
+            "Yes definitely",
+            "You may rely on it",
+            "As I see it, yes",
+            "Most likely",
+            "Outlook good",
+            "Yes",
+            "Signs point to yes",
+            "Reply hazy try again",
+            "Ask again later",
+            "Better not tell you now",
+            "Cannot predict now",
+            "Concentrate and ask again",
+            "Don't count on it",
+            "My reply is no",
+            "My sources say no",
+            "Outlook not so good",
+            "Very doubtful"
+            ]
+        response = "Magic 8-ball says: " + random.choice(answers)
+        self.twitch_send_message(response)
+
     def sub_msg(self, c_msg):
         msg_split = c_msg.split(' ')
         if len(msg_split) == 3:
@@ -1232,7 +1259,7 @@ class SaltyBot:
 
                 #Toobou trigger check
                 try:
-                    if c_msg["message"].lower().find(self.t_trig) != -1:
+                    if c_msg["message"].lower().find(self.t_trig.lower()) != -1:
                         if 'toobou' in self.command_times and self.config_data["toobou_output"] != "":
                             if self.time_check('toobou'):
                                 self.twitch_send_message(self.config_data["toobou_output"])
@@ -1339,6 +1366,9 @@ class SaltyBot:
                     elif c_msg["message"].startswith('highlight'):
                         if self.command_check(c_msg, "!highlight"):
                             self.highlight(c_msg)
+
+                    elif c_msg["message"].startswith("8ball") and (c_msg["sender"] is "zeldocto" or c_msg["sender"] in SUPER_USER):
+                        self.eight_ball()
 
                     elif c_msg["message"] == "show_highlight":
                         if c_msg["sender"] == self.channel or c_msg["sender"] in SUPER_USER:
@@ -1550,11 +1580,11 @@ def main():
     while True:
         command = raw_input("> ")
         if command.startswith("/brcs"):
-            for bot, inst in bot_dict.items():
+            for inst in bot_dict.values():
                 inst.twitch_send_message("[Broadcast message]: "+(' '.join(command.split(' ')[1:])))
 
         if command.startswith("/stop"):
-            for bot, inst in bot_dict.items():
+            for inst in bot_dict.values():
                 inst.stop()
             sys.exit()()
 
