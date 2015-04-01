@@ -106,12 +106,13 @@ class SaltyBot:
 
         return self.thread
 
-    def twitch_info(self, game, title, live):
+    def twitch_info(self, game, title, live, online_status):
         #Game and title need to be a string to work
         self.game = game.lower()
         self.game_normal = game
         self.title = title.lower()
         self.time_start = live
+        self.stream_online = online_status
 
     def twitch_connect(self):
         #Connect to Twitch IRC
@@ -227,7 +228,6 @@ class SaltyBot:
         self.rate_limit = 0
 
     def twitch_send_message(self, response, command = None):
-
         #Sending any message to chat goes through this function
         try:
             response = response.encode('utf-8')
@@ -1468,7 +1468,7 @@ def twitch_info_grab(bots):
                                                 "start" : i["created_at"],
                                                 "online": True}
             for k, v in new_info.iteritems():
-                bots[k].twitch_info(v["game"], v["title"], v["start"])
+                bots[k].twitch_info(v["game"], v["title"], v["start"], v["online"])
 
         else:
             pass
