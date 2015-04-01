@@ -1451,7 +1451,7 @@ def twitch_info_grab(bots):
     channels = bots.keys()
     new_info = {}
     for i in channels:
-        new_info[i] = {"game" : '', "title" : '', "live" : None, "online": False}
+        new_info[i] = {"game" : '', "title" : '', "live" : None, "online_status": False}
     url = 'https://api.twitch.tv/kraken/streams?channel=' + ','.join(channels)
     headers = {'Accept' : 'application/vnd.twitchtv.v3+json'}
     try:
@@ -1466,7 +1466,7 @@ def twitch_info_grab(bots):
                 new_info[i['channel']['name']] = {"game" : i['channel']['game'],
                                                 "title" : i['channel']['status'],
                                                 "live" : i["created_at"],
-                                                "online": True}
+                                                "online_status": True}
             for k, v in new_info.iteritems():
                 bots[k].twitch_info(**v)
 
