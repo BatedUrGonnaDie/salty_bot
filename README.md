@@ -40,6 +40,11 @@ by the poll creator.
 
 `!endvote` will allow mods or channel host to close the current poll.
 
+`!uptime` will display how long the current stream has been live for.
+
+`!highlight` will add a timestamp and optional message to a list, and when be shown when the broadcaster uses the 
+`!show_highlight` command.
+
 You can now make custom commands.  They must be one word commands and only have static text output.  You may also use
 wildcards.  `$sender` and `$param` can be used and replaced with who sent the message and the first word after the
 command respectively.  Currently the only way to add custom commands is to manually add them to the config file.
@@ -64,28 +69,18 @@ Post the duration, title, uploaded, and views of a youtube video posted in chat 
 
 Insult people who don't know who トーボウ is (trigger can be changed to something else).
 
-Ability to output static text every x amount of messages, or x amount of time, or both.  This can be useful for
+Ability to output static text every x amount of messages, or x minutes, or both.  This can be useful for
 different links to various social media.
 
-Ability to set all commands as moderator only.  This means that only your moderators will be able to use that command.
-This can be useful to cut down on flood.
+All commands can be limited to moderators only and each command has its own rate limiting.
 
-Ability to set flood limits on all commands.  Each command has its own flood limit, so you can use some more than
-others.
+Running Locally
+===============
+Copy the default config file and fill out appropriately, and then rename to `general_config.json`.
+Set up a postgres database with the following [schema](https://github.com/BatedUrGonnaDie/salty_web/blob/master/db/schema.rb).
+If you want a web interface to change settings then you must follow the set up directions at
+[the web repo](https://github.com/batedurgonnadie/salty_web).
 
-Config File
-===========
-The config file is no more.  Please set up a postgres database with the following [schema](https://github.com/batedurgonnadie/salty_web).
-If you are so inclined you can also set up the web side and have an interface to modify command settings.
-
-Usage
-=====
-You can either download the bot (2 file) and make your own config file for the channels you want it to join
-and commands to use, or shoot me an email at batedurgonnadie@yahoo.com and I can add you to my config file.  In the
-future I hope to have a webpage up that will allow you to authenticate through twitch and customize the commands from
-there.  If you're interested I will ask you all the necessary info needed to set you up and then all you have to do is
-keep me updated with leaderboard/wr times.
-
-License Thing?
-==============
+License Thing
+=============
 Do whatever you want with it except sell it or claim it to be your own unless you modify it.  Other than that have fun.
