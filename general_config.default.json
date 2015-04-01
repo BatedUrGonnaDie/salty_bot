@@ -1,0 +1,20 @@
+{
+    "general_info": {
+        "db_url": "postgres://something here", 
+        "default_nick": "default bot nick", 
+        "default_oauth": "oauth for the default nick", 
+        "lol_api_key": "api key for league of legends", 
+        "osu": {
+            "osu_api_key": "api key for osu!", 
+            "osu_irc_nick": "username for osu irc", 
+            "osu_irc_pass": "special irc password for osu nick"
+        }, 
+        "super_users": [
+            "admins go here, they by pass all limits and can use all commands even if moderated"
+        ], 
+        "web_listen_ip": "IP for machine running bot if web interface", 
+        "web_listen_port": 6666, 
+        "web_secret": "secret key used by website to validate who is connecting (i used rake secret)", 
+        "youtube_api_key": "api key for youtube"
+    }
+}
