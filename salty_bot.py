@@ -1460,7 +1460,7 @@ def twitch_info_grab(bots):
             data_decode = data.json()
             if not data_decode['streams']:
                 for k, v in new_info.iteritems():
-                    bots[k].twitch_info(v["game"], v["title"], v["start"], v["online"])
+                    bots[k].twitch_info(**v)
                 return
             for i in data_decode['streams']:
                 new_info[i['channel']['name']] = {"game" : i['channel']['game'],
@@ -1468,7 +1468,7 @@ def twitch_info_grab(bots):
                                                 "start" : i["created_at"],
                                                 "online": True}
             for k, v in new_info.iteritems():
-                bots[k].twitch_info(v["game"], v["title"], v["start"], v["online"])
+                bots[k].twitch_info(**v)
 
         else:
             pass
