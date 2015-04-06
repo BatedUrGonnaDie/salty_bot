@@ -313,7 +313,7 @@ class SaltyBot:
         self.twitch_send_message(response)
 
     def osu_song_display(self):
-        url = 'https://leagueofnewbs.com/api/user/{}/songs'.format(self.channel)
+        url = 'https://leagueofnewbs.com/api/users/{}/songs'.format(self.channel)
         data_decode = self.api_caller(url)
         if data_decode:
             print data_decode
@@ -642,7 +642,7 @@ class SaltyBot:
         if text == 'add{}'.format(text_type) or text == 'add{} '.format(text_type):
             self.twitch_send_message('Please input a {}.'.format(text_type))
         else:
-            url = "https://leagueofnewbs.com/api/user/{}/{}s".format(self.channel, text_type)
+            url = "https://leagueofnewbs.com/api/users/{}/{}s".format(self.channel, text_type)
             data = {"reviewed": 1 if c_msg["sender"] == self.channel else 0,
                     "text": text,
                     "user_id": self.channel}
@@ -662,7 +662,7 @@ class SaltyBot:
         #Pull a random pun/quote from the database
         #Will not pull the same one twice in a row
         text_type_plural = text_type + 's'
-        url = "https://leagueofnewbs.com/api/user/{}/{}?limit=2".format(self.channel, text_type_plural)
+        url = "https://leagueofnewbs.com/api/users/{}/{}?limit=2".format(self.channel, text_type_plural)
         text_lines = self.api_caller(url)
         if text_lines:
             try:
