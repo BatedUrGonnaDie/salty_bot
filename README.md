@@ -6,15 +6,18 @@ Commands
 ========
 `!commands` will output all of the active commands at the current time.
 
-`!wr` outputs world record for a specific game.  Game and category can either be input by the user or can be implied
+`!wr <game shortcode> <category>` outputs world record for a specific game.  Game and category can either be input by the user or can be implied
 from the streamers game and title if they are live.
+
+`!pb <user> <game shortcode> <category>` the pb for the specified user.  If category and game is omitted it will attempt
+to infer them from the current streamer's game/title.  If user is also omitted it will assume the streamer.
 
 `!leaderboards` will output the game name escaped for speedrun.com leaderboards.
 
 `!race` race/races/racing required in title to use.  Will poll the SRL API to check if the current streamer is in a
 race, and if so output information about the race, and if the streamer has finished their time and place.
 
-`!splits` will retrieve the best splits that you have uploaded to [splits.io](https://splits.io) for a game and
+`!splits <user> <game shortcode> <category>` will retrieve the best splits that you have uploaded to [splits.io](https://splits.io) for a game and
 category.  A user, game, and category can be supplied or they can be inferred from the streamer, game, and title.
 
 `!quote`/`!pun` will display a randomly selected quote/pun from a from the database.
