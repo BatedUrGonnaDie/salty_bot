@@ -587,6 +587,7 @@ class SaltyBot:
                     else:
                         if category == i["category"]["name"].lower():
                             pb_splits = i
+                            active_cat = i["category"]["name"]
                             break
             except AttributeError:
                 continue
