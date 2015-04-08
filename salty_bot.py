@@ -13,6 +13,7 @@ import threading
 import time
 
 import isodate
+import pytz
 import requests
 
 import salty_listener as SaltyListener
@@ -1124,7 +1125,7 @@ class SaltyBot:
         self.twitch_send_message(response, '!runes')
 
     def get_time_objects(self):
-        current_object = datetime.datetime.now()
+        current_object = datetime.datetime.now(pytz.utc)
         live_object = isodate.parse_datetime(self.time_start)
         return current_object, live_object
 
