@@ -1369,7 +1369,7 @@ class SaltyBot:
                         if self.command_check(c_msg, "!highlight"):
                             self.highlight(c_msg)
 
-                    elif c_msg["message"].startswith("8ball") and (c_msg["sender"] is "zeldocto" or c_msg["sender"] in SUPER_USER):
+                    elif c_msg["message"].startswith("8ball") and (c_msg["sender"] == "zeldocto" or c_msg["sender"] in SUPER_USER):
                         self.eight_ball()
 
                     elif c_msg["message"] == "show_highlight":
