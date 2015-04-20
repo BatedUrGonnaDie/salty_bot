@@ -1575,9 +1575,10 @@ def main():
     otherT.setDaemon(True)
     otherT.start()
 
-    listen_thread = threading.Thread(target=update_listen, args=(online_info,))
-    listen_thread.setDaemon(True)
-    listen_thread.start()
+    if not development:
+        listen_thread = threading.Thread(target=update_listen, args=(online_info,))
+        listen_thread.setDaemon(True)
+        listen_thread.start()
 
     while True:
         command = raw_input("> ")
