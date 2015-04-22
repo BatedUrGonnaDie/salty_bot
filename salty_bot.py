@@ -169,7 +169,8 @@ class SaltyBot:
                 self.custom_command_times["!{}".format(i["trigger"])] = {"last": 0, "limit": i["limit"], "output": i["output"], "admin": i["admin"]}
 
     def live_commands(self):
-        #Remove any commands that would not currently work when !commands is used
+        # Remove any commands that would not currently work when !commands is used
+        # Type cast to not mess with the original lists
         active_commands = list(self.commands) + list(self.custom_commands)
 
         if not self.time_start:
@@ -219,8 +220,9 @@ class SaltyBot:
                 pass
 
         command_string = ', '.join(sorted(active_commands))
-        command_string += " | Mod Only Commands: " + ", ".join(sorted(self.admin_commands))
-        if command_string == '!commands':
+        if self.admin_commands:
+            command_string += " | Mod Only Commands: " + ", ".join(sorted(self.admin_commands))
+        if command_string == '!bot_info, !commands':
             self.twitch_send_message('There are no current active commands.', '!commands')
         else:
             self.twitch_send_message(command_string, '!commands')
@@ -246,6 +248,7 @@ class SaltyBot:
             self.irc.sendall(to_send)
             self.rate_limit += 1
         else:
+            print "{} has exceeded the IRC rate limit".format(self.channel)
             return
 
         if self.__DB == True:
