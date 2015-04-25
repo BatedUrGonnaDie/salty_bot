@@ -381,7 +381,7 @@ class SaltyBot:
             return False, response
 
         if len(categories_in_title) == 0:
-            response = "I'm sorry, but this category does not exist on speedrun.com"
+            response = "I'm sorry, but I could not find a category in the title that exists on speedrun.com"
             return False, response
         elif len(categories_in_title) > 1:
             categories_in_title = list(set(categories_in_title))
@@ -522,7 +522,12 @@ class SaltyBot:
 
         cat_record = game_records[sr_game][active_cat]
         wr_time = self.format_sr_time(cat_record['time'])
-        msg = "The current world record for {} {} is {} by {}.".format(sr_game, active_cat, wr_time, cat_record['player'])
+        try:
+            wr_ingame = self.format_sr_time(cat_record["timeigt"])
+            wr_ingame = "real time and {} ingame time ".format(wr_ingame)
+        except KeyError:
+            wr_ingame = ""
+        msg = "The current world record for {} {} is {} {}by {}.".format(sr_game, active_cat, wr_time, wr_ingame, cat_record['player'])
         if cat_record['video']:
             msg += "  The video can be found here: " + cat_record['video']
         self.twitch_send_message(msg, '!wr')
