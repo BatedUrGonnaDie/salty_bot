@@ -1141,7 +1141,7 @@ class SaltyBot:
         if self.time_start != None:
             current_object, live_object = self.get_time_objects()
             total_live_object = current_object - live_object
-            self.twitch_send_message("The current stream has been live for " + str(total_live_object), '!uptime')
+            self.twitch_send_message("The current stream has been live for " + str(total_live_object)[:-7], '!uptime')
         else:
             self.twitch_send_message("The stream is not currently live.", '!uptime')
 
