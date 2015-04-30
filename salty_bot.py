@@ -1149,7 +1149,7 @@ class SaltyBot:
         if self.time_start != None:
             current_object, live_object = self.get_time_objects()
             time_to_highlight = current_object - live_object
-            self.to_highlight.append({'time' : str(time_to_highlight), 'desc' : c_msg["message"].split('highlight')[-1]})
+            self.to_highlight.append({'time' : str(time_to_highlight)[:-7], 'desc' : c_msg["message"].split('highlight')[-1]})
             self.twitch_send_message("Current time added to the highlight queue. Use !show_highlight to view them.")
         else:
             self.twitch_send_message("Please use the command when the stream is live.")
