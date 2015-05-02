@@ -172,20 +172,26 @@ class SaltyBot:
         # Remove any commands that would not currently work when !commands is used
         # Type cast to not mess with the original lists
         active_commands = list(self.commands) + list(self.custom_commands)
+        admin_commands_tmp = list(self.admin_commands)
 
         if not self.time_start:
             try:
                 active_commands.remove('!uptime')
             except Exception:
                 pass
-        try:
-            if not self.votes:
-                try:
-                    active_commands.remove("!vote")
-                except Exception:
-                    pass
-        except AttributeError:
-            pass
+
+        if self.config_data["voting_active"] and self.votes:
+            active_commands.append("!checkvotes")
+        else:
+            try:
+                active_commands.remove("!vote")
+            except Exception:
+                pass
+
+        if self.config_data["voting_active"]:
+            if self.config_data["voting_mods"]:
+                admin_commands_tmp.append("!createvote")
+                admin_commands_tmp.append("!endvote")
 
         if self.game == '':
             try:
@@ -221,7 +227,7 @@ class SaltyBot:
 
         command_string = ', '.join(sorted(active_commands))
         if self.admin_commands:
-            command_string += " | Mod Only Commands: " + ", ".join(sorted(self.admin_commands))
+            command_string += " | Mod Only Commands: " + ", ".join(sorted(admin_commands_tmp))
         if command_string == '!bot_info, !commands':
             self.twitch_send_message('There are no current active commands.', '!commands')
         else:
@@ -1195,7 +1201,7 @@ class SaltyBot:
         else:
             msg = self.config_data["sub_message_resub"]
             msg = msg.replace("$duration", "{} {}".format(msg_split[3], msg_split[4]))
-            msg = msg.replace("$subscriber", )
+            msg = msg.replace("$subscriber", msg_split[0])
         self.twitch_send_message(msg)
 
 
