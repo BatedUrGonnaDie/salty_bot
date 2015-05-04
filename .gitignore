@@ -1,6 +1,3 @@
 *.pyc
 *.json
-*.txt
-json test.py
-textutils/*
-*.hidden.*
+blacklists/

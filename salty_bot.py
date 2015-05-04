@@ -92,7 +92,7 @@ class SaltyBot:
         self.review = {"quote": [], "pun": []}
         self.last_text = {"quote": "", "pun": ""}
         self.t_trig = None
-        with open('{}_blacklist.txt'.format(self.channel), 'a+') as data_file:
+        with open('blacklists/{}_blacklist.txt'.format(self.channel), 'a+') as data_file:
             blacklist = data_file.readlines()
         for i in blacklist:
             self.blacklist.append(i.split('\n')[0])
@@ -989,13 +989,13 @@ class SaltyBot:
         worked = False
         if s_list == 'black':
             self.blacklist.append(user)
-            with open('{}_blacklist.txt'.format(self.channel), 'a+') as data_file:
+            with open('blacklists/{}_blacklist.txt'.format(self.channel), 'a+') as data_file:
                 data_file.write(user + '\n')
                 worked = True
         elif s_list == 'white':
             if user in self.blacklist:
                 self.blacklist.remove(user)
-                with open('{}_blacklist.txt'.format(self.channel), 'w') as data_file:
+                with open('blacklists/{}_blacklist.txt'.format(self.channel), 'w') as data_file:
                     try:
                         data_file.write(self.blacklist)
                     except Exception:
