@@ -16,7 +16,7 @@ import isodate
 import pytz
 import requests
 
-import modules.irc
+import modules.irc as irc
 import salty_listener as SaltyListener
 
 debuging = True
@@ -62,7 +62,7 @@ class SaltyBot:
 
     message_limit = 100
 
-    def __init__(self, config_data, debug = False):
+    def __init__(self, config_data, debug = False, irc_obj = None):
         if config_data["bot_oauth"] == None:
             config_data["bot_nick"] = default_nick
             config_data["bot_oauth"] = default_oauth
@@ -79,9 +79,10 @@ class SaltyBot:
         self.session = config_data["session"]
         self.user_id = config_data["id"]
         self.config_data = config_data
-        self.irc = socket.socket()
-        self.twitch_host = "irc.twitch.tv"
-        self.port = 443
+        if not irc_obj:
+            self.irc = irc.IRC("irc.twitch.tv", 443, self.twitch_nick, self.twitch_oauth)
+        else:
+            self.irc = irc_obj
 
         self.channel = config_data["twitch_name"]
         self.game = ''
@@ -122,24 +123,26 @@ class SaltyBot:
 
     def twitch_connect(self):
         #Connect to Twitch IRC
-        if self.__DB:
-            print "Joining {} as {}.\n".format(self.channel,self.twitch_nick)
-        try:
-            #If it fails to conenct try again in 60 seconds
-            self.irc.settimeout(600)
-            self.irc.connect((self.twitch_host, self.port))
-        except Exception, e:
-            print '{} failed to connect.'.format(self.channel)
-            print e
-            time.sleep(60)
-            self.twitch_connect()
+        if not self.irc.connected:
+            if self.__DB:
+                print "Joining {} as {}.\n".format(self.channel,self.twitch_nick)
+            try:
+                #If it fails to conenct try again in 60 seconds
+                self.irc.create()
+                self.irc.connect()
+                self.irc.recv(4096)
+            except Exception, e:
+                print '{} failed to connect.'.format(self.channel)
+                print e
+                time.sleep(60)
+                self.twitch_connect()
 
-        self.irc.sendall('PASS {}\r\n'.format(self.twitch_oauth))
-        self.irc.sendall('NICK {}\r\n'.format(self.twitch_nick))
-        self.irc.recv(4096)
-        self.irc.sendall("CAP REQ :twitch.tv/tags twitch.tv/commands\r\n")
-        self.irc.recv(1024)
-        self.irc.sendall('JOIN #{}\r\n'.format(self.channel))
+            self.irc.capability("twitch.tv/tags twitch.tv/commands")
+            self.irc.recv(1024)
+            self.irc.join(self.channel)
+        else:
+            if self.__DB:
+                print "{} already connected.\n".format(self.channel)
 
     def twitch_commands(self):
         #Set up all the limits, if its admin, if its on, quote and pun stuff, and anything else that needs setting up for a command
@@ -254,9 +257,9 @@ class SaltyBot:
             #Prevent people from issuing server commands since bot is usually mod (aka /ban)
             response = "Please stop trying to abuse me BibleThump"
             command = ''
-        to_send = 'PRIVMSG #{} :{}\r\n'.format(self.channel, response)
+
         if self.rate_limit < self.message_limit:
-            self.irc.sendall(to_send)
+            self.irc.privmsg(self.channel, response)
             self.rate_limit += 1
         else:
             print "{} has exceeded the IRC rate limit".format(self.channel)
@@ -1227,7 +1230,7 @@ class SaltyBot:
                 print self.channel + ' returned empty string.'
                 self.socket_error_restart()
             elif message.startswith('PING'):
-                self.irc.sendall(message.replace("PING", "PONG"))
+                self.irc.raw(message.replace("PING", "PONG").strip())
 
             try:
                 message = message.strip()
@@ -1257,11 +1260,12 @@ class SaltyBot:
 
                 if c_msg["sender"] in self.blacklist:
                     continue
-                if c_msg["message"].find('­') != -1:
-                    continue
 
                 if self.__DB:
-                    print datetime.datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ') + '#' + self.channel + ' ' + c_msg["sender"] + ": " + c_msg["message"].decode('utf-8')
+                    print u"[{}] #{} {}: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.channel, c_msg["sender"], c_msg["message"]).encode("utf-8")
+
+                # if self.__DB:
+                #     print datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S] #{} {}: {}".decode("utf-8").format(self.channel, c_msg["sender"], c_msg["message"]))
 
                 #Sub Message
                 if c_msg["sender"] == 'twitchnotify':
@@ -1433,8 +1437,8 @@ class SaltyBot:
     #@@ ADMIN FUNCTIONS @@#
 
     def socket_error_restart(self):
-        self.irc.close()
-        self.irc = socket.socket()
+        self.irc.disconnect()
+        self.irc = irc.IRC("irc.twitch.tv", 443, self.twitch_nick, self.twitch_oauth)
         self.twitch_connect()
         return
 
@@ -1448,23 +1452,18 @@ class SaltyBot:
             interface.put([call,self])
 
     def stop(self):
-        self.irc.sendall("QUIT\r\n")
-        self.irc.close()
+        self.irc.disconnect()
 
 #@@BOT END@@#
 
 def osu_send_message(osu_irc_pass, osu_nick, msg, sender):
     #Send the message through IRC to the person playing osu
     full_msg = "{}: {}".format(sender, msg)
-    irc = socket.socket()
-    osu_host = 'irc.ppy.sh'
-    osu_port = 6667
-    irc.connect((osu_host, osu_port))
-    irc.sendall('PASS {}\r\n'.format(osu_irc_pass))
-    irc.sendall('NICK {}\r\n'.format(osu_irc_nick))
-    irc.sendall('PRIVMSG {} :{}\r\n'.format(osu_nick, full_msg))
-    irc.sendall('QUIT\r\n')
-    irc.close()
+    irc = irc.IRC("irc.ppy.sh", 6667, osu_irc_nick, osu_irc_pass)
+    irc.create()
+    irc.connect()
+    irc.privmsg(osu_nick, full_msg)
+    irc.disconnect()
 
 def twitch_info_grab(bots):
     #Grab all the people using the bots data in one call using stream objects
@@ -1497,8 +1496,9 @@ def twitch_info_grab(bots):
         print e
 
 def restart_bot(bot_name, bot_config, bot_dict):
+    current_irc = bot_dict[bot_name].irc
     del bot_dict[bot_name]
-    bot_dict[bot_name] = SaltyBot(bot_config[bot_name], debuging)
+    bot_dict[bot_name] = SaltyBot(bot_config[bot_name], debuging, irc_obj=current_irc)
     bot_dict[bot_name].start()
 
 def update_bot(bot_name, bot_config, bot_dict):
@@ -1534,6 +1534,12 @@ def automated_main_loop(bot_dict, config_dict):
         except Exception, e:
             print e
 
+        for bot_name, bot_inst in bot_dict.items():
+            if not bot_inst.thread.isAlive():
+                if debuging == True:
+                    print '#' + bot_name + ' Had to restart'
+                restart_bot(bot_inst.channel, config_dict, bot_dict)
+
         current_time = int(time.time())
 
         if next_buffer_clear < current_time:
@@ -1542,14 +1548,7 @@ def automated_main_loop(bot_dict, config_dict):
             next_buffer_clear = int(time.time()) + 30
 
         if time_to_check_twitch < current_time:
-            for bot_name, bot_inst in bot_dict.items():
-                if not bot_inst.thread.isAlive():
-                    if debuging == True:
-                        print '#' + bot_name + ' Had to restart'
-                    restart_bot(bot_inst.channel, config_dict, bot_dict)
-
             twitch_info_grab(bot_dict)
-
             time_to_check_twitch = int(time.time()) + 60
 
 def update_listen(web_inst):

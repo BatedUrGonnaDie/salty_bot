@@ -11,6 +11,7 @@ class IRC(object):
         self.username = username
         self.oauth = oauth
         self.irc = None
+        self.connected = False
 
     def create(self):
         self.irc = socket.socket()
@@ -19,11 +20,16 @@ class IRC(object):
     def connect(self):
         self.irc.connect((self.host, self.port))
         self.raw("PASS {}".format(self.oauth))
-        self.raw("USER {}".format(self.username))
+        self.raw("NICK {}".format(self.username))
+        self.connected = True
 
     def disconnect(self):
-        self.raw("QUIT")
-        self.irc = None
+        try:
+            self.raw("QUIT")
+        except Exception:
+            self.irc = None
+        finally:
+            self.connected = False
 
     def raw(self, msg):
         self.irc.sendall("{}\r\n".format(msg))
