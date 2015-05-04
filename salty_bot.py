@@ -16,6 +16,7 @@ import isodate
 import pytz
 import requests
 
+import modules.irc
 import salty_listener as SaltyListener
 
 debuging = True
@@ -52,6 +53,10 @@ web_listen_port = general_config['general_info']["web_listen_port"]
 web_secret = general_config["general_info"]["web_secret"]
 #super users are used for bot breaking commands and beta commands
 SUPER_USER = general_config['general_info']['super_users']
+
+
+logging.basicConfig(filename='debug.log', filemode='w', level=logging.DEBUG, format="[%(levelname)s %(asctime)s] %(message)s", datefmt="%m-%d %H:%M:%S")
+logging.getLogger("requests").setLevel(logging.WARNING)
 
 class SaltyBot:
 
@@ -1190,7 +1195,7 @@ class SaltyBot:
             "Outlook not so good",
             "Very doubtful"
             ]
-        response = "Magic 8-ball says: " + random.choice(answers)
+        response = "Magic 8-ball says: {}".format(random.choice(answers))
         self.twitch_send_message(response)
 
     def sub_msg(self, c_msg):
