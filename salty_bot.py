@@ -1169,11 +1169,15 @@ class SaltyBot(object):
             self.twitch_send_message("Please use the command when the stream is live.")
 
     def show_highlight(self):
-        msg = "Things you need to highlight: "
-        for i in self.to_highlight:
-            msg += i['desc'] + " @ " + i['time'] + ", "
-        self.twitch_send_message(msg[:-2])
-        self.to_highlight = []
+        if self.to_highlight:
+            msg = "Things you need to highlight: "
+            for i in self.to_highlight:
+                msg += i['desc'] + " @ " + i['time'] + ", "
+            self.twitch_send_message(msg[:-2])
+            self.to_highlight = []
+        else:
+            msg = "Highlight queue empty, use '!highlight (description)' when the stream is live."
+            self.twitch_send_message(msg)
 
     def eight_ball(self):
         answers = [
