@@ -65,6 +65,7 @@ class WebRetrieve:
 
         users_dict = {}
         for i in users:
+            i["id"] = i["user_id"]
             users_dict[i["id"]] = i
             users_dict[i["id"]]["commands"] = []
             users_dict[i["id"]]["custom_commands"] = []
@@ -74,7 +75,7 @@ class WebRetrieve:
 
         for i in custom_commands:
             users_dict[i["user_id"]]["custom_commands"].append(i)
-        for k, v in users_dict.iteritems():
+        for v in users_dict.values():
             channels_dict[v["twitch_name"]] = v
 
         return channels_dict
@@ -90,6 +91,7 @@ class WebRetrieve:
 
         name = user["twitch_name"]
         user_dict[name] = user
+        user_dict[name]["id"] = user_dict[name]["user_id"]
         user_dict[name]["commands"] = commands
         user_dict[name]["custom_commands"] = custom_commands
         return user_dict
@@ -100,6 +102,7 @@ class WebRetrieve:
         secret = connection.recv(128)
         if secret != self.web_secret:
             connection.close()
+            print address
             raise ValueError
         else:
             to_update = connection.recv(128)
