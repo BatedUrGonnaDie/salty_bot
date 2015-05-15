@@ -1228,11 +1228,13 @@ class SaltyBot(object):
                 message = self.irc.recv(4096)
             except socket.timeout:
                 print self.channel + ' timed out.'
-                self.socket_error_restart()
+                if self.running:
+                    self.socket_error_restart()
 
             if message == "":
-                print self.channel + ' returned empty string.'
-                self.socket_error_restart()
+                if self.running:
+                    print self.channel + ' returned empty string.'
+                    self.socket_error_restart()
             elif message.startswith('PING'):
                 self.irc.raw(message.replace("PING", "PONG").strip())
 
