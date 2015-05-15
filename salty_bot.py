@@ -1506,11 +1506,14 @@ def restart_bot(bot_name, bot_config, bot_dict):
     bot_dict[bot_name].start()
 
 def update_bot(bot_name, bot_config, bot_dict):
-    bot_dict[bot_name].config_data = bot_config
-    bot_dict[bot_name].commands = []
-    bot_dict[bot_name].admin_commands = []
-    bot_dict[bot_name].custom_commands = []
-    bot_dict[bot_name].twitch_commands()
+    try:
+        bot_dict[bot_name].config_data = bot_config
+        bot_dict[bot_name].commands = []
+        bot_dict[bot_name].admin_commands = []
+        bot_dict[bot_name].custom_commands = []
+        bot_dict[bot_name].twitch_commands()
+    except KeyError:
+        print "Error updating bot for {}".format(bot_config["twitch_nick"])
 
 def automated_main_loop(bot_dict, config_dict):
     time_to_check_twitch = 0
