@@ -1507,13 +1507,30 @@ def restart_bot(bot_name, bot_config, bot_dict):
 
 def update_bot(bot_name, bot_config, bot_dict):
     try:
-        bot_dict[bot_name].config_data = bot_config
-        bot_dict[bot_name].commands = []
-        bot_dict[bot_name].admin_commands = []
-        bot_dict[bot_name].custom_commands = []
-        bot_dict[bot_name].twitch_commands()
+        if bot_config["active"]:
+            if bot_config["bot_nick"] == bot_dict[bot_name].twitch_nick:
+                bot_dict[bot_name].config_data = bot_config
+                bot_dict[bot_name].commands = []
+                bot_dict[bot_name].admin_commands = []
+                bot_dict[bot_name].custom_commands = []
+                bot_dict[bot_name].twitch_commands()
+            else:
+                bot_dict[bot_name].running = False
+                bot_dict[bot_name].stop()
+                del bot_dict[bot_name]
+                bot_dict[bot_name] = SaltyBot(bot_config, debuging)
+                print "Name changed for {}".format(bot_name)
+            print "Updated bot for {}".format(bot_name)
+        else:
+            bot_dict[bot_name].running = False
+            bot_dict[bot_name].stop()
+            del bot_dict[bot_name]
+            print "Deleted bot for {}".format(bot_name)
     except KeyError:
-        print "Error updating bot for {}".format(bot_config["twitch_nick"])
+        if bot_config["active"]:
+            bot_dict[bot_name] = SaltyBot(bot_config, debuging)
+            bot_dict[bot_name].start()
+            print "Created bot for {}".format(bot_name)
 
 def automated_main_loop(bot_dict, config_dict):
     time_to_check_twitch = 0
@@ -1533,7 +1550,6 @@ def automated_main_loop(bot_dict, config_dict):
                     user = dict(register[DATA]).keys()[0]
                     update_bot(user, register[DATA][user], bot_dict)
                     config_dict[user] = register[DATA][user]
-                    print "Updated " + register[DATA][user]["twitch_name"]
                 register = None
 
         except Q.Empty:
