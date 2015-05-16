@@ -85,6 +85,10 @@ class SaltyBot(object):
             self.irc = irc_obj
 
         self.channel = config_data["twitch_name"]
+        if config_data["speedruncom_nick"]:
+            self.speedruncom_nick = config_data["speedrun_nick"].lower()
+        else:
+            self.speedruncom_nick = self.channel
         self.game = ''
         self.title = ''
         self.time_start = ''
@@ -255,7 +259,7 @@ class SaltyBot(object):
             pass
         elif response.startswith('.') or response.startswith('/'):
             #Prevent people from issuing server commands since bot is usually mod (aka /ban)
-            response = "Please stop trying to abuse me BibleThump"
+            response = "Please stop trying to abuse me BibleThump (messages cannot start with '/' or '.')"
             command = ''
 
         if self.rate_limit < self.message_limit:
@@ -439,8 +443,8 @@ class SaltyBot(object):
                     return
         except IndexError:
             if self.game != '' and self.title != '':
-                url = "http://speedrun.com/api_records.php?user={}&game={}".format(self.channel, self.game)
-                user_name = self.channel
+                url = "http://speedrun.com/api_records.php?user={}&game={}".format(self.speedruncom_nick, self.game)
+                user_name = self.speedruncom_nick
                 infer_category = True
             else:
                 response = "Please either provide a player, game, and category or wait for the streamer to go live."
