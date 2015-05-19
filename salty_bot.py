@@ -61,6 +61,7 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 class SaltyBot(object):
 
     message_limit = 100
+    elevated_user = ["staff", "admin", "global_mod", "mod"]
 
     def __init__(self, config_data, debug = False, irc_obj = None):
         if config_data["bot_oauth"] == None:
@@ -86,7 +87,7 @@ class SaltyBot(object):
 
         self.channel = config_data["twitch_name"]
         if config_data["speedruncom_nick"]:
-            self.speedruncom_nick = config_data["speedrun_nick"].lower()
+            self.speedruncom_nick = config_data["speedruncom_nick"].lower()
         else:
             self.speedruncom_nick = self.channel
         self.game = ''
@@ -108,7 +109,6 @@ class SaltyBot(object):
             self.blacklist.append(i.split('\n')[0])
         self.command_times = {}
         self.custom_command_times = {}
-        self.elevated_user = ["staff", "admin", "global_mod", "mod"]
 
     def start(self):
         self.thread = threading.Thread(target=self.twitch_run)
