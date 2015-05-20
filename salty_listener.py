@@ -9,7 +9,8 @@ import psycopg2.extras
 
 class WebRetrieve:
 
-    def __init__(self, db_url, web_ip, web_port, web_secret):
+    def __init__(self, dev, db_url, web_ip, web_port, web_secret):
+        self.development = dev
         self.db_url = db_url
         self.web_secret = ""
         self.web_secret = web_secret
@@ -56,9 +57,14 @@ class WebRetrieve:
         conn = self.db_connect()
         cur = self.setup_cursor(conn)
 
-        users = self.execute_all(cur, """SELECT * FROM users AS u JOIN settings AS s on u.id=s.user_id WHERE s.active=true""")
-        commands = self.execute_all(cur, """SELECT * FROM commands AS c WHERE c.user_id in (SELECT s.user_id FROM Settings AS s WHERE s.active=true)""")
-        custom_commands = self.execute_all(cur, """SELECT * FROM custom_commands AS c WHERE c.user_id in (SELECT s.user_id FROM Settings AS s WHERE s.active=true)""")
+        if not self.development:
+            users = self.execute_all(cur, """SELECT * FROM users AS u JOIN settings AS s on u.id=s.user_id WHERE s.active=true""")
+            commands = self.execute_all(cur, """SELECT * FROM commands AS c WHERE c.user_id in (SELECT s.user_id FROM Settings AS s WHERE s.active=true)""")
+            custom_commands = self.execute_all(cur, """SELECT * FROM custom_commands AS c WHERE c.user_id in (SELECT s.user_id FROM Settings AS s WHERE s.active=true)""")
+        else:
+            users = self.execute_all(cur, """SELECT * FROM users AS u JOIN settings AS s on u.id=1 AND u.id=s.user_id WHERE s.active=true""")
+            commands = self.execute_all(cur, """SELECT * FROM commands AS c WHERE c.user_id=1""")
+            custom_commands = self.execute_all(cur, """SELECT * FROM custom_commands AS c WHERE c.user_id=1""")
 
         self.close_cursor(cur)
         self.db_close(conn)

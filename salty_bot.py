@@ -1604,7 +1604,7 @@ def main():
 
     bot_dict = {} #Bot instances go in here
 
-    online_info = SaltyListener.WebRetrieve(db_url, web_listen_ip, web_listen_port, web_secret)
+    online_info = SaltyListener.WebRetrieve(development, db_url, web_listen_ip, web_listen_port, web_secret)
     channels_dict = online_info.initial_retrieve() #All channels go in here from the JSON file
 
     for channel_name, channel_data in channels_dict.items(): #Start bots
