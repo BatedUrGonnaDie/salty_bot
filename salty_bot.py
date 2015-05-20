@@ -33,7 +33,7 @@ interface = Q.Queue()
 
 #Set up all the global variables
 with open('general_config.json', 'r') as data_file:
-    general_config = json.load(data_file, encoding = 'utf-8')
+    general_config = json.load(data_file, encoding='utf-8')
 
 lol_api_key = general_config['general_info']['lol_api_key']
 youtube_api_key = general_config['general_info']['youtube_api_key']
@@ -45,7 +45,7 @@ default_nick = general_config['general_info']['default_nick']
 default_oauth = general_config['general_info']['default_oauth']
 
 if development:
-    web_listen_ip = "127.0.0.1"
+    web_listen_ip = "localhost"
 else:
     web_listen_ip = general_config['general_info']["web_listen_ip"]
 
@@ -1622,10 +1622,9 @@ def main():
     otherT.setDaemon(True)
     otherT.start()
 
-    if not development:
-        listen_thread = threading.Thread(target=update_listen, args=(online_info,))
-        listen_thread.setDaemon(True)
-        listen_thread.start()
+    listen_thread = threading.Thread(target=update_listen, args=(online_info,))
+    listen_thread.setDaemon(True)
+    listen_thread.start()
 
     while True:
         command = raw_input("> ")
