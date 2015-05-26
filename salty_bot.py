@@ -539,15 +539,23 @@ class SaltyBot(object):
                 return
 
         cat_record = game_records[sr_game][active_cat]
-        wr_time = self.format_sr_time(cat_record['time'])
+        try:
+            wr_time = self.format_sr_time(cat_record['time'])
+        except TypeError:
+            wr_time = ""
         try:
             wr_ingame = self.format_sr_time(cat_record["timeigt"])
-            wr_ingame = "real time and {} ingame time ".format(wr_ingame)
+            if wr_time:
+                wr_time = "{0} real time and {1} ingame time ".format(wr_time, wr_ingame)
+            else:
+                wr_time = wr_ingame
         except KeyError:
             wr_ingame = ""
-        msg = "The current world record for {} {} is {} {}by {}.".format(sr_game, active_cat, wr_time, wr_ingame, cat_record['player'])
+        msg = "The current world record for {0} {1} is {2} by {3}.".format(sr_game, active_cat, wr_time, cat_record['player'])
         if cat_record['video']:
-            msg += "  The video can be found here: " + cat_record['video']
+            msg += "  Video: {0}".format(cat_record['video'])
+        if cat_record["splitsio"]:
+            msg += " Splits: {0}".format(cat_record["splitsio"])
         self.twitch_send_message(msg, '!wr')
 
     def leaderboard_retrieve(self):
