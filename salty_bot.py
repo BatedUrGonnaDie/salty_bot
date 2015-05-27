@@ -1215,7 +1215,7 @@ class SaltyBot(object):
             "Very doubtful"
             ]
         response = "Magic 8-ball says: {}".format(random.choice(answers))
-        self.twitch_send_message(response)
+        self.twitch_send_message(response, "!8ball")
 
     def sub_msg(self, c_msg):
         msg_split = c_msg.split(' ')
