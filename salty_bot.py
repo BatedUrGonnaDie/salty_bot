@@ -1191,7 +1191,11 @@ class SaltyBot(object):
             msg = "Highlight queue empty, use '!highlight (description)' when the stream is live."
             self.twitch_send_message(msg)
 
-    def eight_ball(self):
+    def eight_ball(self, c_msg):
+        question = c_msg["message"].split(' ')[1:]
+        if not message:
+            self.twitch_send_message("Magic 8ball says: Ask me a question")
+            return
         answers = [
             "It is certain",
             "It is decidedly so",
@@ -1412,7 +1416,7 @@ class SaltyBot(object):
 
                     elif c_msg["message"].startswith("8ball"):
                         if self.command_check(c_msg, "!8ball"):
-                            self.eight_ball()
+                            self.eight_ball(c_msg)
 
                     elif c_msg["message"] == "show_highlight":
                         if c_msg["sender"] == self.channel or c_msg["sender"] in SUPER_USER:
