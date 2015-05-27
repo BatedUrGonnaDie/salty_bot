@@ -1577,6 +1577,7 @@ def automated_main_loop(bot_dict, config_dict):
                 if debuging == True:
                     print '#' + bot_name + ' Had to restart'
                 restart_bot(bot_inst.channel, config_dict, bot_dict)
+                bot_dict[bot_name].twitch_send_message("An error has caused the bot to crash, if this problem persists or is replicatable please send a message to bomb_mask")
 
         current_time = int(time.time())
 
