@@ -1193,7 +1193,7 @@ class SaltyBot(object):
 
     def eight_ball(self, c_msg):
         question = c_msg["message"].split(' ')[1:]
-        if not message:
+        if not question:
             self.twitch_send_message("Magic 8ball says: Ask me a question")
             return
         answers = [
@@ -1577,11 +1577,14 @@ def automated_main_loop(bot_dict, config_dict):
             print e
 
         for bot_name, bot_inst in bot_dict.items():
-            if not bot_inst.thread.isAlive():
-                if debuging == True:
-                    print '#' + bot_name + ' Had to restart'
-                restart_bot(bot_inst.channel, config_dict, bot_dict)
-                bot_dict[bot_name].twitch_send_message("An error has caused the bot to crash, if this problem persists or is replicatable please send a message to bomb_mask")
+            try:
+                if not bot_inst.thread.isAlive():
+                    if debuging == True:
+                        print '#' + bot_name + ' Had to restart'
+                    restart_bot(bot_inst.channel, config_dict, bot_dict)
+                    bot_dict[bot_name].twitch_send_message("An error has caused the bot to crash, if this problem persists or is replicatable please send a message to bomb_mask")
+            except AttributeError:
+                continue
 
         current_time = int(time.time())
 
