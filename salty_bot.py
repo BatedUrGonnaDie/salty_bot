@@ -160,25 +160,28 @@ class SaltyBot(object):
                     self.admin_commands.append(curr_com)
                 else:
                     self.commands.append(curr_com)
-                self.command_times[curr_com] = {"last": 0, "limit": i["limit"]}
+                self.command_times[curr_com] = {"last": 0, "limit": i["limit"] or 30}
 
         if self.config_data["social_active"]:
             self.command_times["social"] = {"time_last": int(time.time()),
-                                            "messages": self.config_data["social_messages"],
+                                            "messages": self.config_data["social_messages"] or 0,
                                             "messages_last": self.messages_received,
-                                            "time": self.config_data["social_time"]}
+                                            "time": self.config_data["social_time"] or 0}
             self.social_text = self.config_data["social_output"]
 
         if self.config_data["toobou_active"]:
             self.t_trig = self.config_data["toobou_trigger"]
             self.command_times["toobou"] = {"trigger": self.t_trig,
                                             "last": 0,
-                                            "limit": self.config_data["toobou_limit"]}
+                                            "limit": self.config_data["toobou_limit"] or 1}
 
         for i in self.config_data["custom_commands"]:
             if i["on"]:
                 self.custom_commands.append("!{}".format(i["trigger"]))
-                self.custom_command_times["!{}".format(i["trigger"])] = {"last": 0, "limit": i["limit"], "output": i["output"], "admin": i["admin"]}
+                self.custom_command_times["!{}".format(i["trigger"])] = {"last": 0,
+                                                                        "limit": i["limit"] or 30,
+                                                                        "output": i["output"],
+                                                                        "admin": i["admin"]}
 
     def live_commands(self):
         # Remove any commands that would not currently work when !commands is used
