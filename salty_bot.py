@@ -1541,6 +1541,7 @@ def update_bot(bot_name, bot_config, bot_dict):
                 bot_dict[bot_name].stop()
                 del bot_dict[bot_name]
                 bot_dict[bot_name] = SaltyBot(bot_config, debuging)
+                bot_dict[bot_name].start()
                 print "Name changed for {}".format(bot_name)
             print "Updated bot for {}".format(bot_name)
         else:
