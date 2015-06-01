@@ -11,6 +11,7 @@ import socket
 import sys
 import threading
 import time
+import traceback
 
 import isodate
 import pytz
@@ -135,9 +136,9 @@ class SaltyBot(object):
                 self.irc.create()
                 self.irc.connect()
                 self.irc.recv(4096)
-            except Exception, e:
+            except Exception:
                 print '{} failed to connect.'.format(self.channel)
-                print e
+                traceback.print_exc(limit=2)
                 time.sleep(60)
                 self.twitch_connect()
 
@@ -314,8 +315,8 @@ class SaltyBot(object):
             else:
                 print data
                 return False
-        except Exception, e:
-            print e
+        except Exception:
+            traceback.print_exc(limit=2)
             return False
 
     def osu_api_user(self):
@@ -692,8 +693,8 @@ class SaltyBot(object):
                 success.raise_for_status()
                 reviewed = "to the database" if c_msg["sender"] == self.channel else "for review"
                 response = "Your {} has been added {}.".format(text_type, reviewed)
-            except Exception, e:
-                print e
+            except Exception:
+                traceback.print_exc(limit=2)
                 response = "I had problems adding this to the database."
             self.twitch_send_message(response, "!add" + text_type)
 
@@ -1267,8 +1268,8 @@ class SaltyBot(object):
                     action = msg_parts[2]
                 else:
                     action = ''
-            except Exception, e:
-                print e
+            except Exception:
+                traceback.print_exc(limit=2)
                 continue
 
             if action == 'PRIVMSG':
@@ -1518,8 +1519,8 @@ def twitch_info_grab(bots):
 
         else:
             pass
-    except Exception, e:
-        print e
+    except Exception:
+        traceback.print_exc(limit=2)
 
 def restart_bot(bot_name, bot_config, bot_dict):
     current_irc = bot_dict[bot_name].irc
@@ -1577,8 +1578,8 @@ def automated_main_loop(bot_dict, config_dict):
 
         except Q.Empty:
             pass
-        except Exception, e:
-            print e
+        except Exception:
+            traceback.print_exc(limit=2)
 
         for bot_name, bot_inst in bot_dict.items():
             try:
@@ -1605,18 +1606,18 @@ def update_listen(web_inst):
     while True:
         try:
             user_to_update = web_inst.main_listen()
-        except ValueError, e:
+        except ValueError:
             print "Was given wrong secret key"
             continue
         try:
             user = json.loads(user_to_update)
-        except ValueError, e:
-            print e
+        except ValueError:
+            traceback.print_exc(limit=2)
             continue
         try:
             new_info = web_inst.update_retrieve(user["user_id"])
-        except Exception, e:
-            print e
+        except Exception:
+            traceback.print_exc(limit=2)
             continue
         interface.put([UPDATE, new_info])
         print "New info in register"
