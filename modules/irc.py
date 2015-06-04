@@ -27,8 +27,10 @@ class IRC(object):
         try:
             self.raw("QUIT")
         except Exception:
-            self.irc = None
+            pass
         finally:
+            self.irc.close()
+            self.irc = None
             self.connected = False
 
     def raw(self, msg):

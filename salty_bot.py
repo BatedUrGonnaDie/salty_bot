@@ -1657,7 +1657,7 @@ def main():
         if command.startswith("/stop"):
             for inst in bot_dict.values():
                 inst.stop()
-            sys.exit()()
+            sys.exit(0)
 
 
 if __name__ == '__main__':
