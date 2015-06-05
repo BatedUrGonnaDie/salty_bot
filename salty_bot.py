@@ -61,10 +61,12 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 
 class SaltyBot(object):
 
-    message_limit = 100
     elevated_user = ["staff", "admin", "global_mod", "mod"]
 
     def __init__(self, config_data, debug = False, irc_obj = None):
+        self.message_limit = 30
+        self.is_mod = False
+
         if config_data["bot_oauth"] == None:
             config_data["bot_nick"] = default_nick
             config_data["bot_oauth"] = default_oauth
@@ -153,6 +155,8 @@ class SaltyBot(object):
         #Set up all the limits, if its admin, if its on, quote and pun stuff, and anything else that needs setting up for a command
         self.command_times["!bot_info"] = {"last": 0, "limit": 300}
         self.commands.append("!bot_info")
+        self.command_times["!help"] = {"last": 0, "limit": 2}
+        self.commands.append("!help")
 
         for i in self.config_data["commands"]:
             if i["on"]:
@@ -1225,7 +1229,42 @@ class SaltyBot(object):
         response = "Magic 8-ball says: {}".format(random.choice(answers))
         self.twitch_send_message(response, "!8ball")
 
+    def help_text(self, c_msg):
+        text = {
+            "help":         ["!help <command>", "Displays help text for commands (<stuff> is required, <stuff?> is optional, exception is wr, splits, pb if you want later options all before must be present)."],
+            "commands":     ["!commands", "Displays all active commands in the current channel."],
+            "quote":        ["!quote", "Displays a random reviewed quote from your channel."],
+            "addquote":     ["!addquote <quote>", "Add the selected text for review (broadcasters adding bypass review."],
+            "pun":          ["!pun", "Displays a random reviewed pun from your channel."],
+            "addpun":       ["!addpun <pun>", "Add the selected text for review (broadcasters adding bypass review."],
+            "8ball":        ["!8ball <question>", "Ask the 8ball and get a response."],
+            "uptime":       ["!uptime", "See how long the stream has been live for (must be live to get a time."],
+            "wr":           ["!wr <game shortcode?> <category?>", "Retrieve the world record for a game's category.  Will try to use game and title if stream is live, otherwise parameters are required."],
+            "pb":           ["!pb <user?> <game shortcode?> <category?>", "Retrieve users pb for a game's category.  Whill try and use game and title if stream is live, otherwise parameters are required."],
+            "leaderboard":  ["!leaderboard", "Adds Twitch game to speedrun.com url, may or may not work depending on how games are mad on speedrun.com"],
+            "splits":       ["!splits <user?> <game?> <category?>", "Retrive pb splits from splits.io.  Will try and user game and category from title and streamer if live, else all are required."],
+            "race":         ["!race", "Retrieve race information from speedrdunslive.com"],
+            "song":         ["!song", "Contact batedurgonnadie to activate this in chat."],
+            "rank":         ["!rank <user?>", "Retrieve basic information about an osu user."],
+            "runes":        ["!runes", "[Game: LoL] Retrieve users current rune book and stats from said runes."],
+            "masteries":    ["!masteries", "[Game: LoL] Retrieve mastery page and how they are distributed."]
+        }
+        try:
+            command = c_msg["message"].split(' ')[1]
+        except IndexError:
+            command = "help"
+
+        try:
+            array = text[command]
+        except KeyError:
+            self.twitch_send_message("Invalid command: {0}".format(command))
+            return
+        self.twitch_send_message("Syntax: {0} | Description: {1}".format(array[0], array[1]), "!help")
+
     def sub_msg(self, c_msg):
+        if not self.stream_online:
+            return
+
         msg_split = c_msg.split(' ')
         if len(msg_split) == 3:
             msg = self.config_data["sub_message_text"]
@@ -1422,6 +1461,10 @@ class SaltyBot(object):
                         if self.command_check(c_msg, "!8ball"):
                             self.eight_ball(c_msg)
 
+                    elif c_msg["message"].startswith("help"):
+                        if self.command_check(c_msg, "!help"):
+                            self.help_text(c_msg)
+
                     elif c_msg["message"] == "show_highlight":
                         if c_msg["sender"] == self.channel or c_msg["sender"] in SUPER_USER:
                             self.show_highlight()
@@ -1451,6 +1494,16 @@ class SaltyBot(object):
                             self.running = False
 
                     #Commands end here
+
+            elif action == "USERSTATE":
+                tags = dict(item.split('=') for item in msg_parts[0][1:].split(';'))
+                if tags["user-type"] in self.elevated_user:
+                    self.message_limit = 100
+                else:
+                    self.message_limit = 30
+            else:
+                print action
+                print message
 
             #Check the social down here, so that even if ping happens social can go off if the minimum time/messages are met but no one is talking
             if self.config_data["social_active"] and self.stream_online:
