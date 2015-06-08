@@ -1505,7 +1505,7 @@ class SaltyBot(object):
                     self.message_limit = 100
                 else:
                     self.message_limit = 30
-            elif action == "JOIN":
+            elif action == "JOIN" or action == "MODE" or message.startswith("PING"):
                 pass
             else:
                 print action
