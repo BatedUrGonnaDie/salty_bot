@@ -84,7 +84,7 @@ class SaltyBot(object):
         self.user_id = config_data["id"]
         self.config_data = config_data
         if not irc_obj:
-            self.irc = irc.IRC("irc.twitch.tv", 443, self.twitch_nick, self.twitch_oauth)
+            self.irc = irc.IRC("irc.twitch.tv", 6667, self.twitch_nick, self.twitch_oauth)
         else:
             self.irc = irc_obj
 
@@ -318,6 +318,7 @@ class SaltyBot(object):
                 return data_decode
             else:
                 print data
+                print data.text
                 return False
         except Exception:
             traceback.print_exc(limit=2)
@@ -466,8 +467,8 @@ class SaltyBot(object):
 
         try:
             sr_game = dict(game_data).keys()[0]
-        except TypeError:
-            self.twitch_send_message("This game does not seem to exist on speedrun.com", "!pb")
+        except (TypeError, IndexError):
+            self.twitch_send_message("This game/user does not seem to exist on speedrun.com", "!pb")
             return
 
         if infer_category:
@@ -522,8 +523,8 @@ class SaltyBot(object):
             return
         try:
             sr_game = dict(game_records).keys()[0]
-        except TypeError:
-            self.twitch_send_message("This game does not seem to exist on speedrun.com", '!wr')
+        except (TypeError, IndexError):
+            self.twitch_send_message("This game/user does not seem to exist on speedrun.com", '!wr')
             return
 
         if len(msg_split) == 1:
@@ -1524,7 +1525,7 @@ class SaltyBot(object):
 
     def socket_error_restart(self):
         self.irc.disconnect()
-        self.irc = irc.IRC("irc.twitch.tv", 443, self.twitch_nick, self.twitch_oauth)
+        self.irc = irc.IRC("irc.twitch.tv", 6667, self.twitch_nick, self.twitch_oauth)
         self.twitch_connect()
         return
 
