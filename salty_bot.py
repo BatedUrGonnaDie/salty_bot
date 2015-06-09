@@ -95,7 +95,7 @@ class SaltyBot(object):
             self.speedruncom_nick = self.channel
         self.game = ''
         self.title = ''
-        self.time_start = ''
+        self.time_start = None
         self.stream_online = False
         self.commands = []
         self.admin_commands = []
