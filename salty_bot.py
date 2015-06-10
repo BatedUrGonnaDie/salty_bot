@@ -1278,6 +1278,17 @@ class SaltyBot(object):
             msg = msg.replace("$subscriber", msg_split[0])
         self.twitch_send_message(msg)
 
+    def social_msg(self):
+        if not self.config_data["social_active"] and not self.stream_online:
+            return
+        elif self.messages_received <= (self.command_times["social"]["messages"] + self.command_times["social"]["messages_last"]):
+            return
+        elif int(time.time()) <= ((self.command_times["social"]["time"] * 60) + self.command_times["social"]["time_last"]):
+            return
+        else:
+            self.twitch_send_message(self.social_text)
+            self.command_times["social"]["time_last"] = int(time.time())
+            self.command_times["social"]["messages_last"] = self.messages_received
 
     def twitch_run(self):
         #Main loop for running the bot
@@ -1510,14 +1521,6 @@ class SaltyBot(object):
                 print action
                 print message
 
-            #Check the social down here, so that even if ping happens social can go off if the minimum time/messages are met but no one is talking
-            if self.config_data["social_active"] and self.stream_online:
-                if self.messages_received >= (self.command_times['social']['messages'] + self.command_times['social']['messages_last']):
-                    if int(time.time()) >= ((self.command_times['social']['time'] * 60) + self.command_times['social']['time_last']):
-                        self.twitch_send_message(self.social_text)
-                        self.command_times['social']['time_last'] = int(time.time())
-                        self.command_times['social']['messages_last'] = self.messages_received
-
         print "thread stoped"
     #@@ ADMIN FUNCTIONS @@#
 
@@ -1647,7 +1650,8 @@ def automated_main_loop(bot_dict, config_dict):
                     restart_bot(bot_inst.channel, config_dict, bot_dict)
                     bot_dict[bot_name].twitch_send_message("An error has caused the bot to crash, if this problem persists or is replicatable please send a message to bomb_mask")
             except AttributeError:
-                continue
+                pass
+            bot_inst.social_msg()
 
         current_time = int(time.time())
 
