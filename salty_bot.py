@@ -147,7 +147,7 @@ class SaltyBot(object):
             self.irc.capability("twitch.tv/tags twitch.tv/commands")
             self.irc.recv(1024)
             self.irc.join(self.channel)
-            self.irc.recv(1024)
+            self.irc.recv(4096)
         else:
             if self.__DB:
                 print "{} already connected.\n".format(self.channel)
