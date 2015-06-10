@@ -737,7 +737,7 @@ class SaltyBot(object):
         data_races = data_decode['races']
         srl_race_entrants = []
         for i in data_races:
-            if srl_nick in [x.lower() for x in i["entrants"]]:
+            if self.channel in [x["twitch"].lower() for x in i["entrants"].values()] or srl_nick in [x.lower() for x in i["entrants"]]:
                 race_channel = i
                 for values in race_channel['entrants'].values():
                     if values['statetext'] == 'Ready' or values['statetext'] == 'Entered':
@@ -745,8 +745,6 @@ class SaltyBot(object):
                             srl_race_entrants.append(values['twitch'].lower())
                 user_place = race_channel['entrants'][srl_nick]['place']
                 user_time = race_channel['entrants'][srl_nick]['time']
-                srl_race_game = race_channel['game']['name']
-                srl_race_category = race_channel['goal']
                 srl_race_status = race_channel['statetext']
                 srl_race_time = race_channel['time']
                 srl_race_link = 'http://www.speedrunslive.com/race/?id={}'.format(race_channel['id'])
@@ -754,7 +752,7 @@ class SaltyBot(object):
                 live_decoded = self.api_caller('https://api.twitch.tv/kraken/streams?channel=' + ','.join(srl_race_entrants))
                 for j in live_decoded['streams']:
                     srl_live_entrants.append(j['channel']['name'])
-                response = 'Game: {}, Category: {}, Status: {}'.format(srl_race_game, srl_race_category, srl_race_status)
+                response = 'Game: {}, Category: {}, Status: {}'.format(race_channel['game']['name'], race_channel['goal'], srl_race_status)
                 if srl_race_time > 0:
                     if user_time > 0:
                         time_formatted = self.format_sr_time(user_time)
