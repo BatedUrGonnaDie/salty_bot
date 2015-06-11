@@ -1653,7 +1653,10 @@ def automated_main_loop(bot_dict, config_dict):
                     bot_dict[bot_name].twitch_send_message("An error has caused the bot to crash, if this problem persists or is replicatable please send a message to bomb_mask")
             except AttributeError:
                 pass
-            bot_inst.social_msg()
+            try:
+                bot_inst.social_msg()
+            except KeyError:
+                pass
 
         current_time = int(time.time())
 
