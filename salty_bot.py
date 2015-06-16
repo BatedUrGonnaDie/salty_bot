@@ -1517,6 +1517,9 @@ class SaltyBot(object):
                     self.message_limit = 100
                 else:
                     self.message_limit = 30
+            elif action == "RECONNECT":
+                # Twitch has told us that the connection will be terminated and we should connect to a different server
+                self.socket_error_restart()
             elif action == "JOIN" or action == "MODE" or message.startswith("PING"):
                 pass
             else:
