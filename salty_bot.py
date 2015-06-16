@@ -1519,6 +1519,7 @@ class SaltyBot(object):
                     self.message_limit = 30
             elif action == "RECONNECT":
                 # Twitch has told us that the connection will be terminated and we should connect to a different server
+                print "Received reconnect command"
                 self.socket_error_restart()
             elif action == "JOIN" or action == "MODE" or message.startswith("PING"):
                 pass
@@ -1542,7 +1543,7 @@ class SaltyBot(object):
                 print 'bot id {}'.format(self)
 
         else:
-            interface.put([call,self])
+            interface.put([call, self])
 
     def stop(self):
         self.irc.disconnect()
@@ -1552,11 +1553,11 @@ class SaltyBot(object):
 def osu_send_message(osu_irc_pass, osu_nick, msg, sender):
     #Send the message through IRC to the person playing osu
     full_msg = "{}: {}".format(sender, msg)
-    irc = irc.IRC("irc.ppy.sh", 6667, osu_irc_nick, osu_irc_pass)
-    irc.create()
-    irc.connect()
-    irc.privmsg(osu_nick, full_msg)
-    irc.disconnect()
+    osu_irc = irc.IRC("irc.ppy.sh", 6667, osu_irc_nick, osu_irc_pass)
+    osu_irc.create()
+    osu_irc.connect()
+    osu_irc.privmsg(osu_nick, full_msg)
+    osu_irc.disconnect()
 
 def twitch_info_grab(bots):
     #Grab all the people using the bots data in one call using stream objects
