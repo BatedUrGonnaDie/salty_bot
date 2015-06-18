@@ -1588,6 +1588,8 @@ def twitch_info_grab(bots):
             pass
     except Exception:
         traceback.print_exc(limit=2)
+        print data
+        print data.text
 
 def restart_bot(bot_name, bot_config, bot_dict):
     current_irc = bot_dict[bot_name].irc
@@ -1604,6 +1606,7 @@ def update_bot(bot_name, bot_config, bot_dict):
                 bot_dict[bot_name].admin_commands = []
                 bot_dict[bot_name].custom_commands = []
                 bot_dict[bot_name].twitch_commands()
+                print "Updated bot for {}".format(bot_name)
             else:
                 bot_dict[bot_name].running = False
                 bot_dict[bot_name].stop()
