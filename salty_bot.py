@@ -1417,7 +1417,7 @@ class SaltyBot(object):
                     elif c_msg["message"].startswith('whitelist ') and c_msg["sender"] == self.channel:
                         self.lister(c_msg, 'white')
 
-                    elif c_msg["message"].starswith("addcom ") and c_msg["sender"] == self.channel:
+                    elif c_msg["message"].startswith("addcom ") and c_msg["sender"] == self.channel:
                         self.add_custom_command(c_msg)
 
                     elif c_msg["message"].startswith("pb"):
