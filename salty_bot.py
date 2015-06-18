@@ -303,11 +303,20 @@ class SaltyBot(object):
             else:
                 if self.time_check(command):
                     return True
+        elif command in self.custom_commands:
+            if c_msg["sender"] == self.channel or c_msg["sender"] in SUPER_USER:
+                return True
+            elif self.custom_time_check(command):
+                return True
+
         return False
 
     def time_check(self, command):
         #Return the current time minus the time the command was last used (used to make sure its off cooldown)
         return int(time.time()) - self.command_times[command]['last'] >= self.command_times[command]['limit']
+
+    def custom_time_check(self, command):
+        return int(time.time()) - self.custom_command_times[command["last"]] >= self.custom_command_times[command["limit"]]
 
     def api_caller(self, url, headers = None):
         #Call JSON api's for other functions
