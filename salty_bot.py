@@ -298,7 +298,7 @@ class SaltyBot(object):
             if c_msg["sender"] == self.channel or c_msg["sender"] in SUPER_USER:
                 return True
             if command in self.admin_commands:
-                if c_msg["tags"]["user_type"] in self.elevated_user:
+                if c_msg["tags"]["user-type"] in self.elevated_user:
                     return True
             else:
                 if self.time_check(command):
@@ -1075,7 +1075,7 @@ class SaltyBot(object):
         if (command) not in self.custom_commands:
             return
 
-        if self.custom_command_times[command]["admin"] and c_msg["tags"]["user_type"] not in self.elevated_user:
+        if self.custom_command_times[command]["admin"] and c_msg["tags"]["user-type"] not in self.elevated_user:
             return
 
         response = self.custom_command_times[command]["output"]
@@ -1362,7 +1362,7 @@ class SaltyBot(object):
                 if msg_parts[0]:
                     c_msg["tags"] = dict(item.split('=') for item in msg_parts[0][1:].split(';'))
                 else:
-                    c_msg["tags"] = {"color": "", "emotes": {}, "subscriber": 0, "turbo": 0, "user_type": ""}
+                    c_msg["tags"] = {"color": "", "emotes": {}, "subscriber": 0, "turbo": 0, "user-type": ""}
                 c_msg["sender"] = msg_parts[1][1:].split('!')[0]
                 c_msg["action"] = msg_parts[2]
                 c_msg["channel"] = msg_parts[3]
@@ -1469,11 +1469,11 @@ class SaltyBot(object):
                                 self.srl_race_retrieve()
 
                     elif c_msg["message"].startswith('createvote '):
-                        if self.config_data["voting_mods"] and (c_msg["tags"]["user_type"] in self.elevated_user or c_msg["sender"] == self.channel):
+                        if self.config_data["voting_mods"] and (c_msg["tags"]["user-type"] in self.elevated_user or c_msg["sender"] == self.channel):
                             self.create_vote(c_msg)
 
                     elif c_msg["message"] == 'endvote':
-                        if self.config_data["voting_mods"] and (c_msg["tags"]["user_type"] in self.elevated_user or c_msg["sender"] == self.channel):
+                        if self.config_data["voting_mods"] and (c_msg["tags"]["user-type"] in self.elevated_user or c_msg["sender"] == self.channel):
                             self.end_vote()
 
                     elif c_msg["message"].startswith('vote '):
