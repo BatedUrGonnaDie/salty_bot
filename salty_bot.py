@@ -1033,6 +1033,35 @@ class SaltyBot(object):
         if worked == True:
             self.twitch_send_message('{} has been {}listed'.format(user, s_list))
 
+    def add_custom_command(self, c_msg):
+        user = c_msg["sender"]
+
+        msg_split = c_msg["message"].split(" ", 4)
+        trigger = msg_split[1]
+        limit = msg_split[2]
+        admin_bool = 1 if (msg_split[3].lower() == "true" or msg_split[3].lower() == "t") else 0
+        output = msg_split[4]
+        send_data = {
+            "on": 1,
+            "trigger": trigger,
+            "limit": limit,
+            "admin": admin_bool,
+            "output": output
+        }
+        url = "https://leagueofnewbs.com/api/users/{}/custom_commands".format(user)
+        cookies = {"session": self.session}
+        try:
+            success = requests.post(url, data=send_data, cookies=cookies)
+            success.raise_for_status()
+            response = "Command successfully created."
+            self.custom_commands.append("!{}".format(trigger))
+            self.custom_command_times["!{}".format(trigger)] = {"last": 0, "limit": limit, "output": output, "admin": admin_bool}
+        except Exception:
+            traceback.print_exc(limit=2)
+            response = "I had problems adding this to the database."
+
+        self.twitch_send_message(response)
+
     def custom_command(self, c_msg):
         #Shitty custom command implementation,
         space_count = c_msg["message"].count(' ')
@@ -1387,6 +1416,9 @@ class SaltyBot(object):
 
                     elif c_msg["message"].startswith('whitelist ') and c_msg["sender"] == self.channel:
                         self.lister(c_msg, 'white')
+
+                    elif c_msg["message"].starswith("addcom ") and c_msg["sender"] == self.channel:
+                        self.add_custom_command(c_msg)
 
                     elif c_msg["message"].startswith("pb"):
                         if self.command_check(c_msg, "!pb"):
