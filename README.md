@@ -1,6 +1,6 @@
 Twitch chat bot with Twitch, Osu, YouTube, SRL, and LoL API integration.
 
-Coded with Python 2.7.  Only required module is Requests.
+Coded with Python 2.7.  Dependencies are located in requirements.txt.
 
 Commands
 ========
@@ -45,18 +45,20 @@ by the poll creator.
 
 `!uptime` will display how long the current stream has been live for.
 
-`!highlight` will add a timestamp and optional message to a list, and when be shown when the broadcaster uses the 
+`!highlight` will add a timestamp and optional message to a list, and when be shown when the broadcaster uses the
 `!show_highlight` command.
 
 You can now make custom commands.  They must be one word commands and only have static text output.  You may also use
 wildcards.  `$sender` and `$param` can be used and replaced with who sent the message and the first word after the
-command respectively.  Currently the only way to add custom commands is to manually add them to the config file.
+command respectively.
 
 Channel Owner Commands
 ======================
 `!blacklist <user>` adds the supplied user to a blacklist removing their ability to interact with the bot at all.
 
 `!whitelist <user>` will remove said user from the blacklist.
+
+`!addcom <trigger> <limit> <admin> <output>` will add the given custom command to the bot.
 
 `!review <quote/pun> <start>` to start reviewing your puns or quotes that have been added.  Bot will spit out the first
 quote/pun in the file.
