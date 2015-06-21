@@ -1635,7 +1635,7 @@ def restart_bot(bot_name, bot_config, bot_dict):
 def update_bot(bot_name, bot_config, bot_dict):
     try:
         if bot_config["active"]:
-            if bot_config["bot_nick"] == bot_dict[bot_name].twitch_nick:
+            if bot_config["bot_nick"] == bot_dict[bot_name].twitch_nick or bot_config["bot_nick"] == "":
                 bot_dict[bot_name].config_data = bot_config
                 bot_dict[bot_name].commands = []
                 bot_dict[bot_name].admin_commands = []
