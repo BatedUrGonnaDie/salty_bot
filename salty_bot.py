@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+import difflib
 import json
 import logging
 import Queue as Q
@@ -395,6 +396,50 @@ class SaltyBot(object):
     def get_number_suffix(self, number):
         return 'th' if 11 <= number <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(number % 10, 'th')
 
+    def get_diff_ratio(self, user_supplied, checking_against):
+        diff = difflib.SequenceMatcher(lambda x: x == " " or x == "_", user_supplied, checking_against)
+        return diff.ratio()
+
+    def find_category_title(self, game_categories, stream_title):
+        # Takes list of possible categories, and the category you are searching for
+        # Returns True/False if successful, and the string with either the category or the error response
+        categories_in_title = []
+        category_position = {}
+
+        for i in game_categories:
+            if i.lower() in stream_title:
+                categories_in_title.append(i)
+        categories_in_title = list(set(categories_in_title))
+        if len(categories_in_title) == 0:
+            response = "It appears the game is not on speedrun.com BibleThump"
+            return False, response
+        elif len(categories_in_title) == 1:
+            return True, categories_in_title[0]
+        else:
+            for j in categories_in_title:
+                category_position[j] = self.title.find(j.lower())
+            min_value = min(category_position.itervalues())
+            min_keys = [k for k in category_position if category_position[k] == min_value]
+            return sorted(min_keys, key=len)[-1]
+
+    def find_category_string(self, game_categories, string_search):
+        for i in game_categories:
+            if i.lower() == string_search.lower():
+                return True, i
+
+        best_ratio = {}
+        for i in game_categories:
+            ratio = self.get_diff_ratio(string_search.lower(), i.lower())
+            if ratio > .6:
+                best_ratio[i] = ratio
+
+        try:
+            return True, max(best_ratio, key=best_ratio.get)
+        except ValueError:
+            response = "I'm sorry, but I could not find a category in the title that exists on speedrun.com"
+            return False, response
+
+
     def find_active_cat(self, sr_game, game_records):
         # Returns True or False depending on if success or failure, and a string
         # String will be the error message to send to chat if failure or the actice cat if success
@@ -430,9 +475,6 @@ class SaltyBot(object):
     def pb_retrieve(self, c_msg):
         msg_split = c_msg["message"].split(' ', 3)
         infer_category = False
-
-        if msg_split[0] != "pb":
-            return
 
         try:
             url = "http://www.speedrun.com/api_records.php?user={}".format(msg_split[1])
@@ -473,25 +515,21 @@ class SaltyBot(object):
         except (TypeError, IndexError):
             self.twitch_send_message("This game/user does not seem to exist on speedrun.com", "!pb")
             return
+        game_cats = game_data[sr_game].keys()
 
         if infer_category:
-            success, response_string = self.find_active_cat(sr_game, game_data)
+            success, response_string = self.find_category_title(game_cats, self.title)
             if success == False:
                 self.twitch_send_message(response_string, "!pb")
                 return
             else:
                 active_cat = response_string
         else:
-            game_cats = game_data[sr_game].keys()
-            for i in game_cats:
-                if msg_split[3].lower() == i.lower():
-                    active_cat = i
-                    break
-            try:
-                active_cat
-            except NameError:
-                self.twitch_send_message("Please specify a category that is available on speedrun.com", "!pb")
-                return
+            success, response_string = self.find_category_string(game_cats, msg_split[3])
+            if success == False:
+                self.twitch_send_message(response_string, "!pb")
+            else:
+                active_cat = response_string
 
         cat_record = game_data[sr_game][active_cat]
         pb_time = self.format_sr_time(cat_record["time"])
@@ -502,17 +540,18 @@ class SaltyBot(object):
     def wr_retrieve(self, c_msg):
         #Find the categories that are on file in the title, and then if more than one exist pick the one located earliest in the title
         msg_split = c_msg["message"].split(' ', 2)
-
-        if msg_split[0] != "wr":
-            return
+        infer_category = False
 
         try:
             url = "http://www.speedrun.com/api_records.php?game=" + msg_split[1]
             try:
                 msg_split[2]
             except IndexError:
-                self.twitch_send_message("Please provide a category to search for.")
-                return
+                if self.title != "":
+                    infer_category = True
+                else:
+                    self.twitch_send_message("Please provide a category to search for.")
+                    return
         except IndexError:
             if self.game != '':
                 url = "http://www.speedrun.com/api_records.php?game=" + self.game
@@ -529,26 +568,22 @@ class SaltyBot(object):
         except (TypeError, IndexError):
             self.twitch_send_message("This game/user does not seem to exist on speedrun.com", '!wr')
             return
+        game_cats = game_records[sr_game].keys()
 
-        if len(msg_split) == 1:
-            success, response_string = self.find_active_cat(sr_game, game_records)
+        if infer_category:
+            success, response_string = self.find_active_cat(game_cats, self.title)
             if success == False:
                 self.twitch_send_message(response_string, "!wr")
                 return
             else:
                 active_cat = response_string
-
-        elif len(msg_split) == 3:
-            game_cats = game_records[sr_game].keys()
-            for i in game_cats:
-                if msg_split[2].lower() == i.lower():
-                    active_cat = i
-                    break
-            try:
-                active_cat
-            except NameError:
-                self.twitch_send_message("Please specify a category that is available on speedrun.com", '!wr')
+        else:
+            success, response_string = self.find_category_string(game_cats, msg_split[2])
+            if success == False:
+                self.twitch_send_message(response_string, "!wr")
                 return
+            else:
+                active_cat = response_string
 
         cat_record = game_records[sr_game][active_cat]
         try:
@@ -621,61 +656,27 @@ class SaltyBot(object):
         if splits_response == False:
             self.twitch_send_message("Failed to retrieve data from splits.io, please try again.")
             return
+        game_pbs = [x for x in splits_response["pbs"] if x["game"][game_type] == input_game]
+        game_categories = [x["category"]["name"] for x in game_pbs if x["category"]]
+        print game_categories
 
         if infer_category:
-            games_with_category = []
-        for i in splits_response["pbs"]:
-            try:
-                if i["game"][game_type].lower() == input_game:
-                    output_game = i["game"]["name"]
-                    if infer_category:
-                        if i["category"]["name"].lower() in self.title:
-                            games_with_category.append(i["category"]["name"])
-                    else:
-                        if category == i["category"]["name"].lower():
-                            pb_splits = i
-                            active_cat = i["category"]["name"]
-                            break
-            except AttributeError:
-                continue
-
-        if infer_category:
-            while True:
-                games_with_category = list(set(games_with_category))
-                if len(games_with_category) == 0:
-                    self.twitch_send_message("I could not find splits based on any categories in the title.", "!splits")
-                    return
-                elif len(games_with_category) == 1:
-                    active_cat = games_with_category[0]
-                    for i in splits_response["pbs"]:
-                        try:
-                            if input_game == i["game"][game_type].lower():
-                                if active_cat == i["category"]["name"]:
-                                    pb_splits = i
-                        except AttributeError:
-                            continue
-                    break
-                else:
-                    category_position = {}
-                    for j in games_with_category:
-                        category_position[j["category"]["name"]] = self.title.find(j["category"]["name"].lower())
-                    min_value = min(category_position.itervalues())
-                    min_keys = [k for k in category_position if category_position[k] == min_value]
-                    active_cat = sorted(min_keys, key = len)[-1]
-                    for i in splits_response["pbs"]:
-                        if active_cat == i["category"]["name"]:
-                            pb_splits = i
-                    break
-
-        try:
-            pb_splits
-        except NameError:
-            if infer_category:
-                self.twitch_send_message("I could not find splits based on any categories in the title.", "!splits")
+            success, response_string = self.find_category_title(game_categories, self.title)
+            if success == False:
+                self.twitch_send_message(response_string, "!splits")
                 return
             else:
-                self.twitch_send_message("I could not find splits based on the category provided.", "!splits")
+                active_cat = response_string
+        else:
+            success, response_string = self.find_category_string(game_categories, category)
+            if success == False:
+                self.twitch_send_message(response_string, "!splits")
                 return
+            else:
+                active_cat = response_string
+
+        pb_splits = [x for x in game_pbs if x["category"]["name"].lower() == active_cat.lower()][0]
+        output_game = pb_splits["game"]["name"]
 
         time = self.format_sr_time(pb_splits['time'])
         link_to_splits = 'https://splits.io{}'.format(pb_splits['path'])
