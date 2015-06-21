@@ -435,7 +435,7 @@ class SaltyBot(object):
         try:
             return True, max(best_ratio, key=best_ratio.get)
         except ValueError:
-            response = "I'm sorry, but I could not find a category {additional_info}"
+            response = "I'm sorry, but I could not find the category supplied {additional_info}"
             return False, response
 
     def pb_retrieve(self, c_msg):
@@ -486,14 +486,14 @@ class SaltyBot(object):
         if infer_category:
             success, response_string = self.find_category_title(game_cats, self.title)
             if success == False:
-                self.twitch_send_message(response_string.format(additional_info="on the users speedrun.com profile."), "!pb")
+                self.twitch_send_message(response_string.format(additional_info="on the user's speedrun.com profile."), "!pb")
                 return
             else:
                 active_cat = response_string
         else:
             success, response_string = self.find_category_string(game_cats, msg_split[3])
             if success == False:
-                self.twitch_send_message(response_string.format(additional_info="on speedrun.com that matches the supplied category."), "!pb")
+                self.twitch_send_message(response_string.format(additional_info="on the user's speedrun.com profile."), "!pb")
             else:
                 active_cat = response_string
 
@@ -539,14 +539,14 @@ class SaltyBot(object):
         if infer_category:
             success, response_string = self.find_category_title(game_cats, self.title)
             if success == False:
-                self.twitch_send_message(response_string.format(additional_info="on the users speedrun.com profile."), "!wr")
+                self.twitch_send_message(response_string.format(additional_info="on the user's speedrun.com profile."), "!wr")
                 return
             else:
                 active_cat = response_string
         else:
             success, response_string = self.find_category_string(game_cats, msg_split[2])
             if success == False:
-                self.twitch_send_message(response_string.format(additional_info="on speedrun.com that matches the supplied category."), "!wr")
+                self.twitch_send_message(response_string.format(additional_info="on the user's speedrun.com profile."), "!wr")
                 return
             else:
                 active_cat = response_string
@@ -629,14 +629,14 @@ class SaltyBot(object):
         if infer_category:
             success, response_string = self.find_category_title(game_categories, self.title)
             if success == False:
-                self.twitch_send_message(response_string.format(additional_info="on the users splits.io profile."), "!splits")
+                self.twitch_send_message(response_string.format(additional_info="on the user's splits.io profile."), "!splits")
                 return
             else:
                 active_cat = response_string
         else:
             success, response_string = self.find_category_string(game_categories, category)
             if success == False:
-                self.twitch_send_message(response_string.format(additional_info="on the users splits.io profile."), "!splits")
+                self.twitch_send_message(response_string.format(additional_info="on the user's splits.io profile."), "!splits")
                 return
             else:
                 active_cat = response_string
