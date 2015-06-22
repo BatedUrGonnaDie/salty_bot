@@ -94,8 +94,8 @@ class SaltyBot(object):
             self.speedruncom_nick = config_data["speedruncom_nick"].lower()
         else:
             self.speedruncom_nick = self.channel
-        self.game = ''
-        self.title = ''
+        self.game = ""
+        self.title = ""
         self.time_start = None
         self.stream_online = False
         self.commands = []
@@ -411,7 +411,7 @@ class SaltyBot(object):
                 categories_in_title.append(i)
         categories_in_title = list(set(categories_in_title))
         if len(categories_in_title) == 0:
-            response = "It appears that no categories exist in the title on {additional_info}"
+            response = "It appears that no categories exist in the title {additional_info}"
             return False, response
         elif len(categories_in_title) == 1:
             return True, categories_in_title[0]
@@ -458,6 +458,7 @@ class SaltyBot(object):
             except IndexError:
                 if self.game != '':
                     url += "&game=" + self.game
+                    infer_category = True
                 else:
                     self.twitch_send_message("Please specify a game shortcode to look up on speedrun.com")
                     return
@@ -519,8 +520,9 @@ class SaltyBot(object):
                     self.twitch_send_message("Please provide a category to search for.")
                     return
         except IndexError:
-            if self.game != '':
-                url = "http://www.speedrun.com/api_records.php?game=" + self.game
+            if self.game != "" and self.title != "":
+                url = "http://ww.speedrun.com/api_records.php?game=" + self.game
+                infer_category = True
             else:
                 self.twitch_send_message("Please either provide a game and category or wait for the streamer to go live.")
                 return
@@ -539,14 +541,14 @@ class SaltyBot(object):
         if infer_category:
             success, response_string = self.find_category_title(game_cats, self.title)
             if success == False:
-                self.twitch_send_message(response_string.format(additional_info="on the user's speedrun.com profile."), "!wr")
+                self.twitch_send_message(response_string.format(additional_info="on the game's speedrun.com page."), "!wr")
                 return
             else:
                 active_cat = response_string
         else:
             success, response_string = self.find_category_string(game_cats, msg_split[2])
             if success == False:
-                self.twitch_send_message(response_string.format(additional_info="on the user's speedrun.com profile."), "!wr")
+                self.twitch_send_message(response_string.format(additional_info="on the games's speedrun.com page."), "!wr")
                 return
             else:
                 active_cat = response_string
@@ -622,7 +624,7 @@ class SaltyBot(object):
         if splits_response == False:
             self.twitch_send_message("Failed to retrieve data from splits.io, please try again.")
             return
-        game_pbs = [x for x in splits_response["pbs"] if x["game"][game_type] == input_game]
+        game_pbs = [x for x in splits_response["pbs"] if x["game"][game_type].lower() == input_game.lower()]
         game_categories = [x["category"]["name"] for x in game_pbs if x["category"]]
         print game_categories
 
