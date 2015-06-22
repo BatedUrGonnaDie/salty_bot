@@ -712,7 +712,7 @@ class SaltyBot(object):
             if self.channel in [x["twitch"].lower() for x in i["entrants"].values()] or srl_nick in [x.lower() for x in i["entrants"]]:
                 race_channel = i
                 for k, v in race_channel["entrants"].iteritems():
-                    if srl_nick == k or self.channel == v["twitch"]:
+                    if srl_nick == k.lower() or self.channel == v["twitch"].lower():
                         user_nick = k
                 for values in race_channel['entrants'].values():
                     if values['statetext'] == 'Ready' or values['statetext'] == 'Entered':
