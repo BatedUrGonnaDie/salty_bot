@@ -701,7 +701,7 @@ class SaltyBot(object):
     def srl_race_retrieve(self):
         #Goes through all races, finds the race the user is in, gathers all other users in the race, prints the game, the
         #category people are racing, the time racebot has, and either a multitwitch link or a SRL race room link
-        srl_nick = self.config_data["srl_nick"].lower()
+        srl_nick = self.config_data["srl_nick"]
         url = 'http://api.speedrunslive.com/races'
         data_decode = self.api_caller(url)
         if data_decode == False:
