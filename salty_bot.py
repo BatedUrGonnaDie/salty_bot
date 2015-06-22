@@ -1344,7 +1344,10 @@ class SaltyBot(object):
                     continue
 
                 if self.__DB:
-                    print u"[{}] #{} {}: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.channel, c_msg["sender"], c_msg["message"]).encode("utf-8")
+                    try:
+                        print u"[{}] #{} {}: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.channel, c_msg["sender"], c_msg["message"]).encode("utf-8")
+                    except UnicodeDecodeError:
+                        print "Unicode decode error"
 
                 # if self.__DB:
                 #     print datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S] #{} {}: {}".decode("utf-8").format(self.channel, c_msg["sender"], c_msg["message"]))
