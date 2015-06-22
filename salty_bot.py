@@ -711,12 +711,15 @@ class SaltyBot(object):
         for i in data_races:
             if self.channel in [x["twitch"].lower() for x in i["entrants"].values()] or srl_nick in [x.lower() for x in i["entrants"]]:
                 race_channel = i
+                for k, v in race_channel["entrants"].iteritems():
+                    if srl_nick == k or self.channel == v["twitch"]:
+                        user_nick = k
                 for values in race_channel['entrants'].values():
                     if values['statetext'] == 'Ready' or values['statetext'] == 'Entered':
                         if values['twitch'] != '':
                             srl_race_entrants.append(values['twitch'].lower())
-                user_place = race_channel['entrants'][srl_nick]['place']
-                user_time = race_channel['entrants'][srl_nick]['time']
+                user_place = race_channel['entrants'][user_nick]['place']
+                user_time = race_channel['entrants'][user_nick]['time']
                 srl_race_status = race_channel['statetext']
                 srl_race_time = race_channel['time']
                 srl_race_link = 'http://www.speedrunslive.com/race/?id={}'.format(race_channel['id'])
