@@ -48,6 +48,9 @@ class IRC(object):
     def privmsg(self, channel, msg):
         self.raw("PRIVMSG #{} :{}".format(channel, msg))
 
+    def pm(self, user, msg):
+        self.raw("PRIVMSG {} : {}".format(user, msg))
+
     def recv(self, amount):
         inc_msg = self.irc.recv(amount)
         try:

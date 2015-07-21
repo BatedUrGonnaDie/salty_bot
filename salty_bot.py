@@ -362,7 +362,7 @@ class SaltyBot(object):
         elif c_msg["message"].find('osu.ppy.sh/b/') != -1:
             osu_number = 'b=' + c_msg["message"].split('osu.ppy.sh/b/')[-1].split(' ')[0]
 
-        osu_send_message(osu_irc_pass, osu_nick, c_msg["message"], c_msg["sender"])
+        osu_send_message(osu_nick, c_msg["message"], c_msg["sender"])
 
         url = 'https://osu.ppy.sh/api/get_beatmaps?k={}&{}'.format(osu_api_key, osu_number)
         data_decode = self.api_caller(url)
@@ -1560,13 +1560,13 @@ class SaltyBot(object):
 
 #@@BOT END@@#
 
-def osu_send_message(osu_irc_pass, osu_nick, msg, sender):
+def osu_send_message(osu_send_nick, msg, sender):
     #Send the message through IRC to the person playing osu
     full_msg = "{}: {}".format(sender, msg)
     osu_irc = irc.IRC("irc.ppy.sh", 6667, osu_irc_nick, osu_irc_pass)
     osu_irc.create()
     osu_irc.connect()
-    osu_irc.privmsg(osu_nick, full_msg)
+    osu_irc.pm(osu_send_nick, full_msg)
     osu_irc.disconnect()
 
 def twitch_info_grab(bots):
