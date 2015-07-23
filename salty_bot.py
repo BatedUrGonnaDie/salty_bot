@@ -1040,6 +1040,10 @@ class SaltyBot(object):
 
         msg_split = c_msg["message"].split(" ")
         command = msg_split[1]
+        if command == "":
+            self.twitch_send_message("Please specify a custom command to delete: {}".format(", ".join(self.custom_commands)))
+            return
+
         url = "https://leagueofnewbs.com/api/users/{}/custom_commands/{}".format(user, command)
         cookies = {"session": self.session}
         try:
