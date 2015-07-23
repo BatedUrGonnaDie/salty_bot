@@ -1,6 +1,8 @@
 {
     "general_info": {
         "db_url": "postgres://something here", 
+        "debugging": true,
+        "development": true,
         "default_nick": "default bot nick", 
         "default_oauth": "oauth for the default nick", 
         "lol_api_key": "api key for league of legends", 

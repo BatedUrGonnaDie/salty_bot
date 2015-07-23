@@ -46,10 +46,8 @@ db_url = general_config['general_info']['db_url']
 default_nick = general_config['general_info']['default_nick']
 default_oauth = general_config['general_info']['default_oauth']
 
-if development:
-    web_listen_ip = "localhost"
-else:
-    web_listen_ip = general_config['general_info']["web_listen_ip"]
+debuging = general_config["debugging"]
+development = general_config["development"]
 
 web_listen_port = general_config['general_info']["web_listen_port"]
 web_secret = general_config["general_info"]["web_secret"]
