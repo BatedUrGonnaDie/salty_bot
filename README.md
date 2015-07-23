@@ -60,6 +60,8 @@ Channel Owner Commands
 
 `!addcom <trigger> <limit> <admin> <output>` will add the given custom command to the bot.
 
+`!delcom <trigger>` will delete the command from the bot.  Please do not include the '!' when specifying a trigger.
+
 `!review <quote/pun> <start>` to start reviewing your puns or quotes that have been added.  Bot will spit out the first
 quote/pun in the file.
 `!review <quote/pun> <approve/reject>` to confirm or deny the quote.  Note that currently there is no way to change the
