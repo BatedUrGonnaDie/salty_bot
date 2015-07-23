@@ -316,7 +316,7 @@ class SaltyBot(object):
         if self.__DB: print url
 
         try:
-            data = requests.get(url, headers = headers)
+            data = requests.get(url, headers=headers)
             if data.status_code == 200:
                 data_decode = data.json()
                 return data_decode
@@ -382,16 +382,16 @@ class SaltyBot(object):
             s = '0' + str(s)
         if m < 10:
             m = '0' + str(m)
-        time = '{}:{}:{}'.format(int(h), m, s)
-        if time.endswith(".0"):
-            time = time[:-2]
-        if time.startswith("0:"):
-            time = time[2:]
-        if time.startswith("0"):
-            time = time[1:]
+        sr_time = '{}:{}:{}'.format(int(h), m, s)
+        if sr_time.endswith(".0"):
+            sr_time = sr_time[:-2]
+        if sr_time.startswith("0:"):
+            sr_time = sr_time[2:]
+        if sr_time.startswith("0"):
+            sr_time = sr_time[1:]
         if self.__DB:
-            print time
-        return time
+            print sr_time
+        return sr_time
 
     def get_number_suffix(self, number):
         return 'th' if 11 <= number <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(number % 10, 'th')
@@ -1035,6 +1035,25 @@ class SaltyBot(object):
 
         self.twitch_send_message(response)
 
+    def del_custom_command(self, c_msg):
+        user = c_msg["sender"]
+
+        msg_split = c_msg["message"].split(" ")
+        command = msg_split[1]
+        url = "https://leagueofnewbs.com/api/users/{}/custom_commands/{}".format(user, command)
+        cookies = {"session": self.session}
+        try:
+            success = requests.delete(url, cookies=cookies)
+            success.raise_for_status()
+            response = "Command successfully deleted."
+            self.custom_commands.remove("!{}".format(command))
+            del self.custom_command_times["!{}".format(command)]
+        except Exception:
+            traceback.print_exc(limit=2)
+            response = "I could not delete the command, please make sure you supply the trigger w/o the prefix (ie: '!') and it is a command currently in the database."
+
+        self.twitch_send_message(response)
+
     def custom_command(self, c_msg):
         #Shitty custom command implementation,
         space_count = c_msg["message"].count(' ')
@@ -1398,6 +1417,9 @@ class SaltyBot(object):
                     elif c_msg["message"].startswith("addcom ") and c_msg["sender"] == self.channel:
                         self.add_custom_command(c_msg)
 
+                    elif c_msg["message"].startswith("delcom ") and c_msg["sender"] == self.channel:
+                        self.del_custom_command(c_msg)
+
                     elif c_msg["message"].startswith("pb"):
                         if self.command_check(c_msg, "!pb"):
                             self.pb_retrieve(c_msg)
@@ -1575,11 +1597,11 @@ def twitch_info_grab(bots):
     channels = bots.keys()
     new_info = {}
     for i in channels:
-        new_info[i] = {"game" : '', "title" : '', "live" : None, "online_status": False}
+        new_info[i] = {"game": '', "title": '', "live": None, "online_status": False}
     url = 'https://api.twitch.tv/kraken/streams?channel=' + ','.join(channels)
-    headers = {'Accept' : 'application/vnd.twitchtv.v3+json'}
+    headers = {'Accept': 'application/vnd.twitchtv.v3+json'}
     try:
-        data = requests.get(url, headers = headers)
+        data = requests.get(url, headers=headers)
         if data.status_code == 200:
             data_decode = data.json()
             if not data_decode['streams']:
@@ -1587,10 +1609,10 @@ def twitch_info_grab(bots):
                     bots[k].twitch_info(**v)
                 return
             for i in data_decode['streams']:
-                new_info[i['channel']['name']] = {"game" : i['channel']['game'],
-                                                "title" : i['channel']['status'],
-                                                "live" : i["created_at"],
-                                                "online_status": True}
+                new_info[i['channel']['name']] = {"game": i['channel']['game'],
+                                                  "title": i['channel']['status'],
+                                                  "live": i["created_at"],
+                                                  "online_status": True}
             for k, v in new_info.iteritems():
                 bots[k].twitch_info(**v)
 
