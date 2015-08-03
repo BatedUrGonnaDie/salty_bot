@@ -37,6 +37,7 @@ interface = Q.Queue()
 with open('general_config.json', 'r') as data_file:
     general_config = json.load(data_file, encoding='utf-8')
 
+# API keys and sensitive info
 lol_api_key = general_config['general_info']['lol_api_key']
 youtube_api_key = general_config['general_info']['youtube_api_key']
 osu_api_key = general_config['general_info']['osu']['osu_api_key']
@@ -46,11 +47,14 @@ db_url = general_config['general_info']['db_url']
 default_nick = general_config['general_info']['default_nick']
 default_oauth = general_config['general_info']['default_oauth']
 
+# Debugging prints more stuff, development may do more in the future
 debuging = general_config["debugging"]
 development = general_config["development"]
 
+# IP and port to listen for the website to talk to it when there is an update to the data
 web_listen_port = general_config['general_info']["web_listen_port"]
 web_secret = general_config["general_info"]["web_secret"]
+
 #super users are used for bot breaking commands and beta commands
 SUPER_USER = general_config['general_info']['super_users']
 
@@ -60,12 +64,16 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 
 class SaltyBot(object):
 
+    # Possible values for "user-type" tag in messages
     elevated_user = ["staff", "admin", "global_mod", "mod"]
 
     def __init__(self, config_data, debug = False, irc_obj = None):
+        # Default rate limits for non-mods is 20 messages per 30 seconds.  Start with this and elevate if find as mod
         self.message_limit = 30
         self.is_mod = False
 
+        # If the bot does not have a nickname set use the nick "TheSaltyBot"
+        # Oauth cannot be set unless it is valid, so only check for that
         if config_data["bot_oauth"] == None:
             config_data["bot_nick"] = default_nick
             config_data["bot_oauth"] = default_oauth
@@ -76,12 +84,19 @@ class SaltyBot(object):
             self.twitch_oauth = "oauth:" + self.twitch_oauth
 
         self.__DB = debug
+        # Used to stop the bot from reviving itself if the user wishes for it to leave
         self.running = True
+        # Used for social message tracking
         self.messages_received = 0
+        # Used to stop us from getting globaled
         self.rate_limit = 0
+        # Session key from the website, used to change settings and add/del stuff
         self.session = config_data["session"]
+        # Associated ID of the user on the website
         self.user_id = config_data["id"]
+        # Keep the rest of the data around just in case
         self.config_data = config_data
+        # Only create a new IRC connection if the old one is toast
         if not irc_obj:
             self.irc = irc.IRC("irc.twitch.tv", 6667, self.twitch_nick, self.twitch_oauth)
         else:
@@ -92,27 +107,35 @@ class SaltyBot(object):
             self.speedruncom_nick = config_data["speedruncom_nick"].lower()
         else:
             self.speedruncom_nick = self.channel
+        # Various channel information from twitch
         self.game = ""
         self.title = ""
         self.time_start = None
         self.stream_online = False
+        # Active commands, custom commands, and commands that are admin only
         self.commands = []
         self.admin_commands = []
         self.custom_commands = []
+        # User blacklist, bot will ignore all users in this list
         self.blacklist = []
+        # Voting system built into the bot
         self.votes = {}
+        # Highlight timestamp system
         self.to_highlight = []
         self.review = {"quote": [], "pun": []}
+        # Make sure quotes/puns aren't used twice in a row
         self.last_text = {"quote": "", "pun": ""}
         self.t_trig = None
         with open('blacklists/{}_blacklist.txt'.format(self.channel), 'a+') as data_file:
             blacklist = data_file.readlines()
         for i in blacklist:
             self.blacklist.append(i.split('\n')[0])
+        # Command rate limiting
         self.command_times = {}
         self.custom_command_times = {}
 
     def start(self):
+        # Bots are started by calling this method after being initializedd
         self.thread = threading.Thread(target=self.twitch_run)
         self.thread.setDaemon(True)
         self.thread.start()
@@ -120,7 +143,7 @@ class SaltyBot(object):
         return self.thread
 
     def twitch_info(self, game, title, live, online_status):
-        #Game and title need to be a string to work
+        # Called by the auto-updater only, sets the game playing, current title, if the stream is live, and when it started
         self.game = game.lower()
         self.game_normal = game
         self.title = title.lower()
@@ -128,7 +151,7 @@ class SaltyBot(object):
         self.stream_online = online_status
 
     def twitch_connect(self):
-        #Connect to Twitch IRC
+        # Connect to Twitch IRC for new IRC instances
         if not self.irc.connected:
             if self.__DB:
                 print "Joining {} as {}.\n".format(self.channel,self.twitch_nick)
@@ -143,6 +166,7 @@ class SaltyBot(object):
                 time.sleep(60)
                 self.twitch_connect()
 
+            # Request the needed capabilites to function correctly
             self.irc.capability("twitch.tv/tags twitch.tv/commands")
             self.irc.recv(1024)
             self.irc.join(self.channel)
@@ -153,7 +177,7 @@ class SaltyBot(object):
                 print "{} already connected.\n".format(self.channel)
 
     def twitch_commands(self):
-        #Set up all the limits, if its admin, if its on, quote and pun stuff, and anything else that needs setting up for a command
+        # Initialize all commands
         self.command_times["!bot_info"] = {"last": 0, "limit": 300}
         self.commands.append("!bot_info")
         self.command_times["!help"] = {"last": 0, "limit": 2}
@@ -168,6 +192,7 @@ class SaltyBot(object):
                     self.commands.append(curr_com)
                 self.command_times[curr_com] = {"last": 0, "limit": i["limit"] or 30}
 
+        # Setup the social feature if active
         if self.config_data["social_active"]:
             self.command_times["social"] = {"time_last": int(time.time()),
                                             "messages": self.config_data["social_messages"] or 0,
@@ -175,12 +200,14 @@ class SaltyBot(object):
                                             "time": self.config_data["social_time"] or 0}
             self.social_text = self.config_data["social_output"]
 
+        # Setup the toobou feature if active
         if self.config_data["toobou_active"]:
             self.t_trig = self.config_data["toobou_trigger"]
             self.command_times["toobou"] = {"trigger": self.t_trig,
                                             "last": 0,
                                             "limit": self.config_data["toobou_limit"] or 1}
 
+        # Initialize all custom commands
         for i in self.config_data["custom_commands"]:
             if i["on"]:
                 self.custom_commands.append("!{}".format(i["trigger"]))
@@ -255,6 +282,8 @@ class SaltyBot(object):
             self.twitch_send_message(command_string, '!commands')
 
     def clear_limiter(self):
+        # Called every 30 seconds by the helper thread
+        # Resets how many messages have been sent
         self.rate_limit = 0
 
     def twitch_send_message(self, response, command = None):
@@ -264,14 +293,15 @@ class SaltyBot(object):
         except Exception:
             pass
         if response.startswith('/me') or response.startswith('.me'):
-            #Grant exception for /me because it can't do any harm
+            # Grant exception for /me because it can't do any harm
             pass
         elif response.startswith('.') or response.startswith('/'):
-            #Prevent people from issuing server commands since bot is usually mod (aka /ban)
+            # Prevent people from issuing server commands since bot is usually mod (aka /ban)
             response = "Please stop trying to abuse me BibleThump (messages cannot start with '/' or '.')"
             command = ''
 
         if self.rate_limit < self.message_limit:
+            # Make sure we don't get globaled (this is a re-occuring theme), send message if under limit
             self.irc.privmsg(self.channel, response)
             self.rate_limit += 1
         else:
@@ -287,12 +317,12 @@ class SaltyBot(object):
                 print("Message contained unicode, could not display in terminal\n\n")
 
         if command:
-            #Update when the command was last used for rate limiting
+            # Update when the command was last used for rate limiting
             self.command_times[command]['last'] = int(time.time())
 
     def command_check(self, c_msg, command):
-        #Finds if the user can use said command, and then if the command is off cooldown
-        #Will only return True if it's off cooldown and the user has the priviledges for the command
+        # Determines if a user can use a given command, and the command is off cooldown
+        # Super users and channel owners do bypass cooldowns and admin
         if command in self.commands or command in self.admin_commands:
             if c_msg["sender"] == self.channel or c_msg["sender"] in SUPER_USER:
                 return True
@@ -306,11 +336,11 @@ class SaltyBot(object):
         return False
 
     def time_check(self, command):
-        #Return the current time minus the time the command was last used (used to make sure its off cooldown)
+        # Determines if the command is off cooldown, True=available False=cooldown
         return int(time.time()) - self.command_times[command]['last'] >= self.command_times[command]['limit']
 
     def api_caller(self, url, headers = None):
-        #Call JSON api's for other functions
+        # Call JSON api's for other functions
         if self.__DB: print url
 
         try:
@@ -327,7 +357,7 @@ class SaltyBot(object):
             return False
 
     def osu_api_user(self):
-        #Perform a simple check of basic user stats on osu
+        # Retrieve basic information about the osu player (!rank)
         osu_nick = self.config_data["osu_nick"]
         url = 'https://osu.ppy.sh/api/get_user?k={}&u={}'.format(osu_api_key, osu_nick)
         data_decode = self.api_caller(url)
@@ -352,7 +382,7 @@ class SaltyBot(object):
             print data_decode
 
     def osu_link(self, c_msg):
-        #Sends beatmaps linked in chat to you on osu, and then displays the map title and author in chat
+        # Sends beatmaps linked in chat to you on osu, and then displays the map title and author in chat
         osu_nick = self.config_data["osu_nick"]
 
         if c_msg["message"].find('osu.ppy.sh/s/') != -1:
@@ -373,6 +403,7 @@ class SaltyBot(object):
         self.twitch_send_message(response)
 
     def format_sr_time(self, f_time):
+        # Format time in a pretty H:M:S, but removing hours if 0 and leading 0 in minutes
         m, s = divmod(float(f_time), 60)
         h, m = divmod(int(m), 60)
         s = round(s, 2)
@@ -392,14 +423,16 @@ class SaltyBot(object):
         return sr_time
 
     def get_number_suffix(self, number):
-        return 'th' if 11 <= number <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(number % 10, 'th')
+        # Find the proper suffix for #'s'
+        return "th" if number in [11, 12, 13] else {1: "st", 2: "nd", 3: "rd"}.get(number % 10, "th")
 
     def get_diff_ratio(self, user_supplied, checking_against):
+        # Retrieve the ratio of how close 2 strings match (fuzzy matching of category names since they have dumb names)
         diff = difflib.SequenceMatcher(lambda x: x == " " or x == "_", user_supplied, checking_against)
         return diff.ratio()
 
     def find_category_title(self, game_categories, stream_title):
-        # Takes list of possible categories, and the category you are searching for
+        # Takes list of possible categories, and the stream title
         # Returns True/False if successful, and the string with either the category or the error response
         categories_in_title = []
         category_position = {}
@@ -421,6 +454,7 @@ class SaltyBot(object):
             return True, sorted(min_keys, key=len)[-1]
 
     def find_category_string(self, game_categories, string_search):
+        # Find the category given by a user
         for i in game_categories:
             if i.lower() == string_search.lower():
                 return True, i
@@ -437,6 +471,7 @@ class SaltyBot(object):
             return False, response
 
     def pb_retrieve(self, c_msg):
+        # Retrieves the users best time from speedrun.com (!pb)
         msg_split = c_msg["message"].split(' ', 3)
         infer_category = False
 
@@ -493,6 +528,7 @@ class SaltyBot(object):
             success, response_string = self.find_category_string(game_cats, msg_split[3])
             if success == False:
                 self.twitch_send_message(response_string.format(additional_info="on the user's speedrun.com profile."), "!pb")
+                return
             else:
                 active_cat = response_string
 
