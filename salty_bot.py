@@ -52,6 +52,7 @@ debuging = general_config["general_info"]["debugging"]
 development = general_config["general_info"]["development"]
 
 # IP and port to listen for the website to talk to it when there is an update to the data
+web_listen_ip = general_config["general_info"]["web_listen_ip"]
 web_listen_port = general_config['general_info']["web_listen_port"]
 web_secret = general_config["general_info"]["web_secret"]
 
