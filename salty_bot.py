@@ -48,8 +48,8 @@ default_nick = general_config['general_info']['default_nick']
 default_oauth = general_config['general_info']['default_oauth']
 
 # Debugging prints more stuff, development may do more in the future
-debuging = general_config["debugging"]
-development = general_config["development"]
+debuging = general_config["general_info"]["debugging"]
+development = general_config["general_info"]["development"]
 
 # IP and port to listen for the website to talk to it when there is an update to the data
 web_listen_port = general_config['general_info']["web_listen_port"]
