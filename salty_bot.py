@@ -535,8 +535,23 @@ class SaltyBot(object):
 
         cat_record = game_data[sr_game][active_cat]
         pb_time = self.format_sr_time(cat_record["time"])
+        try:
+            pb_time = self.format_sr_time(cat_record['time'])
+        except (TypeError, KeyError):
+            try:
+                pb_time = self.format_sr_time(cat_record["timewithloads"])
+            except (TypeError, KeyError):
+                pb_time = ""
+        try:
+            pb_ingame = self.format_sr_time(cat_record["timeigt"])
+            if pb_time:
+                pb_time = "{0} real time and {1} ingame time ".format(pb_time, pb_ingame)
+            else:
+                pb_time = pb_ingame
+        except KeyError:
+            pb_ingame = ""
         place = str(cat_record["place"]) + self.get_number_suffix(int(cat_record["place"]))
-        msg = "{}'s pb for {} {} is {}.  They are ranked {} on speedrun.com".format(user_name.capitalize(), sr_game, active_cat, pb_time, place)
+        msg = "{0}'s pb for {1} {2} is {3}.  They are ranked {4} on speedrun.com".format(user_name.capitalize(), sr_game, active_cat, pb_time, place)
         self.twitch_send_message(msg, "!pb")
 
     def wr_retrieve(self, c_msg):
@@ -591,8 +606,11 @@ class SaltyBot(object):
         cat_record = game_records[sr_game][active_cat]
         try:
             wr_time = self.format_sr_time(cat_record['time'])
-        except TypeError:
-            wr_time = ""
+        except (TypeError, KeyError):
+            try:
+                wr_time = self.format_sr_time(cat_record["timewithloads"])
+            except (TypeError, KeyError):
+                wr_time = ""
         try:
             wr_ingame = self.format_sr_time(cat_record["timeigt"])
             if wr_time:
@@ -659,7 +677,7 @@ class SaltyBot(object):
         if splits_response == False:
             self.twitch_send_message("Failed to retrieve data from splits.io, please try again.")
             return
-        game_pbs = [x for x in splits_response["pbs"] if x["game"][game_type].lower() == input_game.lower()]
+        game_pbs = [x for x in splits_response["pbs"] if x["game"] and x["game"][game_type].lower() == input_game.lower()]
         game_categories = [x["category"]["name"] for x in game_pbs if x["category"]]
         print game_categories
 
