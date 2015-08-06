@@ -34,22 +34,22 @@ class IRC(object):
             self.connected = False
 
     def raw(self, msg):
-        self.irc.sendall("{}\r\n".format(msg))
+        self.irc.sendall("{0}\r\n".format(msg))
 
     def join(self, channel):
-        self.raw("JOIN #{}".format(channel))
+        self.raw("JOIN #{0}".format(channel))
 
     def part(self, channel):
-        self.raw("PART #{}".format(channel))
+        self.raw("PART #{0}".format(channel))
 
     def capability(self, cap):
-        self.raw("CAP REQ :{}".format(cap))
+        self.raw("CAP REQ :{0}".format(cap))
 
     def privmsg(self, channel, msg):
-        self.raw("PRIVMSG #{} :{}".format(channel, msg))
+        self.raw("PRIVMSG #{0} :{1}".format(channel, msg))
 
     def pm(self, user, msg):
-        self.raw("PRIVMSG {} : {}".format(user, msg))
+        self.raw("PRIVMSG {0} :{1}".format(user, msg))
 
     def recv(self, amount):
         inc_msg = self.irc.recv(amount)
@@ -58,3 +58,6 @@ class IRC(object):
         except Exception, e:
             logging.exception(e)
             return inc_msg
+
+    def tokenize(self, raw_msg):
+        raise NotImplementedError

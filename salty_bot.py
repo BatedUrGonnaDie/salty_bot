@@ -21,9 +21,6 @@ import requests
 import modules.irc as irc
 import salty_listener as SaltyListener
 
-debuging = True
-development = False
-
 RESTART = "<restart>"
 CHECK = "<check threads>"
 UPDATE = "<update>"
@@ -56,11 +53,17 @@ web_listen_ip = general_config["general_info"]["web_listen_ip"]
 web_listen_port = general_config['general_info']["web_listen_port"]
 web_secret = general_config["general_info"]["web_secret"]
 
-#super users are used for bot breaking commands and beta commands
+# super users are used for bot breaking commands and beta commands
 SUPER_USER = general_config['general_info']['super_users']
 
 
-logging.basicConfig(filename='debug.log', filemode='w', level=logging.DEBUG, format="[%(levelname)s %(asctime)s] %(message)s", datefmt="%m-%d %H:%M:%S")
+logging.basicConfig(
+    filename='debug.log',
+    filemode='w',
+    level=logging.DEBUG,
+    format="[%(levelname)s %(asctime)s] %(message)s",
+    datefmt="%m-%d %H:%M:%S"
+)
 logging.getLogger("requests").setLevel(logging.WARNING)
 
 class SaltyBot(object):
@@ -69,7 +72,8 @@ class SaltyBot(object):
     elevated_user = ["staff", "admin", "global_mod", "mod"]
 
     def __init__(self, config_data, debug = False, irc_obj = None):
-        # Default rate limits for non-mods is 20 messages per 30 seconds.  Start with this and elevate if find as mod
+        # Default rate limits for non-mods is 20 messages per 30 seconds.
+        # Start with this and elevate if find as mod
         self.message_limit = 30
         self.is_mod = False
 
@@ -144,7 +148,8 @@ class SaltyBot(object):
         return self.thread
 
     def twitch_info(self, game, title, live, online_status):
-        # Called by the auto-updater only, sets the game playing, current title, if the stream is live, and when it started
+        # Called by the auto-updater only, sets the game playing, current title,
+        # if the stream is live, and when it started
         self.game = game.lower()
         self.game_normal = game
         self.title = title.lower()
@@ -155,7 +160,7 @@ class SaltyBot(object):
         # Connect to Twitch IRC for new IRC instances
         if not self.irc.connected:
             if self.__DB:
-                print "Joining {} as {}.\n".format(self.channel,self.twitch_nick)
+                print "Joining {} as {}.\n".format(self.channel, self.twitch_nick)
             try:
                 #If it fails to conenct try again in 60 seconds
                 self.irc.create()
@@ -163,7 +168,7 @@ class SaltyBot(object):
                 self.irc.recv(4096)
             except Exception:
                 print '{} failed to connect.'.format(self.channel)
-                traceback.print_exc(limit=2)
+                traceback.print_exc(limit=4)
                 time.sleep(60)
                 self.twitch_connect()
 
@@ -288,7 +293,7 @@ class SaltyBot(object):
         self.rate_limit = 0
 
     def twitch_send_message(self, response, command = None):
-        #Sending any message to chat goes through this function
+        # Sending any message to chat goes through this function
         try:
             response = response.encode('utf-8')
         except Exception:
@@ -380,7 +385,7 @@ class SaltyBot(object):
         url = 'https://leagueofnewbs.com/api/users/{}/songs'.format(self.channel)
         data_decode = self.api_caller(url)
         if data_decode:
-            print data_decode
+            self.twitch_send_message(data_decode["song"], "!song")
 
     def osu_link(self, c_msg):
         # Sends beatmaps linked in chat to you on osu, and then displays the map title and author in chat
@@ -1427,9 +1432,6 @@ class SaltyBot(object):
                         print u"[{}] #{} {}: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.channel, c_msg["sender"], c_msg["message"]).encode("utf-8")
                     except UnicodeDecodeError:
                         print "Unicode decode error"
-
-                # if self.__DB:
-                #     print datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S] #{} {}: {}".decode("utf-8").format(self.channel, c_msg["sender"], c_msg["message"]))
 
                 #Sub Message
                 if c_msg["sender"] == 'twitchnotify':
