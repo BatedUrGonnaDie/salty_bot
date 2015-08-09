@@ -519,7 +519,7 @@ class SaltyBot(object):
         try:
             sr_game = dict(game_data).keys()[0]
         except (TypeError, IndexError):
-            self.twitch_send_message("This game/user does not seem to exist on speedrun.com", "!pb")
+            self.twitch_send_message("This game/user does not seem to exist on speedrun.com")
             return
         game_cats = game_data[sr_game].keys()
 
@@ -584,7 +584,7 @@ class SaltyBot(object):
 
         game_records = self.api_caller(url)
         if game_records == False:
-            self.twitch_send_message("There was an error fetching info from speedrun.com", '!wr')
+            self.twitch_send_message("There was an error fetching info from speedrun.com")
             return
         try:
             sr_game = dict(game_records).keys()[0]
