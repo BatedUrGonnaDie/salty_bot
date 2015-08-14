@@ -362,9 +362,13 @@ class SaltyBot(object):
             traceback.print_exc(limit=2)
             return False
 
-    def osu_api_user(self):
+    def osu_api_user(self, c_msg):
         # Retrieve basic information about the osu player (!rank)
-        osu_nick = self.config_data["osu_nick"]
+        try:
+            user = c_msg["message"].split("rank ")[1]
+        except IndexError:
+            user = ""
+        osu_nick = user or self.config_data["osu_nick"]
         url = 'https://osu.ppy.sh/api/get_user?k={}&u={}'.format(osu_api_key, osu_nick)
         data_decode = self.api_caller(url)
         if data_decode == False:
@@ -376,7 +380,7 @@ class SaltyBot(object):
         level = int(level)
         accuracy = data_decode['accuracy']
         accuracy = round(float(accuracy), 2)
-        pp_rank = data_decode['pp_rank']
+        pp_rank = "{:,}".format(int(data_decode['pp_rank']))
 
         response = '{} is level {} with {}% accuracy and ranked {}.'.format(username, level, accuracy, pp_rank)
         self.twitch_send_message(response)
@@ -1512,10 +1516,9 @@ class SaltyBot(object):
                         if self.command_check(c_msg, '!pun'):
                             self.text_retrieve('pun')
 
-                    elif c_msg["message"] == 'rank':
-                        if self.game == 'osu!':
-                            if self.command_check(c_msg, '!rank'):
-                                self.osu_api_user()
+                    elif c_msg["message"].startswith("rank"):
+                        if self.command_check(c_msg, '!rank'):
+                            self.osu_api_user(c_msg)
 
                     elif c_msg["message"] == 'song':
                         if self.game == 'osu!':
@@ -1611,7 +1614,8 @@ class SaltyBot(object):
             elif action == "RECONNECT":
                 # Twitch has told us that the connection will be terminated and we should connect to a different server
                 print "Received reconnect command"
-                self.socket_error_restart()
+                ip = self.irc.get_peer_ip()
+                self.socket_error_restart(ip)
             elif action == "JOIN" or action == "MODE" or message.startswith("PING"):
                 pass
             else:
@@ -1621,9 +1625,9 @@ class SaltyBot(object):
         print "thread stoped"
     #@@ ADMIN FUNCTIONS @@#
 
-    def socket_error_restart(self):
+    def socket_error_restart(self, host = "irc.twitch.tv"):
         self.irc.disconnect()
-        self.irc = irc.IRC("irc.twitch.tv", 6667, self.twitch_nick, self.twitch_oauth)
+        self.irc = irc.IRC(host, 6667, self.twitch_nick, self.twitch_oauth)
         self.twitch_connect()
         return
 
