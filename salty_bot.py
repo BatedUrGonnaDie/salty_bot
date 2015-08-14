@@ -1668,7 +1668,7 @@ def twitch_info_grab(bots):
                     bots[k].twitch_info(**v)
                 return
             for i in data_decode['streams']:
-                new_info[i['channel']['name']] = {"game": i['channel']['game'],
+                new_info[i['channel']['name'].lower()] = {"game": i['channel']['game'],
                                                   "title": i['channel']['status'],
                                                   "live": i["created_at"],
                                                   "online_status": True}
@@ -1683,12 +1683,14 @@ def twitch_info_grab(bots):
         print data.text
 
 def restart_bot(bot_name, bot_config, bot_dict):
+    bot_name = bot_name.lower()
     current_irc = bot_dict[bot_name].irc
     del bot_dict[bot_name]
     bot_dict[bot_name] = SaltyBot(bot_config[bot_name], debuging, irc_obj=current_irc)
     bot_dict[bot_name].start()
 
 def update_bot(bot_name, bot_config, bot_dict):
+    bot_name = bot_name.lower()
     try:
         if bot_config["active"]:
             if bot_config["bot_nick"] == bot_dict[bot_name].twitch_nick or bot_config["bot_nick"] == "":
@@ -1797,10 +1799,10 @@ def main():
     for channel_name, channel_data in channels_dict.items(): #Start bots
         # Create bot and put it by name into a dictionary
 
-        bot_dict[channel_name] = SaltyBot(channel_data, debuging)
+        bot_dict[channel_name.lower()] = SaltyBot(channel_data, debuging)
 
         # Look up bot and start the thread
-        bot_dict[channel_name].start()
+        bot_dict[channel_name.lower()].start()
 
         # Wait for twitch limit
         time.sleep(1)
