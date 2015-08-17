@@ -373,7 +373,11 @@ class SaltyBot(object):
         data_decode = self.api_caller(url)
         if data_decode == False:
             return
-        data_decode = data_decode[0]
+        try:
+            data_decode = data_decode[0]
+        except IndexError:
+            self.twitch_send_message('User with name "{}" not found.'.format(user))
+            return
         username = data_decode['username']
         level = data_decode['level']
         level = round(float(level))
