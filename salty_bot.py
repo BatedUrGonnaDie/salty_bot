@@ -1626,7 +1626,6 @@ class SaltyBot(object):
                 print action
                 print message
 
-        print "thread stoped"
     #@@ ADMIN FUNCTIONS @@#
 
     def socket_error_restart(self, host = "irc.twitch.tv"):
@@ -1754,7 +1753,7 @@ def automated_main_loop(bot_dict, config_dict):
 
         for bot_name, bot_inst in bot_dict.items():
             try:
-                if not bot_inst.thread.isAlive():
+                if not bot_inst.thread.isAlive() and bot_inst.running:
                     if debuging == True:
                         print '#' + bot_name + ' Had to restart'
                     restart_bot(bot_inst.channel, config_dict, bot_dict)
@@ -1833,6 +1832,7 @@ def main():
             for inst in bot_dict.values():
                 inst.running = False
                 inst.stop()
+                inst.thread.join()
             sys.exit(0)
 
 
