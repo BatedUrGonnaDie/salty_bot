@@ -1831,6 +1831,7 @@ def main():
 
         if command.startswith("/stop"):
             for inst in bot_dict.values():
+                inst.running = False
                 inst.stop()
             sys.exit(0)
 
