@@ -897,10 +897,10 @@ class SaltyBot(object):
                 if len(winning_keys) == 0:
                     response = ""
                 elif len(winning_keys) == 1:
-                    response = response = "{} has won with {} votes.".format(winning_keys[0], winning_amount)
+                    response = "{0} has won with {1} votes.".format(winning_keys[0], winning_amount)
                 else:
                     combined_keys = ", ".join(winning_keys)
-                    "{} have all tied with {} votes!".format(combined_keys, winning_amount)
+                    response = "{0} have all tied with {1} votes!".format(combined_keys, winning_amount)
             finally:
                 self.votes.clear()
 
