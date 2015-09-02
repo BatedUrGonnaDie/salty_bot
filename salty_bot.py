@@ -964,92 +964,6 @@ class SaltyBot(object):
 
         self.twitch_send_message(response[:-2], '!vote')
 
-    def text_review(self, c_msg, last_r = 'none'):
-        #Review puns/quotes through chat (spammy as shit)
-        try:
-            text_type = c_msg["message"].split(' ')[1]
-            if text_type != 'quote' and text_type != 'pun':
-                return
-        except Exception:
-            self.twitch_send_message('Please specify a type to review.')
-            return
-        try:
-            decision = c_msg["message"].split(' ')[2]
-        except Exception:
-            decision = ''
-        if decision == 'start':
-            if not self.review[text_type]:
-                file_name = '{}_{}_review.txt'.format(self.channel, text_type)
-                with open(file_name, 'a+') as data_file:
-                    lines_read = data_file.readlines()
-                lines = sum(1 for line in lines_read)
-                if lines > 0:
-                    for line in lines_read:
-                        line = line.split('\n')[0]
-                        self.review[text_type].append([line, 0])
-                    self.twitch_send_message(self.review[text_type][0][0])
-                else:
-                    self.twitch_send_message('Nothing to review.')
-            else:
-                self.twitch_send_message("Review already started.")
-        elif decision == 'approve':
-            if self.review[text_type]:
-                for text in self.review[text_type]:
-                    if text[1] == 0:
-                        text[1] = 1
-                        self.text_review('review {} next'.format(text_type), 'Approved')
-                        return
-                self.text_review('review {} next'.format(text_type))
-        elif decision == 'reject':
-            if self.review[text_type]:
-                for text in self.review[text_type]:
-                    if text[1] == 0:
-                        text[1] = 2
-                        self.text_review('review {} next'.format(text_type), 'Rejected')
-                        return
-                self.text_review('review {} next'.format(text_type))
-        elif decision == 'commit':
-            if self.review[text_type]:
-                file_name = '{}_{}_review.txt'.format(self.channel, text_type)
-                for text in self.review[text_type]:
-                    if text[1] == 0:
-                        self.twitch_send_message('There are still more {}s to review, please finish reviewing first.'.format(text_type))
-                        return
-                with open(file_name, 'w') as data_file:
-                    pass
-                with open('{}_{}.txt'.format(self.channel, text_type), 'a') as data_file:
-                    for line in self.review[text_type]:
-                        if line[1] == 1:
-                            data_file.write(line[0] + '\n')
-                self.review[text_type] = []
-                self.twitch_send_message('Approved {}s moved to the live file. Rejected quotes have been discarded.'.format(text_type))
-        else:
-            if self.review[text_type]:
-                for text in self.review[text_type]:
-                    if text[1] == 0:
-                        if last_r == 'none':
-                            self.twitch_send_message('Please use "!review {} (approve/reject)" for reviewing.'.format(text_type))
-                            return
-                        elif last_r == 'repeat':
-                            self.twitch_send_message('New {} added, {}: '.format(text_type, text_type) + text[0])
-                            return
-                        else:
-                            self.twitch_send_message(last_r + ", next quote: " + text[0])
-                            return
-
-                with open('{}_{}_review.txt'.format(self.channel, text_type), 'a+') as data_file:
-                    new_text = data_file.readlines()
-                new_sum = sum(1 for line in new_text)
-                if new_sum != len(self.review[text_type]):
-                    for i in new_text[len(self.review[text_type]):]:
-                        self.review[text_type].append([i.split('\n')[0], 0])
-                    self.text_review('review {} repeat'.format(text_type), 'repeat')
-                    return
-                if self.review[text_type]:
-                    self.twitch_send_message('Please use "!review {} commit" to lock the changes in place.'.format(text_type))
-                else:
-                    self.twitch_send_message('Nothing {}s to review.'.format(text_type))
-
     def lister(self, c_msg, s_list):
         #Add user to blacklist or remove them from it
         #Blacklist will cause bot to completely ignore the blacklisted user
@@ -1549,9 +1463,6 @@ class SaltyBot(object):
                     elif c_msg["message"] == 'checkvotes':
                         if self.config_data["voting_active"]:
                             self.check_votes()
-
-                    elif c_msg["message"].startswith('review') and c_msg["sender"] == self.channel:
-                        self.text_review(c_msg)
 
                     elif c_msg["message"] == 'runes':
                         if self.game == 'league of legends':
