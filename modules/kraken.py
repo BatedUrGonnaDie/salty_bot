@@ -39,45 +39,45 @@ class Kraken(api.API):
     def root(self, headers = None, **kwargs):
         # Root gives information about your oauth key
         endpoint = "/"
-        success, response = self.get(endpoint, headers, **kwargs)
+        success, response = self.get(endpoint, headers=headers, **kwargs)
         return success, response
 
     def get_stream(self, channel, headers = None, **kwargs):
         # Pass a channel that you would like the stream object for
         endpoint = "/streams/{0}".format(channel)
-        success, response = self.get(endpoint, headers, **kwargs)
+        success, response = self.get(endpoint, headers=headers, **kwargs)
         return success, response
 
     def get_streams(self, channels, headers = None, **kwargs):
         # Pass an array of channel you would like to retrieve stream objects for
         endpoint = "/streams?channel={0}".format(','.join(channels))
-        success, response = self.get(endpoint, headers, **kwargs)
+        success, response = self.get(endpoint, headers=headers, **kwargs)
         return success, response
 
     def get_steams_featured(self, headers = None, **kwargs):
         endpoint = "/streams/featured"
-        success, response = self.get(endpoint, headers, **kwargs)
+        success, response = self.get(endpoint, headers=headers, **kwargs)
         return success, response
 
     def get_streams_summarry(self, headers = None, **kwargs):
         endpoint = "/streams/summary"
-        success, response = self.get(endpoint, headers, **kwargs)
+        success, response = self.get(endpoint, headers=headers, **kwargs)
         return success, response
 
     def get_channel(self, channel, headers = None, **kwargs):
         endpoint = "/channels/{0}".format(channel)
-        success, response = self.get(endpoint, headers, **kwargs)
+        success, response = self.get(endpoint, headers=headers, **kwargs)
         return success, response
 
     def get_channel_authed(self, oauth = None, headers = None, **kwargs):
         headers["Authorization"] = self.find_token(oauth, headers)
         endpoint = "/channel"
-        success, response = self.get(endpoint, headers, **kwargs)
+        success, response = self.get(endpoint, headers=headers, **kwargs)
         return success, response
 
     def put_channel(self, channel, data, oauth = None, headers = None, **kwargs):
         headers["Authorization"] = self.find_token(oauth, headers)
         endpoint = "/channels/{0}".format(channel)
-        success, response = self.put(channel, headers, data=data, **kwargs)
+        success, response = self.put(endpoint, headers=headers, data=data, **kwargs)
         return success, response
 
