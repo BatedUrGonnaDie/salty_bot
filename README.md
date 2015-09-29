@@ -6,10 +6,10 @@ Commands
 ========
 `!commands` will output all of the active commands at the current time.
 
-`!wr <game shortcode> <category>` outputs world record for a specific game.  Game and category can either be input by the user or can be implied
+`!wr <game shortcode?> <category?>` outputs world record for a specific game.  Game and category can either be input by the user or can be implied
 from the streamers game and title if they are live.
 
-`!pb <user> <game shortcode> <category>` the pb for the specified user.  If category and game is omitted it will attempt
+`!pb <user?> <game shortcode?> <category?>` the pb for the specified user.  If category and game is omitted it will attempt
 to infer them from the current streamer's game/title.  If user is also omitted it will assume the streamer.
 
 `!leaderboards` will output the game name escaped for speedrun.com leaderboards.
@@ -17,7 +17,7 @@ to infer them from the current streamer's game/title.  If user is also omitted i
 `!race` race/races/racing required in title to use.  Will poll the SRL API to check if the current streamer is in a
 race, and if so output information about the race, and if the streamer has finished their time and place.
 
-`!splits <user> <game shortcode> <category>` will retrieve the best splits that you have uploaded to [splits.io](https://splits.io) for a game and
+`!splits <user?> <game shortcode?> <category?>` will retrieve the best splits that you have uploaded to [splits.io](https://splits.io) for a game and
 category.  A user, game, and category can be supplied or they can be inferred from the streamer, game, and title.
 
 `!quote`/`!pun` will display a randomly selected quote/pun from a from the database.
@@ -25,7 +25,8 @@ category.  A user, game, and category can be supplied or they can be inferred fr
 `!addqoute`/`!addpun` will add the given quote/pun to a review file so that you can manually move it over later.  If
 the broadcaster uses this command the quote/pun will go straight into the live file (that means be careful).
 
-`!rank` will retrieve the accuracy, pp ranking, level, and username of the streamer on osu.
+`!rank <user?>` will retrieve the accuracy, pp ranking, level, and username
+of the streamer (or the user specified) on osu.
 
 `!runes` will retrieve the active rune page and add up all the values.  Note that this will most likely break for the
 runes with more than one stat.
@@ -61,12 +62,6 @@ Channel Owner Commands
 `!addcom <trigger> <limit> <admin> <output>` will add the given custom command to the bot.
 
 `!delcom <trigger>` will delete the command from the bot.  Please do not include the '!' when specifying a trigger.
-
-`!review <quote/pun> <start>` to start reviewing your puns or quotes that have been added.  Bot will spit out the first
-quote/pun in the file.
-`!review <quote/pun> <approve/reject>` to confirm or deny the quote.  Note that currently there is no way to change the
-text once it's in the file, so if formatting or capitalization is wrong, reject it and submit it correctly.
-`!review <quote/pun> commit` to lock changes in place once all text has been reviewed.  Bot will prompt for this.
 
 Passive Features
 ================
