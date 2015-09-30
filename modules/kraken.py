@@ -5,8 +5,8 @@ import modules.kraken_errors as kraken_errors
 
 class Kraken(api.API):
 
-    def __init__(self, base_url, default_headers, oauth_token = None, check_token = True):
-        super(Kraken, self).__init__(base_url, default_headers)
+    def __init__(self, default_headers, oauth_token = None, check_token = True):
+        super(Kraken, self).__init__("https://api.twitch.tv/kraken", default_headers)
         self.oauth_token = oauth_token
         if self.oauth_token and check_token:
             self.check_token()
