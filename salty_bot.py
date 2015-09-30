@@ -1373,7 +1373,7 @@ class SaltyBot(object):
                 #Toobou trigger check
                 try:
                     if c_msg["message"].lower().find(self.t_trig.lower()) != -1:
-                        if 'toobou' in self.command_times and self.config_data["toobou_output"] != "":
+                        if self.config_data["toobou_active"] and self.config_data["toobou_output"] != "":
                             if self.time_check('toobou'):
                                 self.twitch_send_message(self.config_data["toobou_output"].replace("$sender", c_msg["sender"]))
                                 self.command_times['toobou']['last'] = int(time.time())
