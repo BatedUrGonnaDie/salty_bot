@@ -1371,14 +1371,12 @@ class SaltyBot(object):
                     self.youtube_video_check(c_msg)
 
                 #Toobou trigger check
-                try:
-                    if c_msg["message"].lower().find(self.t_trig.lower()) != -1:
-                        if self.config_data["toobou_active"] and self.config_data["toobou_output"] != "":
-                            if int(time.time()) - self.command_times["toobou"]["last"] >= self.command_times["toobout"]["limit"]:
-                                self.twitch_send_message(self.config_data["toobou_output"].replace("$sender", c_msg["sender"]))
-                                self.command_times['toobou']['last'] = int(time.time())
-                except Exception:
-                    pass
+                if c_msg["message"].lower().find(self.t_trig.lower()) != -1:
+                    if self.config_data["toobou_active"] and self.config_data["toobou_output"] != "":
+                        if int(time.time()) - self.command_times["toobou"]["last"] >= self.command_times["toobout"]["limit"]:
+                            self.twitch_send_message(self.config_data["toobou_output"].replace("$sender", c_msg["sender"]))
+                            self.command_times['toobou']['last'] = int(time.time())
+
 
                 if c_msg["message"].startswith('!'):
                     #Dirty work around to allow text to have more !'s in them
