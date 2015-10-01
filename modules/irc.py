@@ -113,5 +113,9 @@ class IRC(object):
         c_msg["sender"] = msg_split[1][1:].split("!")[0]
         c_msg["action"] = msg_split[2]
         c_msg["channel"] = msg_split[3]
-        c_msg["message"] = " ".join(msg_split[4:])[1:]
+        try:
+            c_msg["message"] = " ".join(msg_split[4:])[1:]
+        except IndexError:
+            # Blank string over None so that it is still of string type
+            c_msg["message"] = ""
         return c_msg
