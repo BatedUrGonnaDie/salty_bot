@@ -1,11 +1,13 @@
 #! /usr/bin/env python2.7
 
-import modules.api_base as api
-import modules.kraken_errors as kraken_errors
+import modules.apis.api_base as api
+import modules.apis.kraken_errors as kraken_errors
 
 class Kraken(api.API):
 
-    def __init__(self, default_headers, oauth_token = None, check_token = True):
+    def __init__(self, oauth_token = None, default_headers = None, check_token = True):
+        if not default_headers:
+            default_headers = {}
         super(Kraken, self).__init__("https://api.twitch.tv/kraken", default_headers)
         self.oauth_token = oauth_token
         if self.oauth_token and check_token:
