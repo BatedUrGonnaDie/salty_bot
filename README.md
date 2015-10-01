@@ -82,7 +82,3 @@ Copy the default config file and fill out appropriately, and then rename to `gen
 Set up a postgres database with the following [schema](https://github.com/BatedUrGonnaDie/salty_web/blob/master/db/schema.rb).
 If you want a web interface to change settings then you must follow the set up directions at
 [the web repo](https://github.com/batedurgonnadie/salty_web).
-
-License Thing
-=============
-Do whatever you want with it except sell it or claim it to be your own unless you modify it.  Other than that have fun.
