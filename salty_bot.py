@@ -1371,11 +1371,14 @@ class SaltyBot(object):
                     self.youtube_video_check(c_msg)
 
                 #Toobou trigger check
-                if c_msg["message"].lower().find(self.t_trig.lower()) != -1:
-                    if self.config_data["toobou_active"] and self.config_data["toobou_output"] != "":
-                        if int(time.time()) - self.command_times["toobou"]["last"] >= self.command_times["toobou"]["limit"]:
-                            self.twitch_send_message(self.config_data["toobou_output"])
-                            self.command_times['toobou']['last'] = int(time.time())
+                try:
+                    if c_msg["message"].lower().find(self.t_trig.lower()) != -1:
+                        if self.config_data["toobou_active"] and self.config_data["toobou_output"] != "":
+                            if int(time.time()) - self.command_times["toobou"]["last"] >= self.command_times["toobou"]["limit"]:
+                                self.twitch_send_message(self.config_data["toobou_output"])
+                                self.command_times['toobou']['last'] = int(time.time())
+                except Exception:
+                    pass
 
 
                 if c_msg["message"].startswith('!'):
