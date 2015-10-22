@@ -36,8 +36,8 @@ class SaltyBot(object):
         self.title = ""
         self.stream_start = ""
 
-        with open("blacklists/{}_blacklist.txt".format(self.channel),
-                  "a+") as fin:
+        self.blacklist_file = "blacklists/{}_blacklist.txt".format(self.channel)
+        with open(self.blacklist_file, "a+") as fin:
             self.blacklist = [x.strip() for x in fin.readlines()]
 
         self.commands = {}
