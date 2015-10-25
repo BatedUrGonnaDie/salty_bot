@@ -150,6 +150,10 @@ class SaltyBot(object):
     def twitch_info(self, game, title, live, online_status):
         # Called by the auto-updater only, sets the game playing, current title,
         # if the stream is live, and when it started
+        if not game:
+            game = ""
+        if not title:
+            title = ""
         self.game = game.lower()
         self.game_normal = game
         self.title = title.lower()
