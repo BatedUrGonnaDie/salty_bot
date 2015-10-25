@@ -15,6 +15,7 @@ class SaltyBot(object):
         self.twitch_api = None
         self.osu_api = None
         self.newbs_api = None
+        self.srl_api = None
 
         self.message_limit = 30
         self.is_mod = 30
