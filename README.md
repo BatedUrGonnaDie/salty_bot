@@ -1,3 +1,9 @@
+**WARNING  
+Salty is currently going through a complete rewrite with a lot of complete
+API breaking changes.  If you are basing a bot off of this project functions
+may change at any time  
+Warning**
+
 Twitch chat bot with Twitch, Osu, YouTube, SRL, and LoL API integration.
 
 Coded with Python 2.7.  Dependencies are located in requirements.txt.
