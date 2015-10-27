@@ -7,7 +7,6 @@ import modules.commands.helpers.get_suffix as get_suffix
 
 def call(salty_inst, c_msg, **kwargs):
     channel = salty_inst.channel
-    srl_nick = salty_inst.srl_nick.lower()
     success, response = salty_inst.srl_api.get_races(**kwargs)
     if not success:
         return False, \
@@ -18,15 +17,12 @@ def call(salty_inst, c_msg, **kwargs):
         if channel in [x["twitch"].lower() for x in i["entrants"].values()]:
             race_channel = i
             break
-        if srl_nick in [x.lower() for x in i["entrants"]]:
-            race_channel = i
-            break
     else:
         return False, "User not currently in a race."
 
     entrants = []
     for k, v in race_channel["entrants"].iteritems():
-        if srl_nick == k.lower() or channel == v["twitch"].lower():
+        if salty_inst.channel == v["twitch"].lower():
             real_nick = k
         if v["statetext"] == "Ready" or v["statetext"] == "Entered":
             if v["twitch"] != "":
