@@ -12,13 +12,15 @@ class SaltyBot(object):
     def __init__(self, config, irc_obj):
         self.config = config
         self.irc = irc_obj
+
         self.twitch_api = None
         self.osu_api = None
         self.newbs_api = None
         self.srl_api = None
+        self.sr_com_api = None
 
         self.message_limit = 30
-        self.is_mod = 30
+        self.is_mod = False
         self.rate_limit = 0
         self.messages_received = 0
 
@@ -32,6 +34,11 @@ class SaltyBot(object):
             self.bot_nick = os.environ["default_bot_nick"]
             self.bot_oauth = os.environ["default_bot_oauth"]
         self.channel = config["twtich_name"]
+
+        if config["speedruncom_nick"]:
+            self.speedruncom_nick = config["speedruncom_nick"].lower()
+        else:
+            self.speedruncom_nick = self.channel
 
         self.game = ""
         self.title = ""
