@@ -6,10 +6,8 @@ import modules.apis.api_base as api
 
 class OsuAPI(api.API):
 
-    def __init__(self, key = None, default_headers = None):
-        if not default_headers:
-            default_headers = {}
-        super(OsuAPI, self).__init__("https://osu.ppy.sh/api", default_headers)
+    def __init__(self, key = None, session = None):
+        super(OsuAPI, self).__init__("https://osu.ppy.sh/api", session)
         # API key is required to use the osu api
         self.api_key = key or os.environ["osu_api_key"]
 
