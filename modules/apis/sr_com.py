@@ -4,7 +4,7 @@ import modules.apis.api_base as api
 
 class SRcomAPI(api.API):
 
-    def __init(self, session = None):
+    def __init__(self, session = None):
         super(SRcomAPI, self).__init__("http://www.speedrun.com/api/v1", session)
 
     def get_user_pbs(self, user, embeds = "", **kwargs):
