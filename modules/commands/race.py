@@ -48,7 +48,7 @@ def call(salty_inst, c_msg, **kwargs):
             send_msg += ", Finished {0}{1} with a time of {2}".format(
                 user_place, get_suffix.suffix(user_place), time_formatted)
         else:
-            time_formatted = time_formatter(int(time.time()) - race_time)
+            time_formatted = time_formatter.format(time.time() - race_time)
             send_msg += ", RaceBot Time: {0}".format(time_formatted)
     if race_status == "Complete":
         send_msg += ". {}".format(race_link)
