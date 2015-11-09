@@ -588,7 +588,7 @@ class SaltyBot(object):
                     return
         except IndexError:
             if self.game != "" and self.title != "":
-                url = "http://ww.speedrun.com/api_records.php?game=" + self.game
+                url = "http://www.speedrun.com/api_records.php?game=" + self.game
                 infer_category = True
             else:
                 self.twitch_send_message("Please either provide a game and category or wait for the streamer to go live.")
