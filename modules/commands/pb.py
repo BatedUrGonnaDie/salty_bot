@@ -59,6 +59,7 @@ def call(salty_inst, c_msg, **kwargs):
         cat_response,
         pb_time,
         place,
-        pb_record["run"]["weblink"])
+        pb_record["run"]["weblink"]
+    )
 
     return True, msg
