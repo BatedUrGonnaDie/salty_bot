@@ -25,5 +25,6 @@ class SRcomAPI(api.API):
         success, response = self.get(endpoint, **kwargs)
         return success, response
 
+    # Easy function to join the embeds w/o needing to repeat in every function
     def join_embeds(self, embeds):
         return "" if embeds == None else ",".join(embeds)
