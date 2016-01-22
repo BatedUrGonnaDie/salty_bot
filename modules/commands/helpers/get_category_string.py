@@ -14,4 +14,4 @@ def find_active_cat(game_categories, user_string):
     try:
         return True, max(best_ratio, key=best_ratio.get)
     except ValueError:
-        return False, "Could not find pb with close enough match to {0}>".format(user_string)
+        return False, "Could not find pb with close enough match to {0}".format(user_string)
