@@ -109,6 +109,7 @@ class IRC(object):
         if msg_split[0]:
             c_msg["tags"] = dict(item.split("=") for item in msg_split[0][1:].split(";"))
         else:
+            # Dict of None so that stinn of dict type
             c_msg["tags"] = {}
         c_msg["sender"] = msg_split[1][1:].split("!")[0]
         c_msg["action"] = msg_split[2]
