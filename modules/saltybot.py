@@ -18,6 +18,8 @@ class SaltyBot(object):
         self.newbs_api = None
         self.srl_api = None
         self.sr_com_api = None
+        self.splits_io_api = None
+        self.youtube_api = None
 
         self.message_limit = 30
         self.is_mod = False
@@ -43,6 +45,7 @@ class SaltyBot(object):
         self.game = ""
         self.title = ""
         self.stream_start = ""
+        self.is_live = False
 
         self.blacklist_file = "blacklists/{}_blacklist.txt".format(self.channel)
         with open(self.blacklist_file, "a+") as fin:
