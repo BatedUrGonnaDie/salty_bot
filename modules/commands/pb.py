@@ -26,7 +26,7 @@ def call(salty_inst, c_msg, **kwargs):
     success, response = salty_inst.sr_com_api.get_user_pbs(user_name, ["game", "category"], **kwargs)
     if not success:
         return False, \
-            "Error retrieving info from speedrun.com ({0}).".format(response.status_code)
+            "Error retrieving pbs from speedrun.com ({0}).".format(response.status_code)
 
     found_categories = []
     matching_games = []
