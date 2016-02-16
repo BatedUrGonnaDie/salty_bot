@@ -47,3 +47,14 @@ class API(object):
             return True, data_decode
         except requests.exceptions.HTTPError:
             return False, data
+
+    def delete(self, endpoint, **kwargs):
+        url = self.base_url + endpoint
+
+        try:
+            data = self.session.delete(url=url, **kwargs)
+            data.raise_for_status()
+            data_decode = data.json()
+            return True, data_decode
+        except requests.exceptions.HTTPError:
+            return False, data
