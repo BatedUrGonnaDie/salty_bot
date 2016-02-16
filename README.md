@@ -1,8 +1,11 @@
 **WARNING  
 Salty is currently going through a complete rewrite with a lot of complete
 API breaking changes.  If you are basing a bot off of this project functions
-may change at any time  
-Warning**
+may change at any time
+
+The changes that are in the future rewrite have not been tested in any form
+and will not be used until proper tests have been written.  
+WARNING**
 
 Twitch chat bot with Twitch, Osu, YouTube, SRL, and LoL API integration.
 
