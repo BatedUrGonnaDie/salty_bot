@@ -12,7 +12,7 @@ class NewbsAPI(api.API):
         success, response = self.post(endpoint, data, **kwargs)
         return success, response
 
-    def show_textutil(self, channel, text_type, limit = 1, **kwargs):
+    def get_textutil(self, channel, text_type, limit = 1, **kwargs):
         endpoint = "/users/{0}/{1}s?limit={2}".format(channel, text_type, limit)
         success, response = self.get(endpoint, **kwargs)
         return success, response
