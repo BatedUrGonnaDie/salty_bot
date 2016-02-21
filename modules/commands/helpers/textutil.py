@@ -16,8 +16,8 @@ def add(salty_inst, c_msg, text_type, **kwargs):
         return False, "Error adding {0} to database ({1})".format(text_type, response.status_code)
     return True, "{1} successfully added to the database.".format(text_type.capitalize())
 
-def show(salty_inst, c_msg, text_type, **kwargs):
-    success, response = salty_inst.newbs_api.show_textutil(salty_inst.channel, text_type, **kwargs)
+def get(salty_inst, c_msg, text_type, **kwargs):
+    success, response = salty_inst.newbs_api.get_textutil(salty_inst.channel, text_type, **kwargs)
     if not success:
         return False, \
             "Error retrieving {0} from the database ({1})".format(text_type, response.status_code)
