@@ -43,6 +43,7 @@ class SaltyBot(object):
             self.speedruncom_nick = self.channel
 
         self.game = ""
+        self.game_history = {}
         self.title = ""
         self.stream_start = ""
         self.is_live = False
