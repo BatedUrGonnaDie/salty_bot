@@ -2,7 +2,7 @@
 
 import re
 
-import modules.extensions.regexes as regexes
+from modules.extensions import regexes
 
 def call(salty_inst, c_msg, **kwargs):
     if salty_inst.votes:

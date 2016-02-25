@@ -1,6 +1,6 @@
 #! /usr/bin/env python2.7
 
-import modules.commands.helpers.get_diff_ratio as get_diff_ratio
+from modules.commands.helpers import get_diff_ratio
 
 def call(salty_inst, c_msg, **kwargs):
     msg_split = c_msg["message"].split(" ", 1)

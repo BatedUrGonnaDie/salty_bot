@@ -2,8 +2,8 @@
 
 import time
 
-import modules.commands.helpers.time_formatter as time_formatter
-import modules.commands.helpers.get_suffix as get_suffix
+from modules.commands.helpers import time_formatter
+from modules.commands.helpers import get_suffix
 
 def call(salty_inst, c_msg, **kwargs):
     channel = salty_inst.channel

@@ -1,7 +1,7 @@
 #! /usr/bin/env python2.7
 
 import modules.apis.api_base as api
-import modules.apis.kraken_errors as kraken_errors
+from   modules.apis import kraken_errors
 
 class Kraken(api.API):
 

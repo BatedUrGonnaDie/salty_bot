@@ -1,8 +1,8 @@
 #! /usr/bin/env python2.7
 
-import modules.commands.helpers.get_category_string as get_category_string
-import modules.commands.helpers.get_category_title as get_category_title
-import modules.commands.helpers.time_formatter as time_formatter
+from modules.commands.helpers import get_category_string
+from modules.commands.helpers import get_category_title
+from modules.commands.helpers import time_formatter
 
 def call(salty_inst, c_msg, **kwargs):
     msg_split = c_msg["message"].split(" ", 2)
