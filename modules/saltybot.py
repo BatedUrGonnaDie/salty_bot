@@ -1,13 +1,38 @@
 #! /usr/bin/env python2.7
 
+import imp
 import os
+import sys
 import time
 
-command_functions = {
-    
-}
+if __name__ == "__main__":
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..')))
+
+command_functions = {}
+
+cmd_filenames = []
+cmd_folder = os.path.join(os.getcwd(), "commands")
+for fn in os.listdir(cmd_folder):
+    if os.path.isdir(fn) or not fn.endswith(".py") or fn.startswith("_"):
+        continue
+    cmd_filenames.append(os.path.join(cmd_folder, fn))
+for cmd in cmd_filenames:
+    imp_name = os.path.basename(cmd)[:-3]
+    cmd_name = "!{0}".format(imp_name)
+    try:
+        module = imp.load_source(imp_name, cmd)
+        sys.modules[imp_name] = module
+        command_functions[cmd_name] = module.call
+    except Exception, e:
+        print "Error importing {0}.".format(imp_name)
+        print e
 
 class SaltyBot(object):
+
+    action_functions = {
+        "PRIVMSG" : privmsg,
+        "MODE"    : mode
+    }
 
     def __init__(self, config, irc_obj):
         self.config = config
@@ -101,3 +126,12 @@ class SaltyBot(object):
                     "mod_req": i["admin"],
                     "output": i["output"]
                 }
+
+    def process_message(self, c_msg):
+        self.action_functions[c_msg]["action"](c_msg)
+
+    def privmsg(self, c_msg):
+        pass
+
+    def mode(self, c_msg):
+        pass
