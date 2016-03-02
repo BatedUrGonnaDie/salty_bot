@@ -1,7 +1,7 @@
 #! /usr/bin/env python2.7
 
 import modules.apis.api_base as api
-from   modules.apis import kraken_errors
+from   modules.apis import api_errors
 
 class Kraken(api.API):
 
@@ -35,7 +35,7 @@ class Kraken(api.API):
         if headers["Authorization"]: return headers["Authorization"]
         if oauth: return oauth
         if self.oauth_token: return self.oauth_token
-        raise kraken_errors.AuthorizationRequiredError("This endopint requires an oauth toekn.")
+        raise api_errors.AuthorizationRequiredError("This endopint requires an oauth toekn.")
 
     # Endpoints
     def root(self, headers = None, **kwargs):
