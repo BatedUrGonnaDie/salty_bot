@@ -1,15 +1,20 @@
 #! /usr/bin/env python2.7
 
-import os
-
 import modules.apis.api_base as api
+from   modules.apis import api_errors
 
 class OsuAPI(api.API):
 
     def __init__(self, key = None, session = None):
+        if key == None:
+            if session == None or not session.params["k"]:
+                raise api_errors.AuthorizationRequiredError
+            else:
+                self.api_key = session.params["k"]
+                del session.params["k"]
+        else:
+            self.api_key = key
         super(OsuAPI, self).__init__("https://osu.ppy.sh/api", session)
-        # API key is required to use the osu api
-        self.api_key = key or os.environ["osu_api_key"]
 
     def get_user(self, user, tmp_key = None, **kwargs):
         key = tmp_key if tmp_key else self.api_key
