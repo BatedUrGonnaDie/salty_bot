@@ -29,6 +29,7 @@ def call(salty_inst, c_msg, **kwargs):
         if not options:
             return False, "Please supply options for a strict poll surronded by parenthesis."
 
+        options = [x.strip() for x in options]
         for i in options:
             salty_inst.votes["options"][i.lower()] = 0
             salty_inst.votes["casing"][i.lower()] = i
