@@ -10,31 +10,37 @@ if __name__ == "__main__":
 
 command_functions = {}
 
-cmd_filenames = []
-cmd_folder = os.path.join(os.getcwd(), "commands")
-for fn in os.listdir(cmd_folder):
-    if os.path.isdir(fn) or not fn.endswith(".py") or fn.startswith("_"):
-        continue
-    cmd_filenames.append(os.path.join(cmd_folder, fn))
-for cmd in cmd_filenames:
-    imp_name = os.path.basename(cmd)[:-3]
-    cmd_name = "!{0}".format(imp_name)
-    try:
-        module = imp.load_source(imp_name, cmd)
-        sys.modules[imp_name] = module
-        command_functions[cmd_name] = module.call
-    except Exception, e:
-        print "Error importing {0}.".format(imp_name)
-        print e
+def init_commands():
+    cmd_filenames = []
+    cmd_folder = os.path.join(os.getcwd(), "commands")
+    for fn in os.listdir(cmd_folder):
+        if os.path.isdir(fn) or not fn.endswith(".py") or fn.startswith("_"):
+            continue
+        cmd_filenames.append(os.path.join(cmd_folder, fn))
+    for cmd in cmd_filenames:
+        imp_name = os.path.basename(cmd)[:-3]
+        cmd_name = "!{0}".format(imp_name)
+        try:
+            module = imp.load_source(imp_name, cmd)
+            sys.modules[imp_name] = module
+            command_functions[cmd_name] = module.call
+        except Exception, e:
+            print "Error importing {0}.".format(imp_name)
+            print e
+
+init_commands()
 
 class SaltyBot(object):
 
-    action_functions = {
-        "PRIVMSG" : privmsg,
-        "MODE"    : mode
-    }
-
     def __init__(self, config, irc_obj):
+        self.action_functions = {
+            "PRIVMSG"         : self.privmsg,
+            "NOTICE"          : self.notice,
+            "USERSTATE"       : self.userstate,
+            "GLOBALUSERSTATE" : self.globaluserstate,
+            "HOSTTARGET"      : self.hosttarget,
+            "CLEARCHAT"       : self.clearchat
+        }
         self.config = config
         self.irc = irc_obj
 
@@ -133,5 +139,20 @@ class SaltyBot(object):
     def privmsg(self, c_msg):
         pass
 
-    def mode(self, c_msg):
+    def notice(self, c_msg):
+        pass
+
+    def hosttarget(self, c_msg):
+        pass
+
+    def clearchat(self, c_msg):
+        pass
+
+    def userstate(self, c_msg):
+        self.is_mod = bool(int(c_msg["tags"]["mod"]))
+
+    def globaluserstate(self, c_msg):
+        pass
+
+    def roomstate(self, c_msg):
         pass
