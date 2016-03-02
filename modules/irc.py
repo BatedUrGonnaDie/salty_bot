@@ -12,6 +12,7 @@ class IRC(object):
         self.oauth = oauth
         self.socket = None
         self.connected = False
+        self.capabilities = set()
 
     def create(self):
         self.socket = socket.socket()
@@ -75,7 +76,8 @@ class IRC(object):
             logging.exception(e)
             return inc_msg
 
-    def tokenize(self, raw_msg):
+    @staticmethod
+    def tokenize(raw_msg):
         raise NotImplementedError
 
     def main_loop(self, callback):

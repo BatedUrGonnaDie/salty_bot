@@ -39,10 +39,17 @@ class TwitchIRC(irc.IRC):
                     continue
 
                 msg_parts = self.tokenize(current_message)
-                callback(msg_parts)
+                if msg_parts["action"] == "CAP":
+                    if msg_parts["message"].split(" ")[0] == "ACK":
+                        self.capabilities.add(msg_parts["message"].split(" ", 1)[1])
+                    else:
+                        self.capabilities.remove(msg_parts["message"].split(" ", 1)[1])
+                else:
+                    callback(msg_parts)
             msg_buffer = lines[0]
 
-    def tokenize(self, raw_msg):
+    @staticmethod
+    def tokenize(raw_msg):
         c_msg = {}
         msg_split = raw_msg.split(" ")
         if raw_msg.startswith(":"):
@@ -55,7 +62,9 @@ class TwitchIRC(irc.IRC):
         c_msg["action"] = msg_split[2]
         c_msg["channel"] = msg_split[3]
         try:
-            c_msg["message"] = " ".join(msg_split[4:])[1:]
+            c_msg["message"] = " ".join(msg_split[4:])
+            if c_msg["action"] != "CAP":
+                c_msg["message"] = c_msg["message"][1:]
         except IndexError:
             c_msg["message"] = ""
         return c_msg
