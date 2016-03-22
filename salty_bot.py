@@ -1602,8 +1602,11 @@ def twitch_info_grab(bots):
             pass
     except Exception:
         traceback.print_exc(limit=2)
-        print data
-        print data.text
+        try:
+            print data
+            print data.text
+        except Exception:
+            pass
 
 def restart_bot(bot_name, bot_config, bot_dict):
     bot_name = bot_name.lower()
