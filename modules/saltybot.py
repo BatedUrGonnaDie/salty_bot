@@ -32,7 +32,7 @@ init_commands()
 
 class SaltyBot(object):
 
-    def __init__(self, config, irc_obj):
+    def __init__(self, config, apis):
         self.action_functions = {
             "PRIVMSG"         : self.privmsg,
             "NOTICE"          : self.notice,
@@ -41,16 +41,16 @@ class SaltyBot(object):
             "HOSTTARGET"      : self.hosttarget,
             "CLEARCHAT"       : self.clearchat
         }
-        self.config = config
-        self.irc = irc_obj
 
-        self.twitch_api = None
-        self.osu_api = None
-        self.newbs_api = None
-        self.srl_api = None
-        self.sr_com_api = None
-        self.splits_io_api = None
-        self.youtube_api = None
+        self.config = config
+
+        self.twitch_api = apis["twitch"]
+        self.osu_api = apis["osu"]
+        self.newbs_api = apis["newbs"]
+        self.srl_api = apis["srl"]
+        self.sr_com_api = apis["sr_com"]
+        self.splits_io_api = apis["splits_io"]
+        self.youtube_api = apis["youtube"]
 
         self.message_limit = 30
         self.is_mod = False
@@ -86,18 +86,18 @@ class SaltyBot(object):
         self.commands = {}
         self.setup_commands(config)
         self.social = {
-            "active": config["social_active"],
+            "active": config["settings"]["social_active"],
             "last_send": time.time(),
-            "message_interval": config["social_messages"] or 30,
-            "time_interval": config["social_time"] or 10,
-            "output": config["social_output"]
+            "message_interval": config["settings"]["social_messages"] or 30,
+            "time_interval": config["settings"]["social_time"] or 10,
+            "output": config["settings"]["social_output"]
         }
         self.toobou = {
-            "active": config["toobou_active"],
-            "trigger": config["toobou_trigger"],
+            "active": config["settings"]["toobou_active"],
+            "trigger": config["settings"]["toobou_trigger"],
             "last": 0,
-            "limit": config["toobou_limit"] or 30,
-            "output": config["toobou_output"]
+            "limit": config["settings"]["toobou_limit"] or 30,
+            "output": config["settings"]["toobou_output"]
         }
 
     def setup_commands(self, config):
