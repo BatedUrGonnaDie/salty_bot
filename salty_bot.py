@@ -1316,6 +1316,7 @@ class SaltyBot(object):
                 print self.channel + ' timed out.'
                 if self.running:
                     self.socket_error_restart()
+                    continue
 
             if message == "":
                 if self.running:
