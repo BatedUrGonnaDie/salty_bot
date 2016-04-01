@@ -21,7 +21,7 @@ class IRC(object):
 
     def create(self):
         self.socket = socket.socket()
-        self.socket.settimeout(10)
+        self.socket.settimeout(600)
         if self.use_ssl:
             self.socket = ssl.wrap_socket(self.socket)
 
@@ -123,6 +123,7 @@ class IRC(object):
 
 
     def main_loop(self, callback):
+        self.socket.settimeout(10)
         msg_buffer = ""
         lines = []
         while self.continue_loop:
