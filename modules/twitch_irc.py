@@ -5,7 +5,7 @@ from modules import irc
 class TwitchIRC(irc.IRC):
 
     def __init__(self, username, oauth):
-        super(TwitchIRC, self).__init__("irc.chat.twitch.tv", 6697, True, username, oauth)
+        super(TwitchIRC, self).__init__("irc.chat.twitch.tv", 6697, username, oauth=oauth, use_ssl=True)
         self.total_messages = 0
         self.sent_messages = 0
         self.message_limit = 30

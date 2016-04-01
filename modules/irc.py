@@ -6,7 +6,7 @@ import ssl
 
 class IRC(object):
 
-    def __init__(self, host, port, use_ssl, username, oauth = ""):
+    def __init__(self, host, port, username, oauth = "", use_ssl = False):
         self.host = host
         self.port = port
         self.use_ssl = use_ssl
