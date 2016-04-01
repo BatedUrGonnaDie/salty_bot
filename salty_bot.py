@@ -1695,6 +1695,8 @@ def automated_main_loop(bot_dict, config_dict):
             twitch_info_grab(bot_dict)
             time_to_check_twitch = int(time.time()) + 60
 
+        time.sleep(.1)
+
 def update_listen(web_inst):
     while True:
         try:
