@@ -167,7 +167,6 @@ class SaltyBot(object):
                 print "Joining {} as {}.\n".format(self.channel, self.twitch_nick)
             try:
                 #If it fails to conenct try again in 60 seconds
-                self.irc.create()
                 self.irc.connect()
                 self.irc.recv(4096)
             except Exception:
@@ -1569,7 +1568,6 @@ def osu_send_message(osu_send_nick, msg, sender):
     #Send the message through IRC to the person playing osu
     full_msg = "{}: {}".format(sender, msg)
     osu_irc = irc.IRC("irc.ppy.sh", 6667, osu_irc_nick, osu_irc_pass)
-    osu_irc.create()
     osu_irc.connect()
     osu_irc.pm(osu_send_nick, full_msg)
     osu_irc.disconnect()

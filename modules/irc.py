@@ -18,6 +18,8 @@ class IRC(object):
         self.channels = set()
         self.capabilities = set()
         self.continue_loop = True
+        self.channel_userlist = {}
+        self.create()
 
     def create(self):
         self.socket = socket.socket()
@@ -39,7 +41,7 @@ class IRC(object):
 
     def disconnect(self):
         try:
-            self.raw("QUIT")
+            self.quit()
         except Exception:
             pass
         finally:
@@ -63,10 +65,15 @@ class IRC(object):
     def join(self, channel):
         self.raw("JOIN #{0}".format(channel))
         self.channels.add(channel)
+        self.channel_userlist[channel] = set()
 
     def part(self, channel):
         self.raw("PART #{0}".format(channel))
         self.channels.remove(channel)
+        del self.channel_userlist[channel]
+
+    def quit(self):
+        self.raw("QUIT")
 
     def capability(self, cap):
         self.raw("CAP REQ :{0}".format(cap))
@@ -103,7 +110,7 @@ class IRC(object):
         c_msg["channel"] = msg_split[3]
         try:
             c_msg["message"] = " ".join(msg_split[4:])
-            if c_msg["action"] != "CAP":
+            if c_msg["message"].startswith(":"):
                 c_msg["message"] = c_msg["message"][1:]
         except IndexError:
             c_msg["message"] = ""
@@ -111,7 +118,7 @@ class IRC(object):
 
     @staticmethod
     def process_tags(tags):
-        tags_dict = dict(item.split("=") for item in tags[0][1:].split(";"))
+        tags_dict = dict(item.split("=") for item in tags[1:].split(";"))
         for k, v in tags_dict.iteritems():
             k.replace("\\:", ";")
             k.replace("\\s", " ")
