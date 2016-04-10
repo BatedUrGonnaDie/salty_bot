@@ -28,8 +28,8 @@ class DBConfig(object):
                 c_commands = session.query("SELECT * FROM custom_commands AS c WHERE c.user_id IN (SELECT s.user_id FROM settings AS s WHERE s.active=true)")
         users_dict = {}
         for i in users:
-            user_id = i["user_id"]
-            i["id"] = user_id
+            user_id = i["id"]
+            i["user_id"] = user_id
             users_dict[user_id] = i
             users_dict[user_id]["commands"] = []
             users_dict[user_id]["custom_commands"] = []
@@ -52,9 +52,6 @@ class DBConfig(object):
     def fetch_one(self, user_id):
         pass
 
-    def fetch_active(self, user_id):
-        pass
-
 class JSONConfig(object):
 
     def __init__(self, dev, filename):
@@ -62,13 +59,13 @@ class JSONConfig(object):
         self.filename = filename
 
     def initial_retrieve(self):
-        pass
+        with open(self.filename, "r") as fin:
+            configurations = json.load(fin)
 
-    def fetch_one(self, user_id):
-        pass
+        return {k : v for k, v in configurations.iteritems() if v["settings"]["active"]}
 
-    def fetch_active(self):
-        pass
+    def fetch_one(self, *args):
+        return self.initial_retrieve()
 
 class ConfigServer(object):
 
@@ -76,17 +73,19 @@ class ConfigServer(object):
         if server_type.upper() == "JSON":
             self.file_name = kwargs["filename"]
             self.last_modified = os.stat(self.file_name).st_mtime
+            self.listen_for_updates = self.file_server
         else:
             self.web_ip = kwargs["web_ip"]
             self.web_port = kwargs["web_port"]
             self.web_secret = kwargs["web_secret"]
             self.socket = socket.socket()
             self.socket.bind((self.web_ip, self.web_port))
+            self.listen_for_updates = self.db_server
 
     def file_server(self):
         while True:
             if os.stat(self.file_name).st_mtime != self.last_modified:
-                return True
+                return None
             time.sleep(5)
 
     def db_server(self):
