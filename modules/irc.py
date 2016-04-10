@@ -51,6 +51,7 @@ class IRC(object):
 
     def reconnect(self):
         self.disconnect()
+        self.create()
         self.connect()
 
     def raw(self, msg):
