@@ -39,7 +39,12 @@ class SaltyBot(object):
             "USERSTATE"       : self.userstate,
             "GLOBALUSERSTATE" : self.globaluserstate,
             "HOSTTARGET"      : self.hosttarget,
-            "CLEARCHAT"       : self.clearchat
+            "CLEARCHAT"       : self.clearchat,
+            "JOIN"            : self.join,
+            "PART"            : self.part,
+            "MODE"            : self.mode,
+            "RECONNECT"       : self.reconnect,
+            "ROOMSTATE"       : self.roomstate
         }
 
         self.config = config
@@ -85,6 +90,13 @@ class SaltyBot(object):
 
         self.commands = {}
         self.setup_commands(config)
+        self.social = {}
+        self.setup_social(config)
+        self.toobou = {}
+        self.setup_toobou(config)
+
+    def setup_social(self, config):
+        self.social = {}
         self.social = {
             "active": config["settings"]["social_active"],
             "last_send": time.time(),
@@ -92,6 +104,9 @@ class SaltyBot(object):
             "time_interval": config["settings"]["social_time"] or 10,
             "output": config["settings"]["social_output"]
         }
+
+    def setup_toobou(self, config):
+        self.toobou = {}
         self.toobou = {
             "active": config["settings"]["toobou_active"],
             "trigger": config["settings"]["toobou_trigger"],
@@ -101,6 +116,8 @@ class SaltyBot(object):
         }
 
     def setup_commands(self, config):
+        # Wipe the dict clean first so that it may be called at anytime for a clean commands build
+        self.commands = {}
         self.commands["!bot_info"] = {
             "custom": False,
             "last": 0,
@@ -133,8 +150,14 @@ class SaltyBot(object):
                     "output": i["output"]
                 }
 
+    def update_config(self, new_config):
+        self.config = new_config
+        self.setup_commands(new_config)
+        self.setup_social(new_config)
+        self.setup_toobou(new_config)
+
     def process_message(self, c_msg):
-        self.action_functions[c_msg]["action"](c_msg)
+        self.action_functions[c_msg["action"]](c_msg)
 
     def privmsg(self, c_msg):
         pass
@@ -155,4 +178,16 @@ class SaltyBot(object):
         pass
 
     def roomstate(self, c_msg):
+        pass
+
+    def join(self, c_msg):
+        pass
+
+    def part(self, c_msg):
+        pass
+
+    def mode(self, c_msg):
+        pass
+
+    def reconnect(self, c_msg):
         pass
