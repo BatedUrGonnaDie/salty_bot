@@ -161,6 +161,10 @@ class IRC(object):
                         self.capabilities.add(msg_parts["message"].split(" ", 1)[1])
                     else:
                         self.capabilities.remove(msg_parts["message"].split(" ", 1)[1])
-                else:
-                    callback(msg_parts)
+                elif msg_parts["action"] == "JOIN":
+                    self.channel_userlist[msg_parts["channel"][1:]].add(msg_parts["sender"])
+                elif msg_parts["action"] == "PART":
+                    self.channel_userlist[msg_parts["channel"][1:]].remove(msg_parts["sender"])
+
+                callback(msg_parts)
             msg_buffer = lines[0]
