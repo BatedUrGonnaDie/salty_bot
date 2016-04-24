@@ -5,6 +5,8 @@ import os
 import sys
 import time
 
+from modules.module_errors import DeactivatedBotException
+
 if __name__ == "__main__":
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..')))
 
@@ -32,6 +34,8 @@ init_commands()
 
 class SaltyBot(object):
 
+    elevated_user = ["staff", "admin", "global_mod", "mod"]
+
     def __init__(self, config, apis):
         self.action_functions = {
             "PRIVMSG"         : self.privmsg,
@@ -44,7 +48,8 @@ class SaltyBot(object):
             "PART"            : self.part,
             "MODE"            : self.mode,
             "RECONNECT"       : self.reconnect,
-            "ROOMSTATE"       : self.roomstate
+            "ROOMSTATE"       : self.roomstate,
+            "CAP"             : self.cap
         }
 
         self.config = config
@@ -151,6 +156,9 @@ class SaltyBot(object):
                 }
 
     def update_config(self, new_config):
+        if self.config["settings"]["active"] and not new_config["settings"]["active"]:
+            raise DeactivatedBotException
+
         self.config = new_config
         self.setup_commands(new_config)
         self.setup_social(new_config)
@@ -172,7 +180,11 @@ class SaltyBot(object):
         pass
 
     def userstate(self, c_msg):
-        self.is_mod = bool(int(c_msg["tags"]["mod"]))
+        self.is_mod = (
+            self.channel == self.bot_nick or
+            bool(int(c_msg["tags"]["mod"])) or
+            bool(c_msg["tags"]["user-type"])
+        )
 
     def globaluserstate(self, c_msg):
         pass
@@ -190,4 +202,7 @@ class SaltyBot(object):
         pass
 
     def reconnect(self, c_msg):
+        pass
+
+    def cap(self, c_msg):
         pass
