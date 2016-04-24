@@ -2,3 +2,4 @@
 *.json
 debug.log
 blacklists/
+tests/.cache/
