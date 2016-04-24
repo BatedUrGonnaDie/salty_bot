@@ -59,3 +59,6 @@ def call(salty_inst, c_msg, **kwargs):
         msg += " Splits: {0}".format(response["runs"][0]["run"]["splits"]["uri"])
 
     return True, msg
+
+def test_output():
+    return 0
