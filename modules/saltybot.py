@@ -1,6 +1,7 @@
 #! /usr/bin/env python2.7
 
 import imp
+import logging
 import os
 import sys
 import time
@@ -142,7 +143,7 @@ class SaltyBot(object):
                     "custom": False,
                     "last": 0,
                     "limit": i["limit"] or 30,
-                    "mod_req": i["admin"],
+                    "mod_req": bool(i["admin"]),
                     "function": command_functions[curr_com]
                 }
         for i in config["custom_commands"]:
@@ -151,7 +152,7 @@ class SaltyBot(object):
                     "custom": True,
                     "last": 0,
                     "limit": i["limit"] or 30,
-                    "mod_req": i["admin"],
+                    "mod_req": bool(i["admin"]),
                     "output": i["output"]
                 }
 
@@ -164,11 +165,48 @@ class SaltyBot(object):
         self.setup_social(new_config)
         self.setup_toobou(new_config)
 
+    def check_permissions(self, c_msg):
+        try:
+            command = c_msg["message"].split(" ", 1)[0]
+        except IndexError:
+            return False
+        if not self.commands.get(command, None):
+            return False
+
+        if self.commands[command]["mod_req"]:
+            if not c_msg["tags"]["mod"]:
+                return False
+            if not c_msg["sender"] in self.elevated_user:
+                return False
+            if not c_msg["sender"] == self.channel:
+                return False
+
+        if (time.time() + self.commands[command]["limit"]) < self.commands[command]["last"]:
+            return False
+
+        return True
+
+
     def process_message(self, c_msg):
         self.action_functions[c_msg["action"]](c_msg)
 
     def privmsg(self, c_msg):
-        pass
+        msg_split = c_msg["message"].split(" ")
+        try:
+            if self.check_permissions(c_msg):
+                if self.commands[msg_split[0]]["custom"]:
+                    success, response = True, self.commands[msg_split[0]]["output"]
+                else:
+                    success, response = command_functions[msg_split[0]](self, c_msg)
+        except KeyError:
+            return
+        except Exception, e:
+            logging.exception(e)
+            return
+
+        if success:
+            self.commands[msg_split[0]] = time.time()
+        return response
 
     def notice(self, c_msg):
         pass
