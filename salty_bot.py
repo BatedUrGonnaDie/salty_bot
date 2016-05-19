@@ -729,9 +729,10 @@ class SaltyBot(object):
             self.twitch_send_message('Please input a {}.'.format(text_type))
         else:
             url = "https://leagueofnewbs.com/api/users/{}/{}s".format(self.channel, text_type)
-            data = {"reviewed": 1 if c_msg["sender"] == self.channel else 0,
-                    "text": text,
-                    "user_id": self.channel}
+            data = {
+                "reviewed": 1 if c_msg["sender"] == self.channel else 0,
+                "text": text,
+            }
             cookies = {"session": self.session}
 
             success = requests.post(url, data=data, cookies=cookies)
@@ -1623,6 +1624,7 @@ def update_bot(bot_name, bot_config, bot_dict):
                 bot_dict[bot_name].commands = []
                 bot_dict[bot_name].admin_commands = []
                 bot_dict[bot_name].custom_commands = []
+                bot_dict[bot_name].session = bot_config["session"]
                 bot_dict[bot_name].twitch_commands()
                 print "Updated bot for {}".format(bot_name)
             else:
