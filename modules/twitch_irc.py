@@ -21,6 +21,8 @@ class TwitchIRC(irc.IRC):
         self.sent_messages = 0
         self.message_limit = 30
         self.last_reset = time.time()
+        self.capabilities.add("twitch.tv/tags")
+        self.capabilities.add("twitch.tv/commands")
 
     @property
     def rate_limited(self):
