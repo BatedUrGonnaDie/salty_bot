@@ -13,10 +13,16 @@ class SRcomAPI(api.API):
         success, response = self.get(endpoint, **kwargs)
         return success, response
 
-    def get_games_search(self, search_string, embeds = None, **kwargs):
+    def get_game(self, game_abbrev, embeds = None, **kwargs):
         embeds = [] if None else embeds
-        endpoint = "/games?name={0}&embed={1}".format(search_string, self.join_embeds(embeds))
+        endpoint = "/games/{0}?embed={1}".format(game_abbrev, self.join_embeds(embeds))
         success, response = self.get(endpoint, **kwargs)
+        return success, response
+
+    def get_games(self, query_params, embeds = None, **kwargs):
+        embeds = [] if None else embeds
+        endpoint = "/games?embed={0}".format(self.join_embeds(embeds))
+        success, response = self.get(endpoint, params=query_params, **kwargs)
         return success, response
 
     def get_leaderboards(self, game, category, embeds = None, **kwargs):
