@@ -29,8 +29,8 @@ def call(salty_inst, c_msg, **kwargs):
     if not success:
         return False, \
             "Error retrieving info from splits.io ({0}).".format(response.status_code)
-    game_pbs = [x for x in response["pbs"] if x["game"] and x["game"][game_type].lower() == game.lower()]
-    game_categories = [x["category"]["name"] for x in game_pbs if x["cateogry"]]
+    game_pbs = [x for x in response["pbs"] if x["game"] and (x["game"][game_type] or "").lower() == game.lower()]
+    game_categories = {x["category"]["name"] : x["category"]["name"] for x in game_pbs if x["category"]}
 
     if infer_category:
         category_finder = get_category_title.find_active_cat
@@ -41,13 +41,13 @@ def call(salty_inst, c_msg, **kwargs):
     if not cat_success:
         return False, cat_response
 
-    pb_splits = [x for x in game_pbs if x["caetgory"]["name"].lower() == cat_response.lower()][0]
+    pb_splits = [x for x in game_pbs if x["category"]["name"].lower() == cat_response.lower()][0]
     output_game = pb_splits["game"]["name"]
     msg = "{0}'s best splits for {1} {2} is {3} https://splits.io{4}".format(
         username.capitalize(),
         output_game,
         cat_response,
-        time_formatter.format(pb_splits["time"]),
+        time_formatter.format_time(pb_splits["time"]),
         pb_splits["path"]
     )
     return True, msg
