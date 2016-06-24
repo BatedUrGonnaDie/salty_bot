@@ -4,10 +4,10 @@ def find_active_cat(game_categories, title):
     in_title = []
     position = {}
     title = title.lower()
-    for i in game_categories:
-        if i.lower() in title:
-            in_title.append(i)
-            position[i] = title.find(i.lower())
+    for k in game_categories.keys():
+        if k.lower() in title:
+            in_title.append(k)
+            position[k] = title.find(k.lower())
     in_title = list(set(in_title))
 
     in_title_len = len(in_title)

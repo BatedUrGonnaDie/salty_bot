@@ -3,9 +3,9 @@
 import modules.commands.helpers.get_diff_ratio as get_diff_ratio
 
 def find_active_cat(game_categories, user_string):
-    for i in game_categories:
-        if i.lower() == user_string.lower():
-            return True, i
+    for k in game_categories.keys():
+        if k.lower() == user_string.lower():
+            return True, k
 
     best_ratio = {}
     for i in game_categories:
