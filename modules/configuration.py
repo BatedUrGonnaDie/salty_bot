@@ -11,37 +11,49 @@ import queries
 class DBConfig(object):
 
     def __init__(self, dev, db_url):
-        self.dev = dev
+        if dev == "development":
+            self.dev = True
+        else:
+            self.dev = False
         self.db_url = db_url
 
     def initial_retrieve(self):
         with queries.Session(self.db_url) as session:
             if self.dev:
-                users = session.query("SELECT * FROM users AS u WHERE u.id=1")
-                settings = session.query("SELECT * FROM settings AS s WHERE s.user_id=1")
-                commands = session.query("SELECT * FROM commands AS c WHERE c.user_id=1")
-                c_commands = session.query("SELECT * FROM custom_commands AS c WHERE c.user_id=1")
+                session.cursor.execute("SELECT * FROM users AS u WHERE u.id=1")
+                users = session.cursor.fetchall()
+                session.cursor.execute("SELECT * FROM settings AS s WHERE s.user_id=1")
+                settings = session.cursor.fetchall()
+                session.cursor.execute("SELECT * FROM commands AS c WHERE c.user_id=1")
+                commands = session.cursor.fetchall()
+                session.cursor.execute("SELECT * FROM custom_commands AS c WHERE c.user_id=1")
+                c_commands = session.cursor.fetchall()
             else:
-                users = session.query("SELECT * FROM users AS u WHERE u.id IN (SELECT s.user_id FROM settings AS s WHERE s.active=true)")
-                settings = session.query("SELECT * FROM settings AS s WHERE s.active=true")
-                commands = session.query("SELECT * FROM commands AS c WHERE c.user_id IN (SELECT s.user_id FROM settings AS s WHERE s.active=true)")
-                c_commands = session.query("SELECT * FROM custom_commands AS c WHERE c.user_id IN (SELECT s.user_id FROM settings AS s WHERE s.active=true)")
-        users_dict = {}
-        for i in users:
-            user_id = i["id"]
-            i["user_id"] = user_id
-            users_dict[user_id] = i
-            users_dict[user_id]["commands"] = []
-            users_dict[user_id]["custom_commands"] = []
+                session.cursor.execute("SELECT * FROM users AS u WHERE u.id IN (SELECT s.user_id FROM settings AS s WHERE s.active=true)")
+                users = session.cursor.fetchall()
+                session.cursor.execute("SELECT * FROM settings AS s WHERE s.active=true")
+                settings = session.cursor.fetchall()
+                session.cursor.execute("SELECT * FROM commands AS c WHERE c.user_id IN (SELECT s.user_id FROM settings AS s WHERE s.active=true)")
+                commands = session.cursor.fetchall()
+                session.cursor.execute("SELECT * FROM custom_commands AS c WHERE c.user_id IN (SELECT s.user_id FROM settings AS s WHERE s.active=true)")
+                c_commands = session.cursor.fetchall()
 
-        for i in settings:
-            users_dict[i["user_id"]]["settings"] = i
+            users_dict = {}
+            for i in users:
+                user_id = i["id"]
+                i["user_id"] = user_id
+                users_dict[user_id] = i
+                users_dict[user_id]["commands"] = []
+                users_dict[user_id]["custom_commands"] = []
 
-        for i in commands:
-            users_dict[i["user_id"]]["commands"].append(i)
+            for i in settings:
+                users_dict[i["user_id"]]["settings"] = i
 
-        for i in c_commands:
-            users_dict[i["user_id"]]["custom_commands"].append(i)
+            for i in commands:
+                users_dict[i["user_id"]]["commands"].append(i)
+
+            for i in c_commands:
+                users_dict[i["user_id"]]["custom_commands"].append(i)
 
         channels_dict = {}
         for v in users_dict.values():
@@ -79,7 +91,7 @@ class ConfigServer(object):
             self.web_port = kwargs["web_port"]
             self.web_secret = kwargs["web_secret"]
             self.socket = socket.socket()
-            self.socket.bind((self.web_ip, self.web_port))
+            self.socket.bind((self.web_ip, int(self.web_port)))
             self.listen_for_updates = self.db_server
 
     def file_server(self):
