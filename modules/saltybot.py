@@ -1,10 +1,14 @@
 #! /usr/bin/env python2.7
 
+import datetime
 import imp
 import logging
 import os
 import sys
 import time
+
+import isodate
+import pytz
 
 from modules.module_errors import DeactivatedBotException
 
@@ -15,7 +19,8 @@ command_functions = {}
 
 def init_commands():
     cmd_filenames = []
-    cmd_folder = os.path.join(os.getcwd(), "commands")
+    cmd_folder = os.path.join(os.path.dirname(__file__), "commands")
+
     for fn in os.listdir(cmd_folder):
         if os.path.isdir(fn) or not fn.endswith(".py") or fn.startswith("_"):
             continue
@@ -55,7 +60,7 @@ class SaltyBot(object):
 
         self.config = config
 
-        self.twitch_api = apis["twitch"]
+        self.twitch_api = apis["kraken"]
         self.osu_api = apis["osu"]
         self.newbs_api = apis["newbs"]
         self.srl_api = apis["srl"]
@@ -77,7 +82,7 @@ class SaltyBot(object):
         else:
             self.bot_nick = os.environ["default_bot_nick"]
             self.bot_oauth = os.environ["default_bot_oauth"]
-        self.channel = config["twtich_name"]
+        self.channel = config["twitch_name"]
 
         if config["speedruncom_nick"]:
             self.speedruncom_nick = config["speedruncom_nick"].lower()
@@ -89,6 +94,8 @@ class SaltyBot(object):
         self.title = ""
         self.stream_start = ""
         self.is_live = False
+
+        self.highlights = []
 
         self.blacklist_file = "blacklists/{}_blacklist.txt".format(self.channel)
         with open(self.blacklist_file, "a+") as fin:
@@ -125,10 +132,11 @@ class SaltyBot(object):
         # Wipe the dict clean first so that it may be called at anytime for a clean commands build
         self.commands = {}
         self.commands["!bot_info"] = {
-            "custom": False,
+            "custom": True,
             "last": 0,
             "limit": 300,
-            "mod_req": False
+            "mod_req": False,
+            "output": "Powered by SaltyBot, for a full list of command check out the github repo (http://bombch.us/z3x) or to get it in your channel go here http://bombch.us/z3y"
         }
         self.commands["!help"] = {
             "custom": False,
@@ -165,6 +173,22 @@ class SaltyBot(object):
         self.setup_social(new_config)
         self.setup_toobou(new_config)
 
+    def update_twitch_info(self, new_info):
+        if new_info["game"] and self.game != new_info["game"]:
+            if self.game:
+                self.game_history[self.game]["end"] = datetime.datetime.now(pytz.utc)
+            self.game_history[new_info["game"]] = {}
+            self.game_history[new_info["game"]]["start"] = datetime.datetime.now(pytz.utc)
+        elif not new_info["game"]:
+            self.game_history = {}
+
+        if new_info["title"]:
+            self.title = new_info["title"]
+
+        self.stream_start = new_info["stream_start"]
+        self.is_live = new_info["is_live"]
+
+
     def check_permissions(self, c_msg):
         try:
             command = c_msg["message"].split(" ", 1)[0]
@@ -181,31 +205,32 @@ class SaltyBot(object):
             if not c_msg["sender"] == self.channel:
                 return False
 
-        if (time.time() + self.commands[command]["limit"]) < self.commands[command]["last"]:
+        if (time.time() - self.commands[command]["last"]) < self.commands[command]["limit"]:
             return False
 
         return True
 
 
     def process_message(self, c_msg):
-        self.action_functions[c_msg["action"]](c_msg)
+        return self.action_functions[c_msg["action"]](c_msg)
 
     def privmsg(self, c_msg):
         msg_split = c_msg["message"].split(" ")
+        if msg_split[0] not in command_functions.keys():
+            return False
         try:
-            if self.check_permissions(c_msg):
-                if self.commands[msg_split[0]]["custom"]:
-                    success, response = True, self.commands[msg_split[0]]["output"]
-                else:
-                    success, response = command_functions[msg_split[0]](self, c_msg)
-        except KeyError:
-            return
+            if not self.check_permissions(c_msg):
+                return False
+            if self.commands[msg_split[0]]["custom"]:
+                success, response = True, self.commands[msg_split[0]]["output"]
+            else:
+                success, response = command_functions[msg_split[0]](self, c_msg)
         except Exception, e:
             logging.exception(e)
             return
 
         if success:
-            self.commands[msg_split[0]] = time.time()
+            self.commands[msg_split[0]]["last"] = time.time()
         return response
 
     def notice(self, c_msg):
