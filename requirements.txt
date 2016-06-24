@@ -2,3 +2,4 @@ isodate>=0.5.1
 psycopg2>=2.5.4
 pytz>=2015.2
 requests>=2.5.1
+queries>=1.8.10
