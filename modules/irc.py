@@ -4,6 +4,7 @@ import logging
 import Queue
 import socket
 import ssl
+import time
 import threading
 
 PASSTHROUGH_ACTIONS = (
@@ -51,9 +52,13 @@ class IRC(object):
 
     def connect(self):
         self.socket.connect((self.host, self.port))
+        for i in self.capabilities:
+            self.capability(i)
         if self.oauth:
             self.raw("PASS {0}".format(self.oauth))
         self.raw("NICK {0}".format(self.username))
+        time.sleep(.5)
+        self.recv(4096)
         self.connected = True
         if self.channels:
             for i in self.channels:
@@ -199,7 +204,9 @@ class IRC(object):
 
                 msg_parts = self.tokenize(current_message)
                 msg_parts["bot_name"] = self.username
-                print "{0} {1}: {2}".format(msg_parts["channel"], msg_parts["sender"], msg_parts["message"])
+                msg_parts["original"] = current_message
+                if msg_parts["action"] == "PRIVMSG":
+                    print "{0} {1}: {2}".format(msg_parts["channel"], msg_parts["sender"], msg_parts["message"])
                 if msg_parts["action"] == "CAP":
                     if msg_parts["message"].split(" ")[0] == "ACK":
                         self.capabilities.add(msg_parts["message"].split(" ", 1)[1])
