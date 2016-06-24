@@ -7,7 +7,6 @@ import os
 import sys
 import time
 
-import isodate
 import pytz
 
 from modules.module_errors import DeactivatedBotException
