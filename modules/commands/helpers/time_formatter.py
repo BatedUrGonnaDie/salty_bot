@@ -1,6 +1,6 @@
 #! /usr/bin/env python2.7
 
-def format(time):
+def format_time(time):
     m, s = divmod(float(time), 60)
     h, m = divmod(int(m), 60)
     s = round(s, 2)
