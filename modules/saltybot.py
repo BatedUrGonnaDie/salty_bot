@@ -197,12 +197,11 @@ class SaltyBot(object):
         if not self.commands.get(command, None):
             return False
 
+        if c_msg["sender"] in self.elevated_user:
+            return True
+
         if self.commands[command]["mod_req"]:
-            if not c_msg["tags"]["mod"]:
-                return False
-            if not c_msg["sender"] in self.elevated_user:
-                return False
-            if not c_msg["sender"] == self.channel:
+            if not c_msg["tags"]["mod"] and not c_msg["sender"] == self.channel:
                 return False
 
         if (time.time() - self.commands[command]["last"]) < self.commands[command]["limit"]:
