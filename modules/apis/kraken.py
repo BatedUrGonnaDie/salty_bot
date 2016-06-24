@@ -1,85 +1,74 @@
 #! /usr/bin/env python2.7
 
+import os
+
 import modules.apis.api_base as api
 from   modules.apis import api_errors
 
 class Kraken(api.API):
 
-    def __init__(self, oauth_token = None, default_headers = None, check_token = True):
-        if not default_headers:
-            default_headers = {}
-        super(Kraken, self).__init__("https://api.twitch.tv/kraken", default_headers)
-        self.oauth_token = oauth_token
-        if self.oauth_token and check_token:
-            self.check_token()
-        # Feel free to set these manually, they are just here for convenience
-        self.user = ""
-        self.scopes = []
+    def __init__(self, client_id = None, session = None, oauth = None):
+        if client_id == None and not os.environ.get("salty_twitch_client_id", None):
+            if session == None or not session.headers.get("Client-ID", None):
+                raise api_errors.AuthorizationRequiredError
+        super(Kraken, self).__init__("https://api.twitch.tv/kraken", session)
+        self.oauth = oauth
+        self.session.headers["Client-ID"] = client_id or os.environ["salty_twitch_client_id"]
 
-    def set_oauth(self, oauth_token, check_token = True):
-        self.oauth_otken = oauth_token
-        if check_token:
-            self.check_token()
 
-    # Get scopes and who the token is valid for
-    def check_token(self):
-        header = {"Authorization": "Oauth " + self.oauth_token}
-        success, response = self.root(header)
-        if success and response["token"]["valid"]:
-            self.user = response["token"]["user_name"]
-            self.scopes = response["token"]["authorization"]["scopes"]
-            return True
-        return False
-
-    def find_token(self, oauth, headers):
-        if headers["Authorization"]: return headers["Authorization"]
-        if oauth: return oauth
-        if self.oauth_token: return self.oauth_token
-        raise api_errors.AuthorizationRequiredError("This endopint requires an oauth toekn.")
+    @property
+    def oauth(self):
+        return self._oauth
+    @oauth.setter
+    def oauth(self, oauth):
+        self._oauth = oauth
+        self.session.headers["Authorization"] = oauth
 
     # Endpoints
-    def root(self, headers = None, **kwargs):
+    def root(self, **kwargs):
         # Root gives information about your oauth key
         endpoint = "/"
-        success, response = self.get(endpoint, headers=headers, **kwargs)
+        success, response = self.get(endpoint, **kwargs)
         return success, response
 
-    def get_stream(self, channel, headers = None, **kwargs):
+    def get_stream(self, channel, **kwargs):
         # Pass a channel that you would like the stream object for
         endpoint = "/streams/{0}".format(channel)
-        success, response = self.get(endpoint, headers=headers, **kwargs)
+        success, response = self.get(endpoint, **kwargs)
         return success, response
 
-    def get_streams(self, channels, headers = None, **kwargs):
+    def get_streams(self, channels, **kwargs):
         # Pass an array of channel you would like to retrieve stream objects for
         endpoint = "/streams?channel={0}".format(','.join(channels))
-        success, response = self.get(endpoint, headers=headers, **kwargs)
+        success, response = self.get(endpoint, **kwargs)
         return success, response
 
-    def get_steams_featured(self, headers = None, **kwargs):
+    def get_steams_featured(self, **kwargs):
         endpoint = "/streams/featured"
-        success, response = self.get(endpoint, headers=headers, **kwargs)
+        success, response = self.get(endpoint, **kwargs)
         return success, response
 
-    def get_streams_summarry(self, headers = None, **kwargs):
+    def get_streams_summarry(self, **kwargs):
         endpoint = "/streams/summary"
-        success, response = self.get(endpoint, headers=headers, **kwargs)
+        success, response = self.get(endpoint, **kwargs)
         return success, response
 
-    def get_channel(self, channel, headers = None, **kwargs):
+    def get_channel(self, channel, **kwargs):
         endpoint = "/channels/{0}".format(channel)
-        success, response = self.get(endpoint, headers=headers, **kwargs)
+        success, response = self.get(endpoint, **kwargs)
         return success, response
 
-    def get_channel_authed(self, oauth = None, headers = None, **kwargs):
-        headers["Authorization"] = self.find_token(oauth, headers)
+    def get_channel_authed(self, **kwargs):
+        if not self.oauth:
+            raise api_errors.AuthorizationRequiredError
         endpoint = "/channel"
-        success, response = self.get(endpoint, headers=headers, **kwargs)
+        success, response = self.get(endpoint, **kwargs)
         return success, response
 
-    def put_channel(self, channel, data, oauth = None, headers = None, **kwargs):
-        headers["Authorization"] = self.find_token(oauth, headers)
+    def put_channel(self, channel, data, **kwargs):
+        if not self.oauth:
+            raise api_errors.AuthorizationRequiredError
         endpoint = "/channels/{0}".format(channel)
-        success, response = self.put(endpoint, headers=headers, data=data, **kwargs)
+        success, response = self.put(endpoint, data=data, **kwargs)
         return success, response
 
