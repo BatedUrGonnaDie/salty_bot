@@ -1,5 +1,7 @@
 #! /usr/bin/env python2.7
 
+import logging
+
 import requests
 
 class API(object):
@@ -25,6 +27,9 @@ class API(object):
             return True, data_decode
         except requests.exceptions.HTTPError:
             return False, data
+        except Exception, e:
+            logging.exception(e)
+            return None, "Uncaught exception from requests."
 
     def post(self, endpoint, data, **kwargs):
         url = self.base_url + endpoint
@@ -36,6 +41,9 @@ class API(object):
             return True, data_decode
         except requests.exceptions.HTTPError:
             return False, data
+        except Exception, e:
+            logging.exception(e)
+            return None, "Uncaught exception from requests."
 
     def put(self, endpoint, data, **kwargs):
         url = self.base_url + endpoint
@@ -47,6 +55,9 @@ class API(object):
             return True, data_decode
         except requests.exceptions.HTTPError:
             return False, data
+        except Exception, e:
+            logging.exception(e)
+            return None, "Uncaught exception from requests."
 
     def delete(self, endpoint, **kwargs):
         url = self.base_url + endpoint
@@ -58,3 +69,6 @@ class API(object):
             return True, data_decode
         except requests.exceptions.HTTPError:
             return False, data
+        except Exception, e:
+            logging.exception(e)
+            return None, "Uncaught exception from requests."
