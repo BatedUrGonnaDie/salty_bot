@@ -138,7 +138,7 @@ class SaltyBot(object):
             "last": 0,
             "limit": 300,
             "mod_req": False,
-            "output": "Powered by SaltyBot, for a full list of command check out the github repo (http://bombch.us/z3x) or to get it in your channel go here http://bombch.us/z3y"
+            "output": "Powered by SaltyBot, for a full list of command check out the github repo http://bombch.us/z3x or to get it in your channel go here http://bombch.us/z3y"
         }
         self.commands["!help"] = {
             "custom": False,

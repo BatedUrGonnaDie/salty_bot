@@ -1506,7 +1506,7 @@ class SaltyBot(object):
 
                     elif c_msg["message"] == "bot_info":
                         if self.command_check(c_msg, "!bot_info"):
-                            msg = "Powered by SaltyBot, for a full list of command check out the github repo (http://bombch.us/z3x) or to get it in your channel go here http://bombch.us/z3y"
+                            msg = "Powered by SaltyBot, for a full list of command check out the github repo http://bombch.us/z3x or to get it in your channel go here http://bombch.us/z3y"
                             self.twitch_send_message(msg, "!bot_info")
 
                     elif c_msg["message"] == "restart" and c_msg["sender"] in SUPER_USER:
