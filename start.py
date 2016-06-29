@@ -58,7 +58,7 @@ def listen_thread(config_obj, balancer_obj, server_obj):
                 balancer_obj.add_bot(saltybot.SaltyBot(i, GLOBAL_APIS))
     return
 
-def main(**kwargs):
+def main():
     logging.basicConfig(
         filename="debug.log",
         filemode="w",
@@ -69,7 +69,7 @@ def main(**kwargs):
     logging.getLogger("requests").setLevel(logging.WARNING)
     with open("env_config.json", "r") as fin:
         envs = json.load(fin)
-    salty_environment = kwargs.get("SALTY_ENV", None) or os.environ.get("salty_environment", None) or "development"
+    salty_environment = os.environ.get("salty_environment", None) or "development"
     for k, v in envs[salty_environment].iteritems():
         os.environ[k] = str(v)
 
