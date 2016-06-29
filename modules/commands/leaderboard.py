@@ -18,15 +18,17 @@ def call(salty_inst, c_msg, **kwargs):
 
     for i in response["data"]:
         if twitch_game:
-            if i["name"]["international"] == game:
+            if i["name"]["international"].lower() == game.lower():
                 game_record = i
                 break
         else:
             if get_diff_ratio.diff_ratio(game.lower(), i["names"]["international"].lower()) > .8:
                 game_record = i
                 break
+            elif i["abbreviation"].lower() == game.lower():
+                game_record = i
+                break
     else:
-        print "No game found."
-        return False, "Could not find a suitable game match for {0}".format(game)
+        return False, "Could not find a suitable game match for {0}.".format(game)
 
     return True, game_record["weblink"]

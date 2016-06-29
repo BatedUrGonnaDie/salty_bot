@@ -20,7 +20,7 @@ class OsuAPI(api.API):
 
     def get_user(self, user, tmp_key = None, **kwargs):
         key = tmp_key if tmp_key else self.api_key
-        endpoint = "/get_user?k={}&user={}".format(key, user)
+        endpoint = "/get_user?k={}&u={}".format(key, user)
         success, response = self.get(endpoint, **kwargs)
         return success, response
 

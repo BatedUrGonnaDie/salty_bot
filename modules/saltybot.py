@@ -1,5 +1,6 @@
 #! /usr/bin/env python2.7
 
+import ast
 import datetime
 import imp
 import logging
@@ -56,6 +57,8 @@ class SaltyBot(object):
             "ROOMSTATE"       : self.roomstate,
             "CAP"             : self.cap
         }
+        self.super_users = ast.literal_eval(os.environ["salty_super_users"])
+        self.super_users = [x.strip() for x in self.super_users]
 
         self.config = config
 
@@ -196,7 +199,7 @@ class SaltyBot(object):
         if not self.commands.get(command, None):
             return False
 
-        if c_msg["sender"] in self.elevated_user:
+        if c_msg["sender"] in self.super_users:
             return True
 
         if self.commands[command]["mod_req"]:
