@@ -158,7 +158,7 @@ class SaltyBot(object):
                 }
         for i in config["custom_commands"]:
             if i["on"]:
-                self.commands["!{}".format(i["name"])] = {
+                self.commands["!{}".format(i["trigger"])] = {
                     "custom": True,
                     "last": 0,
                     "limit": i["limit"] or 30,
