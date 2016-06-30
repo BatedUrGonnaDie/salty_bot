@@ -74,6 +74,7 @@ def main():
         os.environ[k] = str(v)
 
     GLOBAL_APIS["kraken"] = kraken.Kraken()
+    GLOBAL_APIS["kraken"].session.headers["User-Agent"] = "SaltyBot"
     GLOBAL_APIS["newbs"] = newbs.NewbsAPI()
     GLOBAL_APIS["osu"] = osu.OsuAPI()
     GLOBAL_APIS["splits_io"] = splits_io.SplitsIOAPI()
