@@ -113,14 +113,12 @@ def main():
     l_thread.start()
 
     try:
+        global RUNNING
         while RUNNING:
             input("> ")
     except KeyboardInterrupt:
         print "Time to shut down!"
         RUNNING = False
-        l_thread.join()
-        tu_thread.join()
-
 
 if __name__ == "__main__":
     main()
