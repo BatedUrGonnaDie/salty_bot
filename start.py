@@ -24,6 +24,7 @@ RUNNING = True
 GLOBAL_APIS = {}
 
 def twitch_update_thread(balancer_obj):
+    sleep_timer = 2
     while RUNNING:
         with balancer_obj.lock:
             channels = [x["bots"].keys() for x in balancer_obj.connections.values()]
@@ -31,9 +32,10 @@ def twitch_update_thread(balancer_obj):
 
         success, response = GLOBAL_APIS["kraken"].get_streams(channels)
         if not success:
-            time.sleep(10)
+            time.sleep(sleep_timer)
+            sleep_timer = sleep_timer ** 2
             continue
-        new_info = {i : {"game" : "", "title" : "", "stream_start" : "", "is_live" : False} for i in channels}
+        new_info = {x : {"game" : "", "title" : "", "stream_start" : "", "is_live" : False} for x in channels}
         for i in response["streams"]:
             new_info[i["channel"]["name"]] = {
                 "game" : i["channel"]["game"],
@@ -42,6 +44,7 @@ def twitch_update_thread(balancer_obj):
                 "stream_start" : i["created_at"]
             }
         balancer_obj.update_twitch(new_info)
+        sleep_timer = 2
         time.sleep(60)
     return
 
@@ -114,6 +117,9 @@ def main():
             input("> ")
     except KeyboardInterrupt:
         print "Time to shut down!"
+        RUNNING = False
+        l_thread.join()
+        tu_thread.join()
 
 
 if __name__ == "__main__":

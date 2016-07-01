@@ -4,8 +4,8 @@ import modules.apis.api_base as api
 
 class NewbsAPI(api.API):
 
-    def __init__(self, session = None):
-        super(NewbsAPI, self).__init__("https://leagueofnewbs.com/api", session)
+    def __init__(self, headers = None, cookies = None):
+        super(NewbsAPI, self).__init__("https://leagueofnewbs.com/api", headers=headers, cookies=cookies)
 
     def add_textutil(self, channel, text_type, data, **kwargs):
         endpoint = "/users/{0}/{1}s".format(channel, text_type)

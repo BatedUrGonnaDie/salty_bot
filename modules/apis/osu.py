@@ -7,16 +7,11 @@ from   modules.apis import api_errors
 
 class OsuAPI(api.API):
 
-    def __init__(self, key = None, session = None):
-        if key == None and not os.getenv("osu_api_key"):
-            if session == None or not session.params["k"]:
-                raise api_errors.AuthorizationRequiredError
-            else:
-                self.api_key = session.params["k"]
-                del session.params["k"]
-        else:
-            self.api_key = key or os.environ["osu_api_key"]
-        super(OsuAPI, self).__init__("https://osu.ppy.sh/api", session)
+    def __init__(self, key = None, headers = None, cookies = None):
+        self.api_key = key or os.environ.get("osu_api_key", None)
+        if not self.api_key:
+            raise api_errors.AuthorizationRequiredError
+        super(OsuAPI, self).__init__("https://osu.ppy.sh/api", headers=headers, cookies=cookies)
 
     def get_user(self, user, tmp_key = None, **kwargs):
         key = tmp_key if tmp_key else self.api_key
