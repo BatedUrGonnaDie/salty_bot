@@ -21,7 +21,7 @@ def call(salty_inst, c_msg, **kwargs):
         category = salty_inst.title
 
     if search_game:
-        success, response = salty_inst.sr_com_api.get_games(game, embeds=["categories"])
+        success, response = salty_inst.sr_com_api.get_games({"name" : game}, embeds=["categories"])
         if not success:
             return False, \
                 "Error retrieving games from speedrun.com ({0}).".format(response.status_code)

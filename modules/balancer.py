@@ -97,4 +97,4 @@ class Balancer(object):
             with self.lock:
                 self.connections[c_msg["bot_name"]]["irc_obj"].privmsg(c_msg["channel"][1:], outbound)
         elif outbound:
-            print "{0} {1}: {2}".format(c_msg["channel"], c_msg["bot_name"], outbound)
+            print "[DARK] {0} {1}: {2}".format(c_msg["channel"], c_msg["bot_name"], outbound)

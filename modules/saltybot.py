@@ -183,6 +183,7 @@ class SaltyBot(object):
             self.game_history[new_info["game"]]["start"] = datetime.datetime.now(pytz.utc)
         elif not new_info["game"]:
             self.game_history = {}
+        self.game = new_info["game"]
 
         if new_info["title"]:
             self.title = new_info["title"]
