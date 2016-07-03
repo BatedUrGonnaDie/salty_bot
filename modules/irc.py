@@ -206,7 +206,10 @@ class IRC(object):
                 msg_parts["bot_name"] = self.username
                 msg_parts["original"] = current_message
                 if msg_parts["action"] == "PRIVMSG":
-                    print "{0} {1}: {2}".format(msg_parts["channel"], msg_parts["sender"], msg_parts["message"])
+                    try:
+                        print "{0} {1}: {2}".format(msg_parts["channel"], msg_parts["sender"], msg_parts["message"])
+                    except Exception:
+                        pass
                 if msg_parts["action"] == "CAP":
                     if msg_parts["message"].split(" ")[0] == "ACK":
                         self.capabilities.add(msg_parts["message"].split(" ", 1)[1])
