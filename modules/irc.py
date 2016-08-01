@@ -205,7 +205,12 @@ class IRC(object):
                     self.pong(current_message.split("PING ")[0])
                     continue
 
-                msg_parts = self.tokenize(current_message)
+                try:
+                    msg_parts = self.tokenize(current_message)
+                except Exception, e:
+                    logging.error(current_message)
+                    logging.exception(e)
+                    continue
                 msg_parts["bot_name"] = self.username
                 msg_parts["original"] = current_message
                 if msg_parts["action"] == "PRIVMSG":
