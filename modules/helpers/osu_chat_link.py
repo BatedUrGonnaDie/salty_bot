@@ -13,7 +13,7 @@ def call(salty_inst, c_msg, **kwargs):
         if not success:
             continue
         final_list.append("[{0}] {1} - {2}, mapped by {3} ({4} stars".format(
-            time_formatter.format(response[0]["total_length"]),
+            time_formatter.format_time(response[0]["total_length"]),
             response[0]["artist"],
             response[0]["title"],
             response[0]["creator"],

@@ -26,7 +26,7 @@ def call(salty_inst, c_msg, **kwargs):
 
     for i in response["items"]:
         final_list.append("[{0}] {1} uploaded by {2}. Views: {3}".format(
-            time_formatter.format(isodate.parse_duration(i["contentDetails"]["duration"])),
+            time_formatter.format_time(isodate.parse_duration(i["contentDetails"]["duration"])),
             i["snippet"]["title"].encode("utf-8"),
             i["snippet"]["channelTitle"].encode("utf-8"),
             i["statistics"]["viewCount"]
