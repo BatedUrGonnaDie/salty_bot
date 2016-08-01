@@ -133,7 +133,10 @@ class IRC(object):
         else:
             c_msg["sender"] = msg_split[1][1:]
         c_msg["action"] = msg_split[2]
-        c_msg["channel"] = msg_split[3]
+        try:
+            c_msg["channel"] = msg_split[3]
+        except IndexError:
+            c_msg["channel"] = ""
         try:
             c_msg["message"] = " ".join(msg_split[4:])
             if c_msg["message"].startswith(":"):
