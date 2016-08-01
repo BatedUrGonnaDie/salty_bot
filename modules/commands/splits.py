@@ -7,7 +7,7 @@ from modules.commands.helpers import time_formatter
 def call(salty_inst, c_msg, **kwargs):
     msg_split = c_msg["message"].split(" ", 3)
 
-    game_type = "name"
+
     infer_category = False
     try:
         username = msg_split[1]
@@ -15,10 +15,8 @@ def call(salty_inst, c_msg, **kwargs):
         username = salty_inst.channel
     try:
         game = msg_split[2]
-        game_type = "shortname"
     except IndexError:
         game = salty_inst.game
-        infer_category = True
     try:
         category = msg_split[3]
     except IndexError:
@@ -29,7 +27,7 @@ def call(salty_inst, c_msg, **kwargs):
     if not success:
         return False, \
             "Error retrieving info from splits.io ({0}).".format(response.status_code)
-    game_pbs = [x for x in response["pbs"] if x["game"] and (x["game"][game_type] or "").lower() == game.lower()]
+    game_pbs = [x for x in response["pbs"] if x["game"] and (x["game"]["name"].lower() == game.lower() or x["game"]["shortname"].lower() == game.lower())]
     game_categories = {x["category"]["name"] : x["category"]["name"] for x in game_pbs if x["category"]}
 
     if infer_category:
