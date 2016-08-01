@@ -21,4 +21,4 @@ def get(salty_inst, c_msg, text_type, **kwargs):
     if not success:
         return False, \
             "Error retrieving {0} from the database ({1})".format(text_type, response.status_code)
-    return True, response["{0}s".format(text_type)]["text"]
+    return True, response["{0}s".format(text_type)][0]["text"]
