@@ -213,6 +213,7 @@ class IRC(object):
                     continue
                 msg_parts["bot_name"] = self.username
                 msg_parts["original"] = current_message
+
                 if msg_parts["action"] == "PRIVMSG":
                     try:
                         print "{0} {1}: {2}".format(msg_parts["channel"], msg_parts["sender"], msg_parts["message"])
