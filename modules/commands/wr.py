@@ -75,7 +75,8 @@ def call(salty_inst, c_msg, **kwargs):
     if response["data"]["runs"][0]["run"]["videos"]:
         msg += " Video: {0}".format(response["data"]["runs"][0]["run"]["videos"]["links"][0]["uri"])
     if response["data"]["runs"][0]["run"]["splits"]:
-        msg += " Splits: {0}".format(response["data"]["runs"][0]["run"]["splits"]["uri"])
+        splits_path = response["data"]["runs"][0]["run"]["splits"]["uri"].split("/")[-1]
+        msg += " Splits: https://splits.io/{0}".format(splits_path)
 
     return True, msg
 
