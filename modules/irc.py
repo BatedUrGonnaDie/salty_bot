@@ -19,7 +19,7 @@ PASSTHROUGH_ACTIONS = (
     "MODE",
     "RECONNECT",
     "ROOMSTATE",
-    "CAP",
+    "CAP"
 )
 
 class IRC(object):
@@ -164,7 +164,10 @@ class IRC(object):
                 t.daemon = True
                 t.start()
                 self.tmp_threads.append(t)
-            self.callback(self.queue.get())
+            try:
+                self.callback(self.queue.get())
+            except Exception, e:
+                logging.exception(e)
             self.queue.task_done()
             if self.tmp_threads and self.queue.empty():
                 for i in self.tmp_threads:
