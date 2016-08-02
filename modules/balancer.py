@@ -1,11 +1,51 @@
 #! /usr/bin/env python2.7
 
+import imp
 import logging
+import os
+import sys
 import threading
 
 from modules import twitch_irc
 from modules.module_errors import DeactivatedBotException
 from modules.module_errors import NewBotException
+
+helper_functions = {
+    "PRIVMSG"         : [],
+    "NOTICE"          : [],
+    "USERSTATE"       : [],
+    "GLOBALUSERSTATE" : [],
+    "HOSTTARGET"      : [],
+    "CLEARCHAT"       : [],
+    "JOIN"            : [],
+    "PART"            : [],
+    "MODE"            : [],
+    "RECONNECT"       : [],
+    "ROOMSTATE"       : [],
+    "CAP"             : []
+}
+
+def init_helpers():
+    for k in helper_functions.keys():
+        helper_functions[k] = []
+    helper_filenames = []
+    helper_folder = os.path.join(os.path.dirname(__file__), "helpers")
+
+    for fn in os.listdir(helper_folder):
+        if os.path.isdir(fn) or not fn.endswith(".py") or fn.startswith("_"):
+            continue
+        helper_filenames.append(os.path.join(helper_folder, fn))
+    for helper in helper_filenames:
+        imp_name = os.path.basename(helper)[:-3]
+        try:
+            module = imp.load_source(imp_name, helper)
+            sys.modules[imp_name] = module
+            helper_functions[module.ON_ACTION].append(module.call)
+        except Exception, e:
+            print "Error importing {0}.".format(imp_name)
+            print e
+
+init_helpers()
 
 class Balancer(object):
 
@@ -79,13 +119,6 @@ class Balancer(object):
 
     def process_incomming(self, c_msg):
         with self.lock:
-            if c_msg["action"] == "RECONNECT":
-                irc_obj = self.connections[c_msg["bot_name"]]["irc_obj"]
-                old_host = irc_obj.host
-                irc_obj.host = irc_obj.get_peer_ip()
-                irc_obj.reconnect()
-                irc_obj.host = old_host
-
             bot_obj = self.connections[c_msg["bot_name"]]["bots"][c_msg["channel"][1:]]
         try:
             outbound = bot_obj.process_message(c_msg)
@@ -98,3 +131,16 @@ class Balancer(object):
                 self.connections[c_msg["bot_name"]]["irc_obj"].privmsg(c_msg["channel"][1:], outbound)
         elif outbound:
             print "[DARK] {0} {1}: {2}".format(c_msg["channel"], c_msg["bot_name"], outbound)
+
+        for k, v in helper_functions.iteritems():
+            if k == c_msg["action"]:
+                for i in v:
+                    try:
+                        success, response = i(bot_obj, c_msg, self)
+                    except Exception, e:
+                        logging.error("Error in callback for {0}s".format(k))
+                        logging.exception(e)
+                        continue
+                    if success and response:
+                        self.connections[c_msg["bot_name"]]["irc_obj"].privmsg(c_msg["channel"][1:], response)
+                break
