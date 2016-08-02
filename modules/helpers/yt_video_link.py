@@ -7,10 +7,12 @@ import isodate
 import modules.extensions.regexes as regexes
 import modules.commands.helpers.time_formatter as time_formatter
 
-def call(salty_inst, c_msg, **kwargs):
+ON_ACTION = "PRIVMSG"
+
+def call(salty_inst, c_msg, balancer, **kwargs):
     video_ids = re.findall(regexes.YOUTUBE_URL, c_msg["message"])
     if not video_ids:
-        return
+        return False, "No video ids"
     seen_ids = set()
     seen_add = seen_ids.add
     video_ids = [x for x in video_ids if not (x in seen_ids or seen_add(x))]
@@ -26,9 +28,9 @@ def call(salty_inst, c_msg, **kwargs):
 
     for i in response["items"]:
         final_list.append("[{0}] {1} uploaded by {2}. Views: {3}".format(
-            time_formatter.format_time(isodate.parse_duration(i["contentDetails"]["duration"])),
+            time_formatter.format_time(isodate.parse_duration(i["contentDetails"]["duration"]).seconds),
             i["snippet"]["title"].encode("utf-8"),
             i["snippet"]["channelTitle"].encode("utf-8"),
             i["statistics"]["viewCount"]
         ))
-    return " | ".join(final_list)
+    return True, " | ".join(final_list)
