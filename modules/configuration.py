@@ -63,13 +63,13 @@ class DBConfig(object):
 
     def fetch_one(self, user_id):
         with queries.Session(self.db_url) as session:
-            session.cursor.execute("SELECT * FROM users AS u WHERE u.id=%s", str(user_id))
+            session.cursor.execute("SELECT * FROM users AS u WHERE u.id=%s", user_id)
             users = session.cursor.fetchone()
-            session.cursor.execute("SELECT * FROM settings AS s WHERE s.user_id=%s", str(user_id))
+            session.cursor.execute("SELECT * FROM settings AS s WHERE s.user_id=%s", user_id)
             settings = session.cursor.fetchone()
-            session.cursor.execute("SELECT * FROM commands AS c WHERE c.user_id=%s", str(user_id))
+            session.cursor.execute("SELECT * FROM commands AS c WHERE c.user_id=%s", user_id)
             commands = session.cursor.fetchone()
-            session.cursor.execute("SELECT * FROM custom_commands AS cc WHERE cc.user_id=%s", str(user_id))
+            session.cursor.execute("SELECT * FROM custom_commands AS cc WHERE cc.user_id=%s", user_id)
             custom_commands = session.cursor.fetchone()
 
         return {
@@ -126,4 +126,4 @@ class ConfigServer(object):
                 continue
             to_update = connection.recv(128)
             connection.close()
-            return to_update
+            return json.loads(to_update)["user_id"]
