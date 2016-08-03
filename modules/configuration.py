@@ -62,7 +62,7 @@ class DBConfig(object):
         return channels_dict
 
     def fetch_one(self, user_id):
-        with queries.Sessions(self.db_url) as session:
+        with queries.Session(self.db_url) as session:
             session.cursor.execute("SELECT * FROM users AS u WHERE u.id=%s", user_id)
             users = session.cursor.fetchone()
             session.cursor.execute("SELECT * FROM settings AS s WHERE s.user_id=%s", user_id)
