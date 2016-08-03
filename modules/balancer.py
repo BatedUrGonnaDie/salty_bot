@@ -126,11 +126,10 @@ class Balancer(object):
             logging.exception(e)
             return
 
-        if outbound and False:
+        if outbound:
             with self.lock:
                 self.connections[c_msg["bot_name"]]["irc_obj"].privmsg(c_msg["channel"][1:], outbound)
-        elif outbound:
-            print "[DARK] {0} {1}: {2}".format(c_msg["channel"], c_msg["bot_name"], outbound)
+            print "{0} {1}: {2}".format(c_msg["channel"], c_msg["bot_name"], outbound)
 
         for k, v in helper_functions.iteritems():
             if k == c_msg["action"]:
