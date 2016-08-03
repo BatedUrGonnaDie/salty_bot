@@ -68,9 +68,9 @@ class DBConfig(object):
             session.cursor.execute("SELECT * FROM settings AS s WHERE s.user_id=%s", (user_id,))
             settings = session.cursor.fetchone()
             session.cursor.execute("SELECT * FROM commands AS c WHERE c.user_id=%s", (user_id,))
-            commands = session.cursor.fetchone()
+            commands = session.cursor.fetchall()
             session.cursor.execute("SELECT * FROM custom_commands AS cc WHERE cc.user_id=%s", (user_id,))
-            custom_commands = session.cursor.fetchone()
+            custom_commands = session.cursor.fetchall()
 
         users["settings"] = settings
         users["commands"] = commands
