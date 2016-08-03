@@ -62,7 +62,22 @@ class DBConfig(object):
         return channels_dict
 
     def fetch_one(self, user_id):
-        pass
+        with queries.Sessions(self.db_url) as session:
+            session.cursor.execute("SELECT * FROM users AS u WHERE u.id=%s", user_id)
+            users = session.cursor.fetchone()
+            session.cursor.execute("SELECT * FROM settings AS s WHERE s.user_id=%s", user_id)
+            settings = session.cursor.fetchone()
+            session.cursor.execute("SELECT * FROM commands AS c WHERE c.user_id=%s", user_id)
+            commands = session.cursor.fetchone()
+            session.cursor.execute("SELECT * FROM custom_commands AS cc WHERE cc.user_id=%s", user_id)
+            custom_commands = session.cursor.fetchone()
+
+        return {
+            users.twitch_name : users,
+            "settings" : settings,
+            "commands" : commands,
+            "custom_commands" : custom_commands
+        }
 
 class JSONConfig(object):
 
