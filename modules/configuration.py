@@ -72,12 +72,10 @@ class DBConfig(object):
             session.cursor.execute("SELECT * FROM custom_commands AS cc WHERE cc.user_id=%s", (user_id,))
             custom_commands = session.cursor.fetchone()
 
-        return {
-            users["twitch_name"] : users,
-            "settings" : settings,
-            "commands" : commands,
-            "custom_commands" : custom_commands
-        }
+        users["settings"] = settings
+        users["commands"] = commands
+        users["custom_commands"] = custom_commands
+        return users
 
 class JSONConfig(object):
 
