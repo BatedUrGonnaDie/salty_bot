@@ -73,7 +73,7 @@ class DBConfig(object):
             custom_commands = session.cursor.fetchone()
 
         return {
-            users.twitch_name : users,
+            users["twitch_name"] : users,
             "settings" : settings,
             "commands" : commands,
             "custom_commands" : custom_commands
