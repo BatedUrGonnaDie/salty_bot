@@ -116,8 +116,13 @@ class ConfigServer(object):
     def db_server(self):
         while True:
             self.socket.listen(1)
-            connection, address = self.socket.accept()
-            secret = connection.recv(128)
+            try:
+                connection, address = self.socket.accept()
+                secret = connection.recv(128)
+            except Exception, e:
+                logging.error("Error with connection in db_server")
+                logging.exception(e)
+                continue
             if secret != self.web_secret:
                 connection.close()
                 logging.error("Wrong secret key received from IP: {0}".format(address))
