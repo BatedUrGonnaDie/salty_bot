@@ -27,7 +27,14 @@ def call(salty_inst, c_msg, **kwargs):
     if not success:
         return False, \
             "Error retrieving info from splits.io ({0}).".format(response.status_code)
-    game_pbs = [x for x in response["pbs"] if x["game"] and (x["game"]["name"].lower() == game.lower() or x["game"]["shortname"].lower() == game.lower())]
+    game_pbs = []
+    for i in response["pbs"]:
+        if not i["game"]:
+            continue
+        if (i["game"]["name"] or "").lower() == game:
+            game_pbs.append(i)
+        if (i["game"]["shortname"] or "").lower() == game:
+            game_pbs.append(i)
     game_categories = {x["category"]["name"] : x["category"]["name"] for x in game_pbs if x["category"]}
 
     if infer_category:
