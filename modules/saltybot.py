@@ -218,7 +218,7 @@ class SaltyBot(object):
 
     def privmsg(self, c_msg):
         msg_split = c_msg["message"].split(" ")
-        if msg_split[0] not in command_functions.keys():
+        if msg_split[0] not in command_functions.keys() and msg_split[0] not in self.commands.keys():
             return False
         try:
             if not self.check_permissions(c_msg):
