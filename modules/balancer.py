@@ -71,6 +71,7 @@ class Balancer(object):
         # i.e. With the same lock as when you check that there is no more bots on a connection
         logging.debug("Removing connection for {0}.".format(username))
         self.connections[username]["irc_obj"].continue_loop = False
+        self.connections[username]["irc_obj"].disconnect()
         self.connections[username]["thread"].join()
         del self.connections[username]
 
@@ -92,12 +93,13 @@ class Balancer(object):
     def update_bot(self, new_config):
         with self.lock:
             try:
-                self.connections["bots"][new_config["twitch_name"]].update_config(new_config)
+                self.connections[new_config["bot_nick"]]["bots"][new_config["twitch_name"]].update_config(new_config)
+                logging.debug("Updated bot for {0}.".format(new_config["twitch_name"]))
             except KeyError:
                 # Tells the main thread/listener to create a fresh bot
                 raise NewBotException
             except DeactivatedBotException:
-                self.remove_bot(new_config["bot_name"], new_config["twitch_name"], lock=False)
+                self.remove_bot(new_config["bot_nick"], new_config["twitch_name"], lock=False)
 
     def update_twitch(self, new_info):
         with self.lock:
@@ -124,6 +126,7 @@ class Balancer(object):
             outbound = bot_obj.process_message(c_msg)
         except Exception, e:
             logging.exception(e)
+            logging.error(c_msg)
             return
 
         if outbound:
