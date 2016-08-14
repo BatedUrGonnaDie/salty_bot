@@ -39,6 +39,7 @@ class IRC(object):
         self.create()
         self.callback = callback
         self.queue = Queue.Queue()
+        self.queue_size = 0
         self.worker_thread = threading.Thread(target=self.msg_worker)
         self.worker_thread.daemon = True
         self.worker_thread.start()
@@ -159,7 +160,7 @@ class IRC(object):
 
     def msg_worker(self):
         while self.continue_loop:
-            if self.queue.qsize > 20:
+            if self.queue_size > 20:
                 t = threading.Thread(target=self.tmp_msg_worker)
                 t.daemon = True
                 t.start()
@@ -168,6 +169,7 @@ class IRC(object):
                 self.callback(self.queue.get())
             except Exception, e:
                 logging.exception(e)
+            self.queue_size -= 1
             self.queue.task_done()
             if self.tmp_threads and self.queue.empty():
                 for i in self.tmp_threads:
@@ -177,6 +179,7 @@ class IRC(object):
         while True:
             try:
                 self.callback(self.queue.get(False))
+                self.queue_size -= 1
                 self.queue.task_done()
             except Queue.Empty:
                 break
@@ -230,6 +233,7 @@ class IRC(object):
 
                 if self.callback and msg_parts["action"] in PASSTHROUGH_ACTIONS:
                     self.queue.put(msg_parts)
+                    self.queue_size += 1
             if lines[0] != "":
                 msg_buffer = lines[0]
             else:
