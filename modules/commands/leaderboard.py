@@ -10,6 +10,8 @@ def call(salty_inst, c_msg, **kwargs):
     except IndexError:
         game = salty_inst.game
         twitch_game = True
+    if not game:
+        return
     success, response = salty_inst.sr_com_api.get_games({"name" : game}, **kwargs)
 
     if not success:
