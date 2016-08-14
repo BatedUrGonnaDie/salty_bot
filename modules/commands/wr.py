@@ -42,8 +42,11 @@ def call(salty_inst, c_msg, **kwargs):
                 decode = {"message": "Game {0} could not be found".format(game), "status" : 404}
             return False, "{0} ({1})".format(decode["message"], decode["status"])
 
-        found_categories = {x["name"] : x["id"] for x in response["data"][0]["categories"]["data"] if x["type"] == "per-game"}
-        game_id = response["data"][0]["id"]
+        try:
+            found_categories = {x["name"] : x["id"] for x in response["data"][0]["categories"]["data"] if x["type"] == "per-game"}
+            game_id = response["data"][0]["id"]
+        except IndexError:
+            return False, "No game found for: {0}.".format(game)
 
     if infer_category:
         category_finder = get_category_title.find_active_cat
