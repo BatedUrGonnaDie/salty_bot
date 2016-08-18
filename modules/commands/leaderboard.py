@@ -20,7 +20,7 @@ def call(salty_inst, c_msg, **kwargs):
 
     for i in response["data"]:
         if twitch_game:
-            if i["name"]["international"].lower() == game.lower():
+            if i["names"]["international"].lower() == game.lower():
                 game_record = i
                 break
         else:
