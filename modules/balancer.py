@@ -97,6 +97,11 @@ class Balancer(object):
                 logging.debug("Updated bot for {0}.".format(new_config["twitch_name"]))
             except KeyError:
                 # Tells the main thread/listener to create a fresh bot
+                channel = new_config["twitch_name"]
+                for k, v in self.connections.iteritems():
+                    if channel in v["bots"].keys():
+                        self.remove_bot(k, channel, lock=False)
+                        break
                 raise NewBotException
             except DeactivatedBotException:
                 self.remove_bot(new_config["bot_nick"], new_config["twitch_name"], lock=False)
