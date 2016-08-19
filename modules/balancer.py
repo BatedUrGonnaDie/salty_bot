@@ -100,8 +100,10 @@ class Balancer(object):
                 channel = new_config["twitch_name"]
                 for k, v in self.connections.iteritems():
                     if channel in v["bots"].keys():
-                        self.remove_bot(k, channel, lock=False)
+                        bot_name = k
                         break
+                else:
+                    self.remove_bot(bot_name, channel, lock=False)
                 raise NewBotException
             except DeactivatedBotException:
                 self.remove_bot(new_config["bot_nick"], new_config["twitch_name"], lock=False)
