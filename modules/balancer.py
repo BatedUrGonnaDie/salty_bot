@@ -22,7 +22,8 @@ helper_functions = {
     "MODE"            : [],
     "RECONNECT"       : [],
     "ROOMSTATE"       : [],
-    "CAP"             : []
+    "CAP"             : [],
+    "USERNOTICE"      : []
 }
 
 def init_helpers():
@@ -127,29 +128,47 @@ class Balancer(object):
             self.lock.release()
 
     def process_incomming(self, c_msg):
+        outbound = []
         with self.lock:
-            bot_obj = self.connections[c_msg["bot_name"]]["bots"][c_msg["channel"][1:]]
-        try:
-            outbound = bot_obj.process_message(c_msg)
-        except Exception, e:
-            logging.exception(e)
-            logging.error(c_msg)
-            return
+            bots = self.connections[c_msg["bot_name"]]["bots"]
+            if c_msg.get("channel", None):
+                bots = [bots[c_msg["channel"][1:]]]
+            else:
+                bots = bots.values()
+
+        for i in bots:
+            try:
+                outbound_msg = i.process_message(c_msg)
+                if outbound_msg:
+                    outbound.append({"channel" : i.channel, "message" : outbound_msg})
+            except Exception, e:
+                logging.exception(e)
+                logging.error(c_msg)
+                return
 
         if outbound:
             with self.lock:
-                self.connections[c_msg["bot_name"]]["irc_obj"].privmsg(c_msg["channel"][1:], outbound)
-            print "{0} {1}: {2}".format(c_msg["channel"], c_msg["bot_name"], outbound)
+                for i in outbound:
+                    self.connections[c_msg["bot_name"]]["irc_obj"].privmsg(i["channel"], i["message"])
 
-        for k, v in helper_functions.iteritems():
-            if k == c_msg["action"]:
-                for i in v:
-                    try:
-                        success, response = i(bot_obj, c_msg, self)
-                    except Exception, e:
-                        logging.error("Error in callback for {0}s".format(k))
-                        logging.exception(e)
-                        continue
-                    if success and response:
-                        self.connections[c_msg["bot_name"]]["irc_obj"].privmsg(c_msg["channel"][1:], response)
-                break
+        self.process_helpers(c_msg)
+
+
+    def process_helpers(self, c_msg):
+        channel = c_msg.get("channel", None)
+        if channel:
+            with self.lock:
+                channel = channel[1:]
+                bot_obj = self.connections[c_msg["bot_name"]]["bots"][channel]
+        else:
+            bot_obj = None
+
+        for i in helper_functions[c_msg["action"]]:
+            try:
+                success, response = i(bot_obj, c_msg, self)
+            except Exception, e:
+                logging.exception(e)
+                continue
+            if success and response and channel:
+                with self.lock:
+                    self.connections[c_msg["bot_name"]]["irc_obj"].privmsg(channel, response)
