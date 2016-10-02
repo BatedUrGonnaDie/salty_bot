@@ -19,7 +19,8 @@ PASSTHROUGH_ACTIONS = (
     "MODE",
     "RECONNECT",
     "ROOMSTATE",
-    "CAP"
+    "CAP",
+    "USERNOTICE"
 )
 
 class IRC(object):
