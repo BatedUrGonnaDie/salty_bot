@@ -55,7 +55,8 @@ class SaltyBot(object):
             "MODE"            : self.mode,
             "RECONNECT"       : self.reconnect,
             "ROOMSTATE"       : self.roomstate,
-            "CAP"             : self.cap
+            "CAP"             : self.cap,
+            "USERNOTICE"      : self.usernotice
         }
         self.super_users = ast.literal_eval(os.environ["salty_super_users"])
         self.super_users = [x.strip() for x in self.super_users]
@@ -270,4 +271,7 @@ class SaltyBot(object):
         pass
 
     def cap(self, c_msg):
+        pass
+
+    def usernotice(self, c_msg):
         pass
