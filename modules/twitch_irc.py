@@ -11,10 +11,10 @@ class TwitchIRC(irc.IRC):
             oauth = "oauth:{0}".format(oauth)
         super(TwitchIRC, self).__init__(
             "irc.chat.twitch.tv",
-            6667,
+            6697,
             username,
             oauth=oauth,
-            use_ssl=False,
+            use_ssl=True,
             callback=callback
         )
         self.total_messages = 0
