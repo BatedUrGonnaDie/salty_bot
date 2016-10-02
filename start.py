@@ -1,6 +1,6 @@
 #! /usr/bin/env python2.7
 
-from itertools import chain
+from   itertools import chain
 import json
 import logging
 import os
