@@ -4,8 +4,8 @@ import logging
 import Queue
 import socket
 import ssl
-import time
 import threading
+import time
 
 PASSTHROUGH_ACTIONS = (
     "PRIVMSG",
@@ -24,7 +24,7 @@ PASSTHROUGH_ACTIONS = (
 
 class IRC(object):
 
-    def __init__(self, host, port, username, oauth = "", use_ssl = False, callback = None):
+    def __init__(self, host, port, username, oauth = "", use_ssl = False, callback = None, max_worker_threads = 5):
         self.host = host
         self.port = port
         self.use_ssl = use_ssl
@@ -40,10 +40,15 @@ class IRC(object):
         self.callback = callback
         self.queue = Queue.Queue()
         self.queue_size = 0
+        self.logger = logging.getLogger("IRC.IRC")
+
         self.worker_thread = threading.Thread(target=self.msg_worker)
         self.worker_thread.daemon = True
         self.worker_thread.start()
-        self.tmp_threads = []
+        if max_worker_threads < 0:
+            max_worker_threads = 0
+        self.max_worker_threads = max_worker_threads
+        self.tmp_threads = 0
 
     def create(self):
         self.socket = socket.socket()
@@ -53,17 +58,16 @@ class IRC(object):
 
     def connect(self):
         self.socket.connect((self.host, self.port))
-        for i in self.capabilities:
-            self.capability(i)
+        self.capability(" ".join(self.capabilities))
         if self.oauth:
             self.raw("PASS {0}".format(self.oauth))
         self.raw("NICK {0}".format(self.username))
         time.sleep(.5)
-        self.recv(4096)
         self.connected = True
         if self.channels:
             for i in self.channels:
                 self.join(i)
+                time.sleep(.2)
 
     def disconnect(self):
         try:
@@ -117,33 +121,70 @@ class IRC(object):
         try:
             return inc_msg.decode("utf-8")
         except Exception, e:
-            logging.exception(e)
+            self.logger.exception(e)
             return inc_msg
 
     @staticmethod
-    def tokenize(raw_msg):
-        c_msg = {}
-        msg_split = raw_msg.split(" ")
-        if raw_msg.startswith(":"):
-            msg_split.insert(0, "")
-            c_msg["tags"] = {}
-        elif msg_split[0]:
-            c_msg["tags"] = IRC.process_tags(msg_split[0])
-        if "!" in msg_split[1]:
-            c_msg["sender"] = msg_split[1][1:].split("!")[0]
-        else:
-            c_msg["sender"] = msg_split[1][1:]
-        c_msg["action"] = msg_split[2]
-        try:
-            c_msg["channel"] = msg_split[3]
-        except IndexError:
-            c_msg["channel"] = ""
-        try:
-            c_msg["message"] = " ".join(msg_split[4:])
-            if c_msg["message"].startswith(":"):
-                c_msg["message"] = c_msg["message"][1:]
-        except IndexError:
-            c_msg["message"] = ""
+    def parse(msg):
+        position = 0
+        next_space = 0
+        c_msg = {
+            "raw": msg,
+            "tags": {},
+            "prefix": None,
+            "action": None,
+            "params": []
+        }
+        msg = msg.strip("\r\n")
+        if msg[position] == "@":
+            next_space = msg.find(" ")
+            c_msg["tags"] = IRC.process_tags(msg[:next_space])
+            position = next_space + 1
+
+        while msg[position] == " ":
+            position += 1
+
+        if msg[position] == ":":
+            next_space = msg.find(" ", position)
+            c_msg["prefix"] = msg[position : next_space]
+            position = next_space + 1
+
+            while position == " ":
+                position += 1
+
+        next_space = msg.find(" ", position)
+
+        if next_space == -1:
+            if len(msg) > position:
+                c_msg["action"] = msg[position:]
+            return c_msg
+
+        c_msg["action"] = msg[position : next_space]
+        position = next_space + 1
+
+        while msg[position] == " ":
+            position += 1
+
+        while position < len(msg):
+            next_space = msg.find(" ", position)
+
+            if msg[position] == ":":
+                c_msg["params"].append(msg[position + 1:])
+                break
+
+            if next_space != -1:
+                c_msg["params"].append(msg[position : next_space])
+                position = next_space + 1
+
+                while msg[position] == " ":
+                    position += 1
+
+                continue
+
+            if next_space == -1:
+                c_msg["params"].append(msg[position:])
+                break
+
         return c_msg
 
     @staticmethod
@@ -160,20 +201,28 @@ class IRC(object):
 
     def msg_worker(self):
         while self.continue_loop:
-            if self.queue_size > 20:
+            if self.queue_size > 5 and self.max_worker_threads < self.tmp_threads:
+                self.logger.info("Spawning worker thread.")
                 t = threading.Thread(target=self.tmp_msg_worker)
                 t.daemon = True
                 t.start()
-                self.tmp_threads.append(t)
+                self.tmp_threads += 1
             try:
                 self.callback(self.queue.get())
             except Exception, e:
-                logging.exception(e)
+                self.logger.exception(e)
             self.queue_size -= 1
             self.queue.task_done()
-            if self.tmp_threads and self.queue.empty():
-                for i in self.tmp_threads:
-                    i.join()
+
+    @staticmethod
+    def extra_parse(msg):
+        c_msg = IRC.parse(msg)
+        if c_msg["action"] in ("PRIVMSG", "NOTICE", "HOSTTARGET"):
+            c_msg["message"] = c_msg["params"][1]
+            c_msg["sender"] = c_msg["prefix"].split("!")[0][1:]
+        if c_msg["action"] in ("ROOMSTATE", "USERSTATE", "JOIN", "PRIVMSG", "NOTICE", "HOSTTARGET", "CLEARCHAT", "USERNOTICE", "JOIN", "PART", "MODE"):
+            c_msg["channel"] = c_msg["params"][0]
+        return c_msg
 
     def tmp_msg_worker(self):
         while True:
@@ -183,6 +232,7 @@ class IRC(object):
                 self.queue.task_done()
             except Queue.Empty:
                 break
+        self.tmp_threads -= 1
         return
 
     def main_loop(self):
@@ -192,48 +242,48 @@ class IRC(object):
         while self.continue_loop:
             try:
                 msg_buffer += self.recv(4096)
-            except socket.timeout:
+            except (socket.timeout, ssl.SSLError), e:
+                if e.message != "The read operation timed out":
+                    raise
                 if self.timeout_count < 60:
                     self.timeout_count += 1
                     continue
                 else:
-                    self.reconnect()
+                    if self.continue_loop:
+                        self.reconnect()
                     continue
+
             if msg_buffer == "":
-                self.reconnect()
+                if self.continue_loop:
+                    self.reconnect()
                 continue
             lines += msg_buffer.split("\r\n")
             while len(lines) > 1:
                 current_message = lines.pop(0)
                 if current_message == "":
                     continue
-                if current_message.startswith("PING"):
-                    self.pong(current_message.split("PING ")[0])
+                msg_parts = self.extra_parse(current_message)
+                if msg_parts["action"] == "PONG":
+                    self.pong(msg_parts["params"][0])
                     continue
 
-                try:
-                    msg_parts = self.tokenize(current_message)
-                except Exception, e:
-                    logging.error(current_message)
-                    logging.exception(e)
-                    continue
                 msg_parts["bot_name"] = self.username
-                msg_parts["original"] = current_message
 
-                if msg_parts["action"] == "PRIVMSG":
-                    try:
-                        print "{0} {1}: {2}".format(msg_parts["channel"], msg_parts["sender"], msg_parts["message"])
-                    except Exception:
-                        pass
                 if msg_parts["action"] == "CAP":
-                    if msg_parts["message"].split(" ")[0] == "ACK":
-                        self.capabilities.add(msg_parts["message"].split(" ", 1)[1])
-                    else:
-                        self.capabilities.remove(msg_parts["message"].split(" ", 1)[1])
+                    if msg_parts["params"][1] == "ACK":
+                        for i in msg_parts["params"][2].split(" "):
+                            self.capabilities.add(i)
+                    elif msg_parts["params"][1] == "NAK":
+                        for i in msg_parts["params"][2].split(" "):
+                            if i in self.capabilities:
+                                self.capabilities.remove(i)
 
-                if self.callback and msg_parts["action"] in PASSTHROUGH_ACTIONS:
-                    self.queue.put(msg_parts)
-                    self.queue_size += 1
+                if self.callback:
+                    if msg_parts["action"] in PASSTHROUGH_ACTIONS:
+                        self.queue.put(msg_parts)
+                        self.queue_size += 1
+                else:
+                    raise ValueError("Callback should be defined before calling main_loop.")
             if lines[0] != "":
                 msg_buffer = lines[0]
             else:
