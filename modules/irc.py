@@ -256,6 +256,7 @@ class IRC(object):
 
             if msg_buffer == "":
                 if self.continue_loop:
+                    self.logger.info("Connection for {0} reset, reconnecting.".format(self.username))
                     self.reconnect()
                 continue
             lines += msg_buffer.split("\r\n")
