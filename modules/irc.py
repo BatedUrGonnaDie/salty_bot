@@ -32,7 +32,6 @@ class IRC(object):
         self.username = username
         self.oauth = oauth
         self.socket = None
-        self.timeout_count = 0
         self.connected = False
         self.channels = set()
         self.capabilities = set()
@@ -237,22 +236,20 @@ class IRC(object):
         return
 
     def main_loop(self):
-        self.socket.settimeout(10)
         msg_buffer = ""
         lines = []
         while self.continue_loop:
             try:
                 tmp_buffer = self.recv(4096)
-            except (socket.timeout, ssl.SSLError), e:
+            except socket.timeout, e:
+                if self.continue_loop:
+                    self.reconnect()
+                continue
+            except ssl.SSLError, e:
                 if e.message != "The read operation timed out":
                     raise
-                if self.timeout_count < 60:
-                    self.timeout_count += 1
-                    continue
-                else:
-                    if self.continue_loop:
-                        self.reconnect()
-                    continue
+                if self.continue_loop:
+                    self.reconnect()
 
             self.timeout_count = 0
 

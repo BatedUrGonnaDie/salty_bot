@@ -73,7 +73,6 @@ class Balancer(object):
         logging.debug("Removing connection for {0}.".format(username))
         self.connections[username]["irc_obj"].continue_loop = False
         self.connections[username]["irc_obj"].disconnect()
-        self.connections[username]["thread"].join()
         del self.connections[username]
 
     def add_bot(self, bot, lock = True):
