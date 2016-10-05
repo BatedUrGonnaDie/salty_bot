@@ -268,6 +268,7 @@ class IRC(object):
                 if current_message == "":
                     continue
                 msg_parts = self.extra_parse(current_message)
+                if msg_parts["action"] == "PING":
                     self.pong(msg_parts["params"][0])
                     continue
 
