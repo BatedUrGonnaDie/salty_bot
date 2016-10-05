@@ -253,6 +253,8 @@ class IRC(object):
                     if self.continue_loop:
                         self.reconnect()
                     continue
+            finally:
+                self.timeout_count = 0
 
             if tmp_buffer == "":
                 if self.continue_loop:
