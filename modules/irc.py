@@ -242,7 +242,7 @@ class IRC(object):
         lines = []
         while self.continue_loop:
             try:
-                msg_buffer += self.recv(4096)
+                tmp_buffer = self.recv(4096)
             except (socket.timeout, ssl.SSLError), e:
                 if e.message != "The read operation timed out":
                     raise
@@ -254,11 +254,12 @@ class IRC(object):
                         self.reconnect()
                     continue
 
-            if msg_buffer == "":
+            if tmp_buffer == "":
                 if self.continue_loop:
                     self.logger.info("Connection for {0} reset, reconnecting.".format(self.username))
                     self.reconnect()
                 continue
+            msg_buffer += tmp_buffer
             lines += msg_buffer.split("\r\n")
             while len(lines) > 1:
                 current_message = lines.pop(0)
