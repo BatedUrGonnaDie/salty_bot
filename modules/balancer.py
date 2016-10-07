@@ -97,6 +97,7 @@ class Balancer(object):
                 logging.debug("Updated bot for {0}.".format(new_config["twitch_name"]))
             except KeyError:
                 # Tells the main thread/listener to create a fresh bot
+                # First it checks to make sure a bot under a different name isn't still in the channel
                 channel = new_config["twitch_name"]
                 bot_name = None
                 for k, v in self.connections.iteritems():
