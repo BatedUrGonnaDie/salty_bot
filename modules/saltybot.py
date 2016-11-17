@@ -171,6 +171,7 @@ class SaltyBot(object):
         if self.config["settings"]["active"] and not new_config["settings"]["active"]:
             raise DeactivatedBotException
 
+        self.session_id = new_config["session"]
         self.config = new_config
         self.setup_commands(new_config)
         self.setup_social(new_config)
