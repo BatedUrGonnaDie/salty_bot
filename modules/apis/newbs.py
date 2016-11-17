@@ -7,8 +7,9 @@ class NewbsAPI(api.API):
     def __init__(self, headers = None, cookies = None):
         super(NewbsAPI, self).__init__("https://leagueofnewbs.com/api", headers=headers, cookies=cookies)
 
-    def add_textutil(self, channel, text_type, data, **kwargs):
+    def add_textutil(self, channel, text_type, data, cookies, **kwargs):
         endpoint = "/users/{0}/{1}s".format(channel, text_type)
+        kwargs += cookies
         success, response = self.post(endpoint, data, **kwargs)
         return success, response
 
