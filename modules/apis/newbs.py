@@ -9,7 +9,7 @@ class NewbsAPI(api.API):
 
     def add_textutil(self, channel, text_type, data, cookies, **kwargs):
         endpoint = "/users/{0}/{1}s".format(channel, text_type)
-        kwargs.update(cookies)
+        kwargs["cookies"] = cookies
         success, response = self.post(endpoint, data, **kwargs)
         return success, response
 
