@@ -71,6 +71,8 @@ class SaltyBot(object):
         self.splits_io_api = apis["splits_io"]
         self.youtube_api = apis["youtube"]
 
+        self.newbs_api.cookies = {"session" : config["session"]}
+
         self.message_limit = 30
         self.is_mod = False
         self.rate_limit = 0
@@ -172,6 +174,7 @@ class SaltyBot(object):
             raise DeactivatedBotException
 
         self.session_id = new_config["session"]
+        self.newbs_api.cookies = {"session" : new_config["session"]}
         self.config = new_config
         self.setup_commands(new_config)
         self.setup_social(new_config)
