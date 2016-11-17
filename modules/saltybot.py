@@ -11,6 +11,13 @@ import time
 import pytz
 
 from modules.module_errors import DeactivatedBotException
+from   modules.apis import kraken
+from   modules.apis import newbs
+from   modules.apis import osu
+from   modules.apis import splits_io
+from   modules.apis import sr_com
+from   modules.apis import srl
+from   modules.apis import youtube
 
 if __name__ == "__main__":
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..')))
@@ -42,7 +49,7 @@ class SaltyBot(object):
 
     elevated_user = ["staff", "admin", "global_mod", "mod"]
 
-    def __init__(self, config, apis):
+    def __init__(self, config):
         self.action_functions = {
             "PRIVMSG"         : self.privmsg,
             "NOTICE"          : self.notice,
@@ -63,15 +70,13 @@ class SaltyBot(object):
 
         self.config = config
 
-        self.twitch_api = apis["kraken"]
-        self.osu_api = apis["osu"]
-        self.newbs_api = apis["newbs"]
-        self.srl_api = apis["srl"]
-        self.sr_com_api = apis["sr_com"]
-        self.splits_io_api = apis["splits_io"]
-        self.youtube_api = apis["youtube"]
-
-        self.newbs_api.cookies = {"session" : config["session"]}
+        self.twitch_api = kraken.Kraken(headers={"User-Agent" : "SaltyBot"})
+        self.osu_api = osu.OsuAPI()
+        self.newbs_api = newbs.NewbsAPI(cookies={"session" : config["session"]})
+        self.srl_api = srl.SRLAPI()
+        self.sr_com_api = sr_com.SRcomAPI()
+        self.splits_io_api = splits_io.SplitsIOAPI()
+        self.youtube_api = youtube.YoutubeAPI()
 
         self.message_limit = 30
         self.is_mod = False
@@ -174,7 +179,7 @@ class SaltyBot(object):
             raise DeactivatedBotException
 
         self.session_id = new_config["session"]
-        self.newbs_api.cookies = {"session" : new_config["session"]}
+        self.newbs_api.cookies["session"] = new_config["session"]
         self.config = new_config
         self.setup_commands(new_config)
         self.setup_social(new_config)

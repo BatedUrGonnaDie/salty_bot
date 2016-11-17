@@ -101,7 +101,7 @@ def main():
     balancer_obj = balancer.Balancer()
     initial_configs = config_obj.initial_retrieve()
     for k, v in initial_configs.iteritems():
-        bot_inst = saltybot.SaltyBot(v, dict(GLOBAL_APIS))
+        bot_inst = saltybot.SaltyBot(v)
         balancer_obj.add_bot(bot_inst)
 
     tu_thread = threading.Thread(name="update-thread", target=twitch_update_thread, args=(balancer_obj,))
