@@ -11,6 +11,7 @@ def add(salty_inst, c_msg, text_type, **kwargs):
         "text" : text,
         "user_id" : salty_inst.user_id
     }
+    cookies = {"session" : salty_inst.session_id}
     success, response = salty_inst.newbs_api.add_textutil(salty_inst.channel, text_type, data, cookies, **kwargs)
     if not success:
         return False, "Error adding {0} to database ({1})".format(text_type, response.status_code)
