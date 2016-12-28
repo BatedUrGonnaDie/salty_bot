@@ -57,17 +57,26 @@ class IRC(object):
             self.socket = ssl.wrap_socket(self.socket)
 
     def connect(self):
-        self.socket.connect((self.host, self.port))
-        self.capability(" ".join(self.capabilities))
-        if self.oauth:
-            self.raw("PASS {0}".format(self.oauth))
-        self.raw("NICK {0}".format(self.username))
-        time.sleep(.5)
-        self.connected = True
-        if self.channels:
-            for i in self.channels:
-                self.join(i)
-                time.sleep(.2)
+        sleep_time = 2
+        while True:
+            try:
+                self.socket.connect((self.host, self.port))
+            except Exception, e:
+                self.logger.exception(e)
+                time.sleep(sleep_time)
+                sleep_time = sleep_time ** 2
+                continue
+            self.capability(" ".join(self.capabilities))
+            if self.oauth:
+                self.raw("PASS {0}".format(self.oauth))
+            self.raw("NICK {0}".format(self.username))
+            time.sleep(.5)
+            self.connected = True
+            if self.channels:
+                for i in self.channels:
+                    self.join(i)
+                    time.sleep(.2)
+            break
 
     def disconnect(self):
         try:
