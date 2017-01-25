@@ -58,7 +58,7 @@ def listen_thread(config_obj, balancer_obj, server_obj):
             try:
                 balancer_obj.update_bot(i)
             except NewBotException:
-                balancer_obj.add_bot(saltybot.SaltyBot(i, GLOBAL_APIS))
+                balancer_obj.add_bot(saltybot.SaltyBot(i))
     return
 
 def main():
