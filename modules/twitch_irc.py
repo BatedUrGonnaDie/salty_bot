@@ -35,7 +35,7 @@ class TwitchIRC(irc.IRC):
     def privmsg(self, channel, msg):
         self.clear_limit()
         if not self.rate_limited:
-            if msg[0] in (".", "/") and msg[1:2] != "me":
+            if msg[0] in (".", "/") and msg[1:4] != "me ":
                 msg = "\\{0}".format(msg)
             super(TwitchIRC, self).privmsg(channel, msg)
             self.sent_messages += 1
