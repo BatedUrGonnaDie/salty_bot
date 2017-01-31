@@ -59,7 +59,6 @@ class Balancer(object):
         # i.e. With the same lock as when you check that there is no connection
         logging.debug("Creating connection for {0}.".format(username))
         t_irc = twitch_irc.TwitchIRC(username, oauth, callback=self.process_incomming)
-        t_irc.create()
         t_irc.connect()
         t_irc_thread = threading.Thread(target=t_irc.main_loop)
         t_irc_thread.daemon = True
