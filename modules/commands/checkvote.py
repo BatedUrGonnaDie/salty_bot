@@ -1,5 +1,7 @@
 #! /usr/bin/env python2.7
 
+HELP_TEXT = []
+
 def call(salty_inst, c_msg, **kwargs):
     votes = salty_inst.votes
     if not votes:

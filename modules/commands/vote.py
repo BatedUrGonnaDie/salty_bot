@@ -1,5 +1,7 @@
 #! /usr/bin/env python2.7
 
+HELP_TEXT = ["!vote <poll option>", "Places a vote in the poll."]
+
 def call(salty_inst, c_msg, **kwargs):
     if not salty_inst.votes:
         return False, ""

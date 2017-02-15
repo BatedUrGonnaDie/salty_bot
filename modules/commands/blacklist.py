@@ -1,5 +1,7 @@
 #! /usr/bin/env python2.7
 
+HELP_TEXT = ["!blacklist <name>", "[Broadcaster Only] Prevent a user from interacting with the bot in any way."]
+
 def call(salty_inst, c_msg, **kwargs):
     users = c_msg["message"].split(" ")[1:]
     with open(salty_inst.blacklist_file, "a+") as fin:

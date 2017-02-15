@@ -5,6 +5,8 @@ import datetime
 import isodate
 import pytz
 
+HELP_TEXT = ["!highlight <message?>", "Save a timestamp with optional message decscribing what you wanted to highlight."]
+
 def call(salty_inst, c_msg, **kwargs):
     if not salty_inst.is_live:
         return True, "You can only highlight while the stream is live."

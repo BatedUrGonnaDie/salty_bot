@@ -1,13 +1,17 @@
 #! /usr/bin/env python2.7
 
+HELP_TEXT = ["!endvote", "Ends the current poll (broadcaster only unless mod enabled by broadcaster."]
+
 def call(salty_inst, c_msg, **kwargs):
+    if not salty_inst.config["settings"]["voting_mods"]:
+        return False, "Only the broadcaster may end votes in this channel."
     votes = salty_inst.votes
     if not votes:
         return False, ""
 
     try:
         winning_amount = max(votes["options"].values())
-        winning_keys = [votes["casing"][key] for key, value in votes["options"] if value == winning_amount]
+        winning_keys = [votes["casing"][key] for key, value in votes["options"].iteritems() if value == winning_amount]
         if len(winning_keys) == 0 or winning_amount == 0:
             return True, "No one voted for anything BibleThump"
         elif len(winning_keys) == 1:

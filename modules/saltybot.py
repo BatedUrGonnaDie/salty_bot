@@ -10,7 +10,7 @@ import time
 
 import pytz
 
-from modules.module_errors import DeactivatedBotException
+from   modules.module_errors import DeactivatedBotException
 from   modules.apis import kraken
 from   modules.apis import newbs
 from   modules.apis import osu
@@ -18,6 +18,7 @@ from   modules.apis import splits_io
 from   modules.apis import sr_com
 from   modules.apis import srl
 from   modules.apis import youtube
+from   modules.commands import help as help_command
 
 if __name__ == "__main__":
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..')))
@@ -38,7 +39,7 @@ def init_commands():
         try:
             module = imp.load_source(imp_name, cmd)
             sys.modules[imp_name] = module
-            command_functions[cmd_name] = module.call
+            command_functions[cmd_name] = module
         except Exception, e:
             print "Error importing {0}.".format(imp_name)
             print e
@@ -111,6 +112,8 @@ class SaltyBot(object):
         with open(self.blacklist_file, "a+") as fin:
             self.blacklist = [x.strip() for x in fin.readlines()]
 
+        self.votes = {}
+
         self.commands = {}
         self.setup_commands(config)
         self.social = {}
@@ -152,7 +155,9 @@ class SaltyBot(object):
             "custom": False,
             "last": 0,
             "limit": 2,
-            "mod_req": False
+            "mod_req": False,
+            "function": help_command.call,
+            "help_text": help_command.HELP_TEXT
         }
         for i in config["commands"]:
             if i["on"]:
@@ -162,17 +167,56 @@ class SaltyBot(object):
                     "last": 0,
                     "limit": i["limit"] or 30,
                     "mod_req": bool(i["admin"]),
-                    "function": command_functions[curr_com]
+                    "function": command_functions[curr_com].call,
+                    "help_text": command_functions[curr_com].HELP_TEXT
                 }
         for i in config["custom_commands"]:
+            if self.commands.get("!{0}".format(i["trigger"]), None):
+                continue
             if i["on"]:
-                self.commands["!{}".format(i["trigger"])] = {
+                self.commands["!{0}".format(i["trigger"])] = {
                     "custom": True,
                     "last": 0,
                     "limit": i["limit"] or 30,
                     "mod_req": bool(i["admin"]),
-                    "output": i["output"]
+                    "output": i["output"],
+                    "help_text": i["help_text"]
                 }
+
+        self.votes = {}
+        if config["settings"]["voting_active"]:
+            self.commands["!createvote"] = {
+                "custom": False,
+                "last": 0,
+                "limit": 0,
+                "mod_req": True,
+                "function": command_functions["!createvote"].call,
+                "help_text": command_functions["!createvote"].HELP_TEXT
+            }
+            self.commands["!vote"] = {
+                "custom": False,
+                "last": 0,
+                "limit": 0,
+                "mod_req": False,
+                "function": command_functions["!vote"].call,
+                "help_text": command_functions["!vote"].HELP_TEXT
+            }
+            self.commands["!checkvote"] = {
+                "custom": False,
+                "last": 0,
+                "limit": 15,
+                "mod_req": False,
+                "function": command_functions["!checkvote"].call,
+                "help_text": command_functions["!checkvote"].HELP_TEXT
+            }
+            self.commands["!endvote"] = {
+                "custom": False,
+                "last": 0,
+                "limit": 0,
+                "mod_req": True,
+                "function": command_functions["!endvote"].call,
+                "help_text": command_functions["!endvote"].HELP_TEXT
+            }
 
     def update_config(self, new_config):
         if self.config["settings"]["active"] and not new_config["settings"]["active"]:
@@ -228,21 +272,23 @@ class SaltyBot(object):
 
     def privmsg(self, c_msg):
         msg_split = c_msg["message"].split(" ")
-        if msg_split[0] not in command_functions.keys() and msg_split[0] not in self.commands.keys():
+        command = msg_split[0]
+
+        if command not in command_functions.keys() and command not in self.commands.keys():
             return False
         try:
             if not self.check_permissions(c_msg):
                 return False
-            if self.commands[msg_split[0]]["custom"]:
-                success, response = True, self.commands[msg_split[0]]["output"]
+            if self.commands[command]["custom"]:
+                success, response = True, self.commands[command]["output"]
             else:
-                success, response = command_functions[msg_split[0]](self, c_msg)
+                success, response = self.commands[command]["function"](self, c_msg)
         except Exception, e:
             logging.exception(e)
             return
 
         if success:
-            self.commands[msg_split[0]]["last"] = time.time()
+            self.commands[command]["last"] = time.time()
         return response
 
     def notice(self, c_msg):

@@ -4,7 +4,11 @@ import re
 
 from modules.extensions import regexes
 
+HELP_TEXT = ['!createvote <loose/strict> "Poll Name" (options) (if) (strict)', "Create a new poll. Loose means any votes count, strict only can vote for supplied options. Format with quotes and parenthesis."]
+
 def call(salty_inst, c_msg, **kwargs):
+    if not salty_inst.config["settings"]["voting_mods"]:
+        return False, "Only the broadcast may create polls in this channel."
     if salty_inst.votes:
         return False, "There is already a poll in progress."
     try:
@@ -27,6 +31,7 @@ def call(salty_inst, c_msg, **kwargs):
     if poll_type == "strict":
         options = re.findall(regexes.POLL_OPTIONS, c_msg["message"])
         if not options:
+            salty_inst.votes.clear()
             return False, "Please supply options for a strict poll surronded by parenthesis."
 
         options = [x.strip() for x in options]
@@ -40,4 +45,5 @@ def call(salty_inst, c_msg, **kwargs):
     elif poll_type == "loose":
         return True, "You may now vote for {0} with any options you wish.".format(", ".join(options))
     else:
+        salty_inst.votes.clear()
         return False, "Invalid poll type, only strict/loose accepted."

@@ -2,7 +2,9 @@
 
 import random
 
-answers = [
+HELP_TEXT = ["!8ball <question>", "Ask the 8ball and get a response."]
+
+ANSWERS = [
     "It is certain",
     "It is decidedly so",
     "Without a doubt",
@@ -30,4 +32,4 @@ def call(salty_inst, c_msg, **kwargs):
     if not question:
         return False, "Magic 8ball says: Ask me a real question!"
 
-    return True, "Magic 8ball says: {0}".format(random.choice(answers))
+    return True, "Magic 8ball says: {0}".format(random.choice(ANSWERS))

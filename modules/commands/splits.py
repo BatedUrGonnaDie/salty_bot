@@ -4,6 +4,11 @@ from modules.commands.helpers import get_category_string
 from modules.commands.helpers import get_category_title
 from modules.commands.helpers import time_formatter
 
+HELP_TEXT = [
+    "!splits <user?> <game?> <category?>",
+    "Retrive pb splits from splits.io.  Will try and user game and category from title and streamer if live, else all are required."
+]
+
 def call(salty_inst, c_msg, **kwargs):
     msg_split = c_msg["message"].split(" ", 3)
 

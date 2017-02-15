@@ -5,6 +5,8 @@ import time
 from modules.commands.helpers import time_formatter
 from modules.commands.helpers import get_suffix
 
+HELP_TEXT = ["!race", "Retrieve race information from speedrdunslive.com"]
+
 def call(salty_inst, c_msg, **kwargs):
     channel = salty_inst.channel
     success, response = salty_inst.srl_api.get_races(**kwargs)

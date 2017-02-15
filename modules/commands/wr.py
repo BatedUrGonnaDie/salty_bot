@@ -4,6 +4,8 @@ from modules.commands.helpers import get_category_string
 from modules.commands.helpers import get_category_title
 from modules.commands.helpers import time_formatter
 
+HELP_TEXT = ["!wr <game shortcode?> <category?>", "Retrieve the world record for a game's category.  Will try to use game and title if stream is live, otherwise parameters are required."]
+
 def call(salty_inst, c_msg, **kwargs):
     msg_split = c_msg["message"].split(" ", 2)
     infer_category = True

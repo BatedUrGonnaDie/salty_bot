@@ -1,5 +1,7 @@
 #! /usr/bin/env python2.7
 
+HELP_TEXT = ["!commands", "Displays all active commands in the current channel."]
+
 def call(salty_inst, c_msg, **kwargs):
     active_commands = dict(salty_inst.commands)
     if not salty_inst.is_live:

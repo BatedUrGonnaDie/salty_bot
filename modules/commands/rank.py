@@ -1,5 +1,7 @@
 #! /usr/bin/env python2.7
 
+HELP_TEXT = ["!rank <user?>", "Retrieve basic information about an osu user."]
+
 def call(salty_inst, c_msg, **kwargs):
     try:
         user = c_msg["message"].split("rank ")[1]

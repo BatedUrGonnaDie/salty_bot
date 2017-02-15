@@ -2,6 +2,8 @@
 
 from modules.commands.helpers import get_diff_ratio
 
+HELP_TEXT = ["!leaderboard <game?>", "Attempts to find game on speedrun.com if provided, or searches the channels game."]
+
 def call(salty_inst, c_msg, **kwargs):
     msg_split = c_msg["message"].split(" ", 1)
     try:
