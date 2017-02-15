@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 import threading
+import time
 
 from modules import twitch_irc
 from modules.module_errors import DeactivatedBotException
@@ -52,6 +53,9 @@ class Balancer(object):
 
     def __init__(self):
         self.connections = {}
+        self.social_thread = threading.Thread(target=self.social_message_send)
+        self.social_thread.daemon = True
+        self.social_thread.start()
         self.lock = threading.Semaphore()
 
     def _create_connection(self, username, oauth):
@@ -125,6 +129,25 @@ class Balancer(object):
             self._remove_connection(bot_name)
         if lock:
             self.lock.release()
+
+    def social_message_send(self):
+        while True:
+            for value in self.connections.values():
+                for bot in value["bots"].values():
+                    if not bot.social["active"]:
+                        continue
+                    cur_time = time.time()
+                    if cur_time < bot.social["time_interval"] + bot.social["last_send"]:
+                        continue
+                    cur_messages = bot.messages_received
+                    if cur_messages < bot.social["message_interval"] + bot.social["last_message"]:
+                        continue
+
+                    msg = bot.social["output"]
+                    value["irc_obj"].privmsg(bot.channel, msg)
+                    bot.social["last_send"] = cur_time
+                    bot.social["last_message"] = cur_messages
+            time.sleep(15)
 
     def process_incomming(self, c_msg):
         outbound = []

@@ -79,9 +79,7 @@ class SaltyBot(object):
         self.splits_io_api = splits_io.SplitsIOAPI()
         self.youtube_api = youtube.YoutubeAPI()
 
-        self.message_limit = 30
         self.is_mod = False
-        self.rate_limit = 0
         self.messages_received = 0
 
         self.user_id = config["id"]
@@ -126,6 +124,7 @@ class SaltyBot(object):
         self.social = {
             "active": config["settings"]["social_active"],
             "last_send": time.time(),
+            "last_message": 0,
             "message_interval": config["settings"]["social_messages"] or 30,
             "time_interval": config["settings"]["social_time"] or 10,
             "output": config["settings"]["social_output"]
@@ -271,6 +270,7 @@ class SaltyBot(object):
         return self.action_functions[c_msg["action"]](c_msg)
 
     def privmsg(self, c_msg):
+        self.messages_received += 1
         msg_split = c_msg["message"].split(" ")
         command = msg_split[0]
 
