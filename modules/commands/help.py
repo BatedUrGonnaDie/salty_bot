@@ -14,5 +14,7 @@ def call(salty_inst, c_msg, **kwargs):
     except KeyError:
         return False, "Invalid command: {0}".format(command)
 
+    if help_list == None:
+        return False, "No help text defined for {0}.".format(command)
     return True, \
         "Syntax: {0} | Description: {1}".format(help_list[0], help_list[1])
