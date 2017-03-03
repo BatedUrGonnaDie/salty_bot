@@ -170,16 +170,17 @@ class SaltyBot(object):
                     "help_text": command_functions[curr_com].HELP_TEXT
                 }
         for i in config["custom_commands"]:
-            if self.commands.get("!{0}".format(i["trigger"]), None):
+            command = "!{0}".format(i["trigger"])
+            if self.commands.get(command, None):
                 continue
             if i["on"]:
-                self.commands["!{0}".format(i["trigger"])] = {
+                self.commands[command] = {
                     "custom": True,
                     "last": 0,
                     "limit": i["limit"] or 30,
                     "mod_req": bool(i["admin"]),
                     "output": i["output"],
-                    "help_text": i["help_text"]
+                    "help_text": [command, i["help_text"]]
                 }
 
         self.votes = {}
