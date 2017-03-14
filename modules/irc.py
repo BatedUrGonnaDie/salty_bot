@@ -61,6 +61,8 @@ class IRC(object):
         while True:
             try:
                 self.socket.connect((self.host, self.port))
+            except ValueError, e:
+                self.logger.error("Tried to connect to already connected socket!")
             except Exception, e:
                 self.logger.exception(e)
                 time.sleep(sleep_time)

@@ -1,5 +1,7 @@
 #! /usr/bin/env python2.7
 
+import logging
+
 from modules.commands.helpers import get_category_string
 from modules.commands.helpers import get_category_title
 from modules.commands.helpers import time_formatter
@@ -71,10 +73,18 @@ def call(salty_inst, c_msg, **kwargs):
         return False, \
             "Error retrieving leaderboard from speedrun.com ({0}).".format(response.status_code)
 
+    try:
+        run_time = response["data"]["runs"][0]["run"]["times"]["primary_t"]
+    except Exception, e:
+        logging.error("Could not get run duration from srcom response.")
+        logging.error(game_id, found_categories, embeds, params)
+        logging.exception(e)
+        raise e
+
     msg = "The current world record for {0} {1} is {2} by {3}.".format(
         response["data"]["game"]["data"]["names"]["international"],
         cat_response,
-        time_formatter.format_time(response["data"]["runs"][0]["run"]["times"]["primary_t"]),
+        time_formatter.format_time(),
         response["data"]["players"]["data"][0]["names"]["international"]
     )
     if response["data"]["runs"][0]["run"]["videos"]:
