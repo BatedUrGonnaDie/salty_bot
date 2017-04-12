@@ -9,11 +9,14 @@ class API(object):
     # See kraken.py for an example
     def __init__(self, base_url, headers = None, cookies = None):
         self.base_url = base_url
+        # These headers and cookies will be sent with every request
         self.headers = headers if headers else {}
         self.cookies = cookies if cookies else {}
 
     # Define all HTTP verb calls
     # Each return the status of the call (True/False), and the return payload
+    # ALl returns will be decoded JSON if success is True, otherwise the
+    # return data is not decoded incase the server doesn't send back valid JSON
     def get(self, endpoint, params = None, **kwargs):
         url = self.base_url + endpoint
 
