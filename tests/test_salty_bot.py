@@ -13,6 +13,7 @@ from modules.commands.helpers import get_suffix
 
 def test_irc_message_parsing():
     assert 1
+    assert 1
 
 def test_time_parsing():
     assert "3:28:54" == time_formatter.format_time(12534)
