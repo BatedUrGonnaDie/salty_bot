@@ -1,4 +1,4 @@
-#! /usr/bin/env
+#! /usr/bin/env python2.7
 
 import modules.commands.helpers.get_diff_ratio as get_diff_ratio
 
