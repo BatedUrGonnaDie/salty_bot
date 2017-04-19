@@ -1,0 +1,41 @@
+{
+    1: {
+        "twitch_name": "batedurgonnadie",
+        "twitch_id": 18946907,
+        "session": "qwertyuiopasdfghjklzxcvbnm",
+        "bot_nick": "TheSaltyBot",
+        "bot_oauth": "oauth:blahblahblah",
+        "srl_nick": "batedurgonnadie",
+        "summoner_name": "batedurgonnadie",
+        "osu_nick": "batedurgonnadie",
+        "speedruncom_nick" : batedurgonnadie,
+        "created_at": "",
+        "updated_at": "",
+        "settings": {
+            "active": true,
+            "osu_link": true,
+            "osu_curent_song": "",
+            "youtube_link": true,
+            "social_active": true,
+            "social_output": "Follow on twitter or something",
+            "social_messages": 100,
+            "social_time": 30,
+            "toobou_active": true,
+            "toobou_limit": 30,
+            "toobou_trigger": "toobou",
+            "toobou_output": "#LearnMoonRunes",
+            "osu_song_key": "blakblakblak",
+            "sub_message_active": true,
+            "sub_message_text": "Thanks for subbin'",
+            "sub_message_resub": "Thanks for resubbin'",
+            "voting_active": true,
+            "voting_mods": true
+        },
+        "commands": {
+
+        },
+        "custom_commands": {
+
+        }
+    }
+}
