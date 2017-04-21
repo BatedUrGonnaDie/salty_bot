@@ -15,11 +15,6 @@ from modules.commands.helpers import get_category_title
 from modules.commands.helpers import get_diff_ratio
 from modules.commands.helpers import get_suffix
 
-setup_env.set_environment_variables()
-with open("tests/test_user.json", "r") as fin:
-    config = json.load(fin)
-SALTY_INST = saltybot.SaltyBot(config["1"])
-
 
 def test_irc_message_parsing():
     assert 1
