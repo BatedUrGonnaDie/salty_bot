@@ -1,5 +1,7 @@
 {
-    1: {
+    "1": {
+        "id": 1,
+        "user_id": 1,
         "twitch_name": "batedurgonnadie",
         "twitch_id": 18946907,
         "session": "qwertyuiopasdfghjklzxcvbnm",
@@ -8,7 +10,7 @@
         "srl_nick": "batedurgonnadie",
         "summoner_name": "batedurgonnadie",
         "osu_nick": "batedurgonnadie",
-        "speedruncom_nick" : batedurgonnadie,
+        "speedruncom_nick" : "batedurgonnadie",
         "created_at": "",
         "updated_at": "",
         "settings": {
