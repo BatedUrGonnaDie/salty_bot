@@ -1,2 +1,6 @@
 pytest
 vcrpy
+isodate>=0.5.1
+pytz>=2015.2
+requests>=2.5.1
+queries>=1.8.10
