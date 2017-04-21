@@ -1,7 +1,6 @@
 #! /usr/bin/env python2.7
 
 from   itertools import chain
-import json
 import logging
 import os
 import threading
@@ -10,6 +9,7 @@ import time
 from   modules import saltybot
 from   modules import balancer
 from   modules import configuration
+from   modules import setup_env
 from   modules.module_errors import NewBotException
 from   modules.apis import kraken
 from   modules.apis import newbs
@@ -70,11 +70,8 @@ def main():
         datefmt="%m-%d %H:%M:%S"
     )
     logging.getLogger("requests").setLevel(logging.WARNING)
-    with open("env_config.json", "r") as fin:
-        envs = json.load(fin)
-    salty_environment = os.environ.get("salty_environment", None) or envs.get("environment", None) or "development"
-    for k, v in envs[salty_environment].iteritems():
-        os.environ[k] = str(v)
+
+    salty_environment = setup_env.set_environment_variables()
 
     GLOBAL_APIS["kraken"] = kraken.Kraken()
     GLOBAL_APIS["kraken"].headers["User-Agent"] = "SaltyBot"
