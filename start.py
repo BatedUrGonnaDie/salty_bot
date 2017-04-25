@@ -36,14 +36,17 @@ def twitch_update_thread(balancer_obj):
             sleep_timer = sleep_timer ** 2
             continue
         new_info = {x : {"game" : "", "title" : "", "stream_start" : "", "is_live" : False} for x in channels}
-        for i in response["streams"]:
-            new_info[i["channel"]["name"]] = {
-                "game" : i["channel"]["game"],
-                "title" : i["channel"]["status"],
-                "is_live" : True,
-                "stream_start" : i["created_at"]
-            }
-        balancer_obj.update_twitch(new_info)
+        try:
+            for i in response["streams"]:
+                new_info[i["channel"]["name"]] = {
+                    "game" : i["channel"]["game"],
+                    "title" : i["channel"]["status"],
+                    "is_live" : True,
+                    "stream_start" : i["created_at"]
+                }
+            balancer_obj.update_twitch(new_info)
+        except TypeError:
+            pass
         sleep_timer = 2
         time.sleep(60)
     return
