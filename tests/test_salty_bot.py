@@ -1,7 +1,5 @@
 #! /usr/bin/env python2.7
 
-import json
-
 import pytest
 import vcr
 
@@ -9,6 +7,7 @@ from modules import irc
 from modules import twitch_irc
 from modules import saltybot
 from modules import setup_env
+from modules.extensions import regexes
 from modules.commands.helpers import time_formatter
 from modules.commands.helpers import get_category_string
 from modules.commands.helpers import get_category_title
@@ -59,3 +58,11 @@ def test_get_suffix():
     assert "nd" == get_suffix.suffix(2)
     assert "rd" == get_suffix.suffix(3)
     assert "th" == get_suffix.suffix(4)
+
+def test_osu_regexes():
+    assert regexes.OSU_URL.match("https://osu.ppy.sh/s/528824")
+    assert regexes.OSU_URL.match("http://osu.ppy.sh/s/528824")
+    assert regexes.OSU_URL.match("osu.ppy.sh/s/528824")
+    assert regexes.OSU_URL.match("https://osu.ppy.sh/b/1121510")
+    assert regexes.OSU_URL.match("http://osu.ppy.sh/b/1121510")
+    assert regexes.OSU_URL.match("osu.ppy.sh/b/1121510")
