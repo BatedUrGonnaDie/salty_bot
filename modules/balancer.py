@@ -125,7 +125,7 @@ class Balancer(object):
             self.lock.acquire()
         self.connections[bot_name]["irc_obj"].part(channel_name)
         del self.connections[bot_name]["bots"][channel_name]
-        if not self.connections[bot_name].get("bots", None):
+        if not self.connections[bot_name]["bots"]:
             self._remove_connection(bot_name)
         if lock:
             self.lock.release()
