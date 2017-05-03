@@ -11,6 +11,9 @@ def call(salty_inst, c_msg, **kwargs):
     except Exception:
         return False, ""
 
+    if vote_lower.strip() == "!vote":
+        return False, "Please suuply an option to vote for."
+
     if salty_inst.votes["type"] == "strict":
         if vote_lower not in salty_inst.votes["options"]:
             return False, "You must vote for one of the following options: {0}".format(

@@ -43,7 +43,7 @@ def call(salty_inst, c_msg, **kwargs):
             ", ".join(options)
         )
     elif poll_type == "loose":
-        return True, "You may now vote for {0} with any options you wish.".format(", ".join(options))
+        return True, "You may now vote for {0} with any options you wish.".format(poll_name)
     else:
         salty_inst.votes.clear()
         return False, "Invalid poll type, only strict/loose accepted."
