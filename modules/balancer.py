@@ -120,7 +120,7 @@ class Balancer(object):
 
     def remove_bot(self, bot_name, channel_name, lock = True):
         # Lock should only be disabled if currently acquired from another source
-        logging.debug("Removing bot for {0}.".format(bot_name))
+        logging.debug("Removing bot for {0}.".format(channel_name))
         if lock:
             self.lock.acquire()
         self.connections[bot_name]["irc_obj"].part(channel_name)
