@@ -282,6 +282,7 @@ class SaltyBot(object):
             else:
                 success, response = self.commands[command]["function"](self, c_msg)
         except Exception, e:
+            logging.error("{0} triggered an error.".format(command))
             logging.exception(e)
             return
 
