@@ -201,14 +201,12 @@ class IRC(object):
     @staticmethod
     def process_tags(tags):
         tags_dict = dict(item.split("=") for item in tags[1:].split(";"))
+        escaped_dict = {}
         for k, v in tags_dict.iteritems():
-            k.replace("\\:", ";")
-            k.replace("\\s", " ")
-            k.replace("\\\\", "\\")
-            v.replace("\\:", ";")
-            v.replace("\\s", " ")
-            v.replace("\\\\", "\\")
-        return tags_dict
+            new_k = k.replace("\\:", ";").replace("\\s", " ").replace("\\\\", "\\")
+            new_v = v.replace("\\:", ";").replace("\\s", " ").replace("\\\\", "\\")
+            escaped_dict[new_k] = new_v
+        return escaped_dict
 
     def msg_worker(self):
         while self.continue_loop:
