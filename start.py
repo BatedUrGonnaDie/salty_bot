@@ -85,17 +85,17 @@ def main():
     GLOBAL_APIS["srl"] = srl.SRLAPI()
     GLOBAL_APIS["youtube"] = youtube.YoutubeAPI()
 
-    config_type = os.environ["db_type"]
-    db_url = os.environ["db_url"]
+    config_type = os.environ["DB_TYPE"]
+    db_url = os.environ["DB_URL"]
     if config_type == "json":
         config_obj = configuration.JSONConfig(salty_environment, db_url)
-        server_obj = configuration.ConfigServer("JSON", **{"filename" : os.environ["db_url"]})
+        server_obj = configuration.ConfigServer("JSON", **{"filename" : os.environ["DB_URL"]})
     else:
         config_obj = configuration.DBConfig(salty_environment, db_url)
         server_obj = configuration.ConfigServer("db", **{
-            "web_ip" : os.environ["web_listen_ip"],
-            "web_port" : os.environ["web_listen_port"],
-            "web_secret" : os.environ["web_secret_key"]
+            "web_ip" : os.environ["WEB_LISTEN_IP"],
+            "web_port" : os.environ["WEB_LISTEN_PORT"],
+            "web_secret" : os.environ["wEB_SECRET_KEY"]
         })
 
     balancer_obj = balancer.Balancer()

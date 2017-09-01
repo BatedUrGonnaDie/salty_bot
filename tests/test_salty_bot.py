@@ -2,7 +2,6 @@
 
 import json
 import os
-import socket
 
 import pytest
 import vcr
@@ -17,7 +16,7 @@ from modules.commands.helpers import get_category_title
 from modules.commands.helpers import get_diff_ratio
 from modules.commands.helpers import get_suffix
 
-os.environ["salty_environment"] = "testing"
+os.environ["SALTY_ENVIRONMENT"] = "testing"
 setup_env.set_environment_variables()
 with open("tests/test_user.json", "r") as fin:
     config = json.load(fin)["1"]
@@ -29,8 +28,7 @@ def test_irc_message_parsing():
         "action": "CLEARCHAT",
         "params": ["#dallas", "ronni"],
         "prefix": ":tmi.twitch.tv",
-        "raw": "@ban-reason=Follow\sthe\srules :tmi.twitch.tv CLEARCHAT #dallas :ronni",
-        
+        "raw": "@ban-reason=Follow\sthe\srules :tmi.twitch.tv CLEARCHAT #dallas :ronni"
     }
 
 def test_time_parsing():

@@ -63,7 +63,7 @@ class SaltyBot(object):
             "CAP"             : self.cap,
             "USERNOTICE"      : self.usernotice
         }
-        self.super_users = ast.literal_eval(os.environ["salty_super_users"])
+        self.super_users = ast.literal_eval(os.environ["SALTY_SUPER_USERS"])
         self.super_users = [x.strip() for x in self.super_users]
 
         self.config = config
@@ -86,8 +86,8 @@ class SaltyBot(object):
             self.bot_nick = config["bot_nick"]
             self.bot_oauth = config["bot_oauth"]
         else:
-            self.bot_nick = os.environ["default_bot_nick"]
-            self.bot_oauth = os.environ["default_bot_oauth"]
+            self.bot_nick = os.environ["DEFAULT_BOT_NICK"]
+            self.bot_oauth = os.environ["DEFAULT_BOT_OAUTH"]
         self.channel = config["twitch_name"]
 
         if config["speedruncom_nick"]:

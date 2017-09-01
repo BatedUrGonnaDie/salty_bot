@@ -1,8 +1,19 @@
 language: python
 python:
   - "2.7"
+env:
+  SALTY_ENVIRONMENT=testing
+  SALTY_SUPER_USERS="['batedurgonnadie']"
+  SALTY_TWITCH_CLIENT_ID=testing
+  OSU_API_KEY=testing
+  YOUTUBE_API_KEY=testing
+  DEFAULT_BOT_NICK=thesaltybot
+  DEFAULT_BOT_OAUTH='oauth:testing'
 # command to install dependencies
 install:
   - pip install -r build-reqs.txt
 # command to run tests
-script: python -m pytest tests/ -v
+script:
+  - mkdir blacklists
+  - python -m pytest tests/ -v
+cache: pip

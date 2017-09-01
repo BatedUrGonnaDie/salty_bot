@@ -8,11 +8,11 @@ from   modules.apis import api_errors
 class Kraken(api.API):
 
     def __init__(self, client_id = None, oauth = None, headers = None, cookies = None):
-        if not client_id and not os.environ.get("salty_twitch_client_id", None) and not oauth:
+        if not client_id and not os.environ.get("SALTY_TWITCH_CLIENT_ID", None) and not oauth:
             raise api_errors.AuthorizationRequiredError
         super(Kraken, self).__init__("https://api.twitch.tv/kraken", headers=headers, cookies=cookies)
         self.oauth = oauth
-        self.headers["Client-ID"] = client_id or os.environ["salty_twitch_client_id"]
+        self.headers["Client-ID"] = client_id or os.environ["SALTY_TWITCH_CLIENT_ID"]
         self.headers["Accept"] = "application/vnd.twitchtv.v3+json"
 
 

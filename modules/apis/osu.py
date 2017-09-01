@@ -8,7 +8,7 @@ from   modules.apis import api_errors
 class OsuAPI(api.API):
 
     def __init__(self, key = None, headers = None, cookies = None):
-        self.api_key = key or os.environ.get("osu_api_key", None)
+        self.api_key = key or os.environ.get("OSU_API_KEY", None)
         if not self.api_key:
             raise api_errors.AuthorizationRequiredError
         super(OsuAPI, self).__init__("https://osu.ppy.sh/api", headers=headers, cookies=cookies)
