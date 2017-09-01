@@ -95,7 +95,7 @@ def main():
         server_obj = configuration.ConfigServer("db", **{
             "web_ip" : os.environ["WEB_LISTEN_IP"],
             "web_port" : os.environ["WEB_LISTEN_PORT"],
-            "web_secret" : os.environ["wEB_SECRET_KEY"]
+            "web_secret" : os.environ["WEB_SECRET_KEY"]
         })
 
     balancer_obj = balancer.Balancer()
