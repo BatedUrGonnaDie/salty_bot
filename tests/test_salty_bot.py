@@ -23,11 +23,12 @@ with open("tests/test_user.json", "r") as fin:
 SALTY_INST = saltybot.SaltyBot(config)
 
 def test_irc_message_parsing():
-    assert twitch_irc.TwitchIRC.parse("@ban-reason=Follow\sthe\srules :tmi.twitch.tv CLEARCHAT #dallas :ronni") == {
+    assert twitch_irc.TwitchIRC.extra_parse("@ban-reason=Follow\sthe\srules :tmi.twitch.tv CLEARCHAT #dallas :ronni") == {
         "tags": {"ban-reason": "Follow the rules"},
         "action": "CLEARCHAT",
         "params": ["#dallas", "ronni"],
         "prefix": ":tmi.twitch.tv",
+        "channel": "#dallas",
         "raw": "@ban-reason=Follow\sthe\srules :tmi.twitch.tv CLEARCHAT #dallas :ronni"
     }
 
@@ -78,3 +79,16 @@ def test_osu_regexes():
     assert regexes.OSU_URL.match("https://osu.ppy.sh/b/1121510")
     assert regexes.OSU_URL.match("http://osu.ppy.sh/b/1121510")
     assert regexes.OSU_URL.match("osu.ppy.sh/b/1121510")
+
+def test_twitch_rate_limit():
+    tirc = twitch_irc.TwitchIRC("test", "oauth:test")
+    assert False == tirc.rate_limited
+    tirc.sent_messages = 30
+    assert True  == tirc.rate_limited
+    tirc.last_reset = 0
+    tirc.clear_limit()
+    assert False == tirc.rate_limited
+
+def test_commands():
+    for v in saltybot.command_functions.values():
+        v.test("test", "test")

@@ -53,7 +53,7 @@ def call(salty_inst, c_msg, **kwargs):
         if i["category"]["data"]["name"] == cat_response:
             pb_record = i
 
-    pb_time = time_formatter.format(i["run"]["times"]["primary_t"])
+    pb_time = time_formatter.format_time(i["run"]["times"]["primary_t"])
     place = "{0}{1}".format(str(pb_record["place"]), get_suffix.suffix(pb_record["place"]))
     msg = "{0}'s pb for {1} {2} is {3}.  They are ranked {4} on speedrun.com {5}".format(
         user_name.capitalize(),
@@ -65,3 +65,6 @@ def call(salty_inst, c_msg, **kwargs):
     )
 
     return True, msg
+
+def test(salty_inst, c_msg, **kwargs):
+    assert True

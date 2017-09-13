@@ -36,3 +36,6 @@ def call(salty_inst, c_msg, **kwargs):
         return False, "Could not find a suitable game match for {0}.".format(game)
 
     return True, game_record["weblink"]
+
+def test(salty_inst, c_msg, **kwargs):
+    assert True

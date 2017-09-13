@@ -61,3 +61,6 @@ def call(salty_inst, c_msg, **kwargs):
         pb_splits["path"]
     )
     return True, msg
+
+def test(salty_inst, c_msg, **kwargs):
+    assert True

@@ -23,3 +23,6 @@ def call(salty_inst, c_msg, **kwargs):
             )
     finally:
         salty_inst.votes.clear()
+
+def test(salty_inst, c_msg, **kwargs):
+    assert True

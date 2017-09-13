@@ -60,3 +60,6 @@ def call(salty_inst, c_msg, **kwargs):
     else:
         send_msg += ". {}".format(race_link)
     return True, send_msg
+
+def test(salty_inst, c_msg, **kwargs):
+    assert True

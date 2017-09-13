@@ -23,3 +23,6 @@ def call(salty_inst, c_msg, **kwargs):
         "{:,}".format(int(response["pp_rank"]))
     )
     return True, msg
+
+def test(salty_inst, c_msg, **kwargs):
+    assert True

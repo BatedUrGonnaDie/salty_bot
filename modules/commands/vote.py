@@ -49,3 +49,6 @@ def call(salty_inst, c_msg, **kwargs):
             vote_lower,
             str(salty_inst.votes["options"][vote_lower])
         )
+
+def test(salty_inst, c_msg, **kwargs):
+    assert True

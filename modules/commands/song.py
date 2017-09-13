@@ -8,3 +8,6 @@ def call(salty_inst, c_msg, **kwargs):
         return False, \
             "Error retrieving data from LoN ({0}).".format(response.status_code)
     return True, response["song"]
+
+def test(salty_inst, c_msg, **kwargs):
+    assert True

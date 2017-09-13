@@ -12,3 +12,6 @@ def call(salty_inst, c_msg, **kwargs):
             else:
                 users.remove(i)
     return True, "{0} have been blacklisted.".format(", ".join(users))
+
+def test(salty_inst, c_msg, **kwargs):
+    assert True

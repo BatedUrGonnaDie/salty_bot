@@ -18,3 +18,6 @@ def call(salty_inst, c_msg, **kwargs):
         return False, "No help text defined for {0}.".format(command)
     return True, \
         "Syntax: {0} | Description: {1}".format(help_list[0], help_list[1])
+
+def test(salty_inst, c_msg, **kwargs):
+    assert True

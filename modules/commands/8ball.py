@@ -33,3 +33,6 @@ def call(salty_inst, c_msg, **kwargs):
         return False, "Magic 8ball says: Ask me a real question!"
 
     return True, "Magic 8ball says: {0}".format(random.choice(ANSWERS))
+
+def test(salty_inst, c_msg, **kwargs):
+    assert True

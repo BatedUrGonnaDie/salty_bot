@@ -16,3 +16,6 @@ def call(salty_inst, c_msg, **kwargs):
         )
 
     return True, response
+
+def test(salty_inst, c_msg, **kwargs):
+    assert True

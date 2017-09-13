@@ -16,6 +16,6 @@ def set_environment_variables():
             raise e
     salty_environment = os.environ.get("SALTY_ENVIRONMENT", None) or envs.get("environment", None) or "development"
     for k, v in envs[salty_environment].iteritems():
-        os.environ[k] = str(v)
+        os.environ[k.upper()] = str(v)
 
     return salty_environment

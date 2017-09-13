@@ -47,3 +47,6 @@ def call(salty_inst, c_msg, **kwargs):
     else:
         salty_inst.votes.clear()
         return False, "Invalid poll type, only strict/loose accepted."
+
+def test(salty_inst, c_msg, **kwargs):
+    assert True

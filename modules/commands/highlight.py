@@ -30,3 +30,6 @@ def call(salty_inst, c_msg, **kwargs):
         "Current time added to the highlight queue. {0}: use !highlight show to view the highlights saved.".format(
             salty_inst.channel
         )
+
+def test(salty_inst, c_msg, **kwargs):
+    assert True

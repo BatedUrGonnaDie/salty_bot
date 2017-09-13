@@ -7,3 +7,6 @@ HELP_TEXT = ["!addquote <quote>", "Add the selected text for review (broadcaster
 def call(salty_inst, c_msg, **kwargs):
     success, response = quote_add(salty_inst, c_msg, "quote", **kwargs)
     return success, response
+
+def test(salty_inst, c_msg, **kwargs):
+    assert True

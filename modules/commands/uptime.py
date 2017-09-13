@@ -14,3 +14,6 @@ def call(salty_inst, c_msg, **kwargs):
     start = isodate.parse_datetime(salty_inst.stream_start)
     current = datetime.datetime.now(pytz.utc)
     return True, "The stream has been live for {0}.".format(str(current - start)[:-7])
+
+def test(salty_inst, c_msg, **kwargs):
+    True

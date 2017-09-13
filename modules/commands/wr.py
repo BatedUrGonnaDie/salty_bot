@@ -77,14 +77,14 @@ def call(salty_inst, c_msg, **kwargs):
         run_time = response["data"]["runs"][0]["run"]["times"]["primary_t"]
     except Exception, e:
         logging.error("Could not get run duration from srcom response.")
-        logging.error(game_id, found_categories, embeds, params)
+        logging.error(game_id, found_categories)
         logging.exception(e)
         raise e
 
     msg = "The current world record for {0} {1} is {2} by {3}.".format(
         response["data"]["game"]["data"]["names"]["international"],
         cat_response,
-        time_formatter.format_time(),
+        time_formatter.format_time(run_time),
         response["data"]["players"]["data"][0]["names"]["international"]
     )
     if response["data"]["runs"][0]["run"]["videos"]:
@@ -95,5 +95,5 @@ def call(salty_inst, c_msg, **kwargs):
 
     return True, msg
 
-def test_output():
-    return 0
+def test(salty_inst, c_msg, **kwargs):
+    assert True

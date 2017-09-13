@@ -21,3 +21,6 @@ def call(salty_inst, c_msg, **kwargs):
     if admin_commands:
         command_string += " | Mod Only Commands: {0}".format(", ".join(sorted(admin_commands)))
     return True, command_string
+
+def test(salty_inst, c_msg, **kwargs):
+    assert True
