@@ -2,6 +2,7 @@
 
 HELP_TEXT = ["!whitelist <name>", "[Broadcaster Only] Remove a user from the blacklist."]
 
+
 def call(salty_inst, c_msg, **kwargs):
     users = c_msg["message"].split(" ")[1:]
     for i in users:

@@ -1,27 +1,28 @@
 #! /usr/bin/env python2.7
 
-from   itertools import chain
+from itertools import chain
 import logging
 import os
 import threading
 import time
 
-from   modules import saltybot
-from   modules import balancer
-from   modules import configuration
-from   modules import setup_env
-from   modules.module_errors import NewBotException
-from   modules.apis import kraken
-from   modules.apis import newbs
-from   modules.apis import osu
-from   modules.apis import splits_io
-from   modules.apis import sr_com
-from   modules.apis import srl
-from   modules.apis import youtube
+from modules import saltybot
+from modules import balancer
+from modules import configuration
+from modules import setup_env
+from modules.module_errors import NewBotException
+from modules.apis import kraken
+from modules.apis import newbs
+from modules.apis import osu
+from modules.apis import splits_io
+from modules.apis import sr_com
+from modules.apis import srl
+from modules.apis import youtube
 
 RUNNING = True
 # All apis use the environment keys for the required access
 GLOBAL_APIS = {}
+
 
 def twitch_update_thread(balancer_obj):
     sleep_timer = 2
@@ -35,14 +36,14 @@ def twitch_update_thread(balancer_obj):
             time.sleep(sleep_timer)
             sleep_timer = sleep_timer ** 2
             continue
-        new_info = {x : {"game" : "", "title" : "", "stream_start" : "", "is_live" : False} for x in channels}
+        new_info = {x: {"game": "", "title": "", "stream_start": "", "is_live": False} for x in channels}
         try:
             for i in response["streams"]:
                 new_info[i["channel"]["name"]] = {
-                    "game" : i["channel"]["game"],
-                    "title" : i["channel"]["status"],
-                    "is_live" : True,
-                    "stream_start" : i["created_at"]
+                    "game": i["channel"]["game"],
+                    "title": i["channel"]["status"],
+                    "is_live": True,
+                    "stream_start": i["created_at"]
                 }
             balancer_obj.update_twitch(new_info)
         except TypeError:
@@ -51,18 +52,20 @@ def twitch_update_thread(balancer_obj):
         time.sleep(60)
     return
 
+
 def listen_thread(config_obj, balancer_obj, server_obj):
     while RUNNING:
         retrieve_value = server_obj.listen_for_updates()
         new_config = config_obj.fetch_one(retrieve_value)
         if retrieve_value:
-            new_config = {"" : new_config}
+            new_config = {"": new_config}
         for i in new_config.values():
             try:
                 balancer_obj.update_bot(i)
             except NewBotException:
                 balancer_obj.add_bot(saltybot.SaltyBot(i))
     return
+
 
 def main():
     logging.basicConfig(
@@ -89,13 +92,13 @@ def main():
     db_url = os.environ["DB_URL"]
     if config_type == "json":
         config_obj = configuration.JSONConfig(salty_environment, db_url)
-        server_obj = configuration.ConfigServer("JSON", **{"filename" : os.environ["DB_URL"]})
+        server_obj = configuration.ConfigServer("JSON", **{"filename": os.environ["DB_URL"]})
     else:
         config_obj = configuration.DBConfig(salty_environment, db_url)
         server_obj = configuration.ConfigServer("db", **{
-            "web_ip" : os.environ["WEB_LISTEN_IP"],
-            "web_port" : os.environ["WEB_LISTEN_PORT"],
-            "web_secret" : os.environ["WEB_SECRET_KEY"]
+            "web_ip": os.environ["WEB_LISTEN_IP"],
+            "web_port": os.environ["WEB_LISTEN_PORT"],
+            "web_secret": os.environ["WEB_SECRET_KEY"]
         })
 
     balancer_obj = balancer.Balancer()

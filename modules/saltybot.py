@@ -10,17 +10,18 @@ import time
 
 import pytz
 
-from   modules.module_errors import DeactivatedBotException
-from   modules.apis import kraken
-from   modules.apis import newbs
-from   modules.apis import osu
-from   modules.apis import splits_io
-from   modules.apis import sr_com
-from   modules.apis import srl
-from   modules.apis import youtube
-from   modules.commands import help as help_command
+from modules.module_errors import DeactivatedBotException
+from modules.apis import kraken
+from modules.apis import newbs
+from modules.apis import osu
+from modules.apis import splits_io
+from modules.apis import sr_com
+from modules.apis import srl
+from modules.apis import youtube
+from modules.commands import help as help_command
 
 command_functions = {}
+
 
 def init_commands():
     cmd_filenames = []
@@ -42,6 +43,7 @@ def init_commands():
             print e
 
 init_commands()
+
 
 class SaltyBot(object):
 
@@ -68,9 +70,9 @@ class SaltyBot(object):
 
         self.config = config
 
-        self.twitch_api = kraken.Kraken(headers={"User-Agent" : "SaltyBot"})
+        self.twitch_api = kraken.Kraken(headers={"User-Agent": "SaltyBot"})
         self.osu_api = osu.OsuAPI()
-        self.newbs_api = newbs.NewbsAPI(cookies={"session" : config["session"]})
+        self.newbs_api = newbs.NewbsAPI(cookies={"session": config["session"]})
         self.srl_api = srl.SRLAPI()
         self.sr_com_api = sr_com.SRcomAPI()
         self.splits_io_api = splits_io.SplitsIOAPI()
@@ -242,7 +244,6 @@ class SaltyBot(object):
         self.stream_start = new_info["stream_start"]
         self.is_live = new_info["is_live"]
 
-
     def check_permissions(self, c_msg):
         try:
             command = c_msg["message"].split(" ", 1)[0]
@@ -262,7 +263,6 @@ class SaltyBot(object):
             return False
 
         return True
-
 
     def process_message(self, c_msg):
         return self.action_functions[c_msg["action"]](c_msg)

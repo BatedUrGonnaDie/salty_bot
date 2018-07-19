@@ -27,6 +27,7 @@ helper_functions = {
     "USERNOTICE"      : []
 }
 
+
 def init_helpers():
     for k in helper_functions.keys():
         helper_functions[k] = []
@@ -49,6 +50,7 @@ def init_helpers():
 
 init_helpers()
 
+
 class Balancer(object):
 
     def __init__(self):
@@ -66,9 +68,8 @@ class Balancer(object):
         t_irc.connect()
         t_irc_thread = threading.Thread(target=t_irc.main_loop)
         t_irc_thread.daemon = True
-        self.connections[username] = {"thread" : t_irc_thread, "irc_obj" : t_irc, "bots" : {}}
+        self.connections[username] = {"thread": t_irc_thread, "irc_obj": t_irc, "bots": {}}
         t_irc_thread.start()
-
 
     def _remove_connection(self, username):
         # Should only be called while the lock is acquired with fresh data
@@ -78,7 +79,7 @@ class Balancer(object):
         self.connections[username]["irc_obj"].disconnect()
         del self.connections[username]
 
-    def add_bot(self, bot, lock = True):
+    def add_bot(self, bot, lock=True):
         # This will overwrite any bot under the exact same name in the same channel
         # Up to implementer to check for conflictions
         # Lock should only be disabled if currently acquired from another source
@@ -118,7 +119,7 @@ class Balancer(object):
                 for k2, v2 in v["bots"].iteritems():
                     v2.update_twitch_info(new_info[k2])
 
-    def remove_bot(self, bot_name, channel_name, lock = True):
+    def remove_bot(self, bot_name, channel_name, lock=True):
         # Lock should only be disabled if currently acquired from another source
         logging.debug("Removing bot for {0}.".format(channel_name))
         if lock:
@@ -162,7 +163,7 @@ class Balancer(object):
             try:
                 outbound_msg = i.process_message(c_msg)
                 if outbound_msg:
-                    outbound.append({"channel" : i.channel, "message" : outbound_msg})
+                    outbound.append({"channel": i.channel, "message": outbound_msg})
             except Exception, e:
                 logging.exception(e)
                 logging.error(c_msg)
@@ -174,7 +175,6 @@ class Balancer(object):
                     self.connections[c_msg["bot_name"]]["irc_obj"].privmsg(i["channel"], i["message"])
 
         self.process_helpers(c_msg)
-
 
     def process_helpers(self, c_msg):
         channel = c_msg.get("channel", None)

@@ -3,6 +3,7 @@
 import json
 import os
 
+
 def set_environment_variables():
     try:
         with open("env_config.json", "r") as fin:

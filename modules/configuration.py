@@ -8,6 +8,7 @@ import time
 
 import queries
 
+
 class DBConfig(object):
 
     def __init__(self, dev, db_url):
@@ -77,6 +78,7 @@ class DBConfig(object):
         users["custom_commands"] = custom_commands
         return users
 
+
 class JSONConfig(object):
 
     def __init__(self, dev, filename):
@@ -87,10 +89,11 @@ class JSONConfig(object):
         with open(self.filename, "r") as fin:
             configurations = json.load(fin)
 
-        return {k : v for k, v in configurations.iteritems() if v["settings"]["active"]}
+        return {k: v for k, v in configurations.iteritems() if v["settings"]["active"]}
 
     def fetch_one(self, *args):
         return self.initial_retrieve()
+
 
 class ConfigServer(object):
 
