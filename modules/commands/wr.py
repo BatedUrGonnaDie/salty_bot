@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 import logging
 
@@ -75,7 +75,7 @@ def call(salty_inst, c_msg, **kwargs):
 
     try:
         run_time = response["data"]["runs"][0]["run"]["times"]["primary_t"]
-    except Exception, e:
+    except Exception as e:
         logging.error("Could not get run duration from srcom response.")
         logging.error(game_id, found_categories)
         logging.exception(e)
@@ -94,6 +94,7 @@ def call(salty_inst, c_msg, **kwargs):
         msg += " Splits: https://splits.io/{0}".format(splits_path)
 
     return True, msg
+
 
 def test(salty_inst, c_msg, **kwargs):
     assert True

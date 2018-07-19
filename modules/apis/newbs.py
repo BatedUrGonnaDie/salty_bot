@@ -1,10 +1,11 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 import modules.apis.api_base as api
 
+
 class NewbsAPI(api.API):
 
-    def __init__(self, headers = None, cookies = None):
+    def __init__(self, headers=None, cookies=None):
         super(NewbsAPI, self).__init__("https://leagueofnewbs.com/api", headers=headers, cookies=cookies)
 
     def add_textutil(self, channel, text_type, data, **kwargs):
@@ -12,7 +13,7 @@ class NewbsAPI(api.API):
         success, response = self.post(endpoint, data, **kwargs)
         return success, response
 
-    def get_textutil(self, channel, text_type, limit = 1, **kwargs):
+    def get_textutil(self, channel, text_type, limit=1, **kwargs):
         endpoint = "/users/{0}/{1}s?limit={2}".format(channel, text_type, limit)
         success, response = self.get(endpoint, **kwargs)
         return success, response

@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 import time
 
@@ -16,14 +16,14 @@ def call(salty_inst, c_msg, **kwargs):
 
     races = response["races"]
     for i in races:
-        if channel in [x["twitch"].lower() for x in i["entrants"].values()]:
+        if channel in [x["twitch"].lower() for x in list(i["entrants"].values())]:
             race_channel = i
             break
     else:
         return False, "User not currently in a race."
 
     entrants = []
-    for k, v in race_channel["entrants"].iteritems():
+    for k, v in race_channel["entrants"].items():
         if salty_inst.channel == v["twitch"].lower():
             real_nick = k
         if v["statetext"] == "Ready" or v["statetext"] == "Entered":
@@ -60,6 +60,7 @@ def call(salty_inst, c_msg, **kwargs):
     else:
         send_msg += ". {}".format(race_link)
     return True, send_msg
+
 
 def test(salty_inst, c_msg, **kwargs):
     assert True

@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 from modules.commands.helpers import get_category_string
 from modules.commands.helpers import get_category_title
@@ -9,9 +9,9 @@ HELP_TEXT = [
     "Retrive pb splits from splits.io.  Will try and user game and category from title and streamer if live, else all are required."
 ]
 
+
 def call(salty_inst, c_msg, **kwargs):
     msg_split = c_msg["message"].split(" ", 3)
-
 
     infer_category = False
     try:
@@ -40,7 +40,7 @@ def call(salty_inst, c_msg, **kwargs):
             game_pbs.append(i)
         if (i["game"]["shortname"] or "").lower() == game:
             game_pbs.append(i)
-    game_categories = {x["category"]["name"] : x["category"]["name"] for x in game_pbs if x["category"]}
+    game_categories = {x["category"]["name"]: x["category"]["name"] for x in game_pbs if x["category"]}
 
     if infer_category:
         category_finder = get_category_title.find_active_cat
@@ -61,6 +61,7 @@ def call(salty_inst, c_msg, **kwargs):
         pb_splits["path"]
     )
     return True, msg
+
 
 def test(salty_inst, c_msg, **kwargs):
     assert True

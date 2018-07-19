@@ -1,7 +1,7 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 import logging
-import Queue
+import queue
 import socket
 import ssl
 import threading
@@ -23,9 +23,10 @@ PASSTHROUGH_ACTIONS = (
     "USERNOTICE"
 )
 
+
 class IRC(object):
 
-    def __init__(self, host, port, username, oauth = "", use_ssl = False, callback = None, max_worker_threads = 5):
+    def __init__(self, host, port, username, oauth="", use_ssl=False, callback=None, max_worker_threads=5):
         self.host = host
         self.port = port
         self.use_ssl = use_ssl
@@ -38,7 +39,7 @@ class IRC(object):
         self.continue_loop = True
         self.create()
         self.callback = callback
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
         self.queue_size = 0
         self.logger = logging.getLogger("IRC.IRC")
 
@@ -61,9 +62,9 @@ class IRC(object):
         while True:
             try:
                 self.socket.connect((self.host, self.port))
-            except ValueError, e:
+            except ValueError as e:
                 self.logger.error("Tried to connect to already connected socket!")
-            except Exception, e:
+            except Exception as e:
                 self.logger.exception(e)
                 time.sleep(sleep_time)
                 sleep_time = sleep_time ** 2
@@ -96,7 +97,7 @@ class IRC(object):
         self.connect()
 
     def raw(self, msg):
-        self.socket.sendall("{0}\r\n".format(msg))
+        self.socket.sendall("{0}\r\n".format(msg).encode("utf-8"))
 
     def ping(self):
         self.raw("PING")
@@ -131,7 +132,7 @@ class IRC(object):
         inc_msg = self.socket.recv(amount)
         try:
             return inc_msg.decode("utf-8")
-        except Exception, e:
+        except Exception as e:
             self.logger.exception(e)
             return inc_msg
 
@@ -157,7 +158,7 @@ class IRC(object):
 
         if msg[position] == ":":
             next_space = msg.find(" ", position)
-            c_msg["prefix"] = msg[position : next_space]
+            c_msg["prefix"] = msg[position: next_space]
             position = next_space + 1
 
             while position == " ":
@@ -170,7 +171,7 @@ class IRC(object):
                 c_msg["action"] = msg[position:]
             return c_msg
 
-        c_msg["action"] = msg[position : next_space]
+        c_msg["action"] = msg[position: next_space]
         position = next_space + 1
 
         while msg[position] == " ":
@@ -184,7 +185,7 @@ class IRC(object):
                 break
 
             if next_space != -1:
-                c_msg["params"].append(msg[position : next_space])
+                c_msg["params"].append(msg[position: next_space])
                 position = next_space + 1
 
                 while msg[position] == " ":
@@ -202,7 +203,7 @@ class IRC(object):
     def process_tags(tags):
         tags_dict = dict(item.split("=") for item in tags[1:].split(";"))
         escaped_dict = {}
-        for k, v in tags_dict.iteritems():
+        for k, v in tags_dict.items():
             new_k = k.replace("\\:", ";").replace("\\s", " ").replace("\\\\", "\\")
             new_v = v.replace("\\:", ";").replace("\\s", " ").replace("\\\\", "\\")
             escaped_dict[new_k] = new_v
@@ -218,7 +219,7 @@ class IRC(object):
                 self.tmp_threads += 1
             try:
                 self.callback(self.queue.get())
-            except Exception, e:
+            except Exception as e:
                 self.logger.exception(e)
             self.queue_size -= 1
             self.queue.task_done()
@@ -239,7 +240,7 @@ class IRC(object):
                 self.callback(self.queue.get(False))
                 self.queue_size -= 1
                 self.queue.task_done()
-            except Queue.Empty:
+            except queue.Empty:
                 break
         self.tmp_threads -= 1
         return
@@ -250,11 +251,11 @@ class IRC(object):
         while self.continue_loop:
             try:
                 tmp_buffer = self.recv(4096)
-            except socket.timeout, e:
+            except socket.timeout as e:
                 if self.continue_loop:
                     self.reconnect()
                 continue
-            except ssl.SSLError, e:
+            except ssl.SSLError as e:
                 if e.message != "The read operation timed out":
                     raise
                 if self.continue_loop:

@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 import ast
 import datetime
@@ -38,9 +38,10 @@ def init_commands():
             module = imp.load_source(imp_name, cmd)
             sys.modules[imp_name] = module
             command_functions[cmd_name] = module
-        except Exception, e:
-            print "Error importing {0}.".format(imp_name)
-            print e
+        except Exception as e:
+            print("Error importing {0}.".format(imp_name))
+            print(e)
+
 
 init_commands()
 
@@ -272,7 +273,7 @@ class SaltyBot(object):
         msg_split = c_msg["message"].split(" ")
         command = msg_split[0]
 
-        if command not in command_functions.keys() and command not in self.commands.keys():
+        if command not in list(command_functions.keys()) and command not in list(self.commands.keys()):
             return False
         try:
             if not self.check_permissions(c_msg):
@@ -281,7 +282,7 @@ class SaltyBot(object):
                 success, response = True, self.commands[command]["output"]
             else:
                 success, response = self.commands[command]["function"](self, c_msg)
-        except Exception, e:
+        except Exception as e:
             logging.error("{0} triggered an error.".format(command))
             logging.exception(e)
             return

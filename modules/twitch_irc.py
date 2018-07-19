@@ -1,12 +1,13 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 import time
 
 from modules import irc
 
+
 class TwitchIRC(irc.IRC):
 
-    def __init__(self, username, oauth, callback = None):
+    def __init__(self, username, oauth, callback=None):
         if not oauth.startswith("oauth:"):
             oauth = "oauth:{0}".format(oauth)
         super(TwitchIRC, self).__init__(

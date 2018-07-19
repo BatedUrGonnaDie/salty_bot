@@ -1,6 +1,7 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 ON_ACTION = "RECONNECT"
+
 
 def call(salty_inst, c_msg, balancer, **kwargs):
     with balancer.lock:

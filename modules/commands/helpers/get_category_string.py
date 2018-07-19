@@ -1,9 +1,10 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 import modules.commands.helpers.get_diff_ratio as get_diff_ratio
 
+
 def find_active_cat(game_categories, user_string):
-    for k in game_categories.keys():
+    for k in list(game_categories.keys()):
         if k.lower() == user_string.lower():
             return True, k
 

@@ -1,15 +1,15 @@
-**WARNING  
+**WARNING**  
 Salty is currently going through a complete rewrite with a lot of complete
 API breaking changes.  If you are basing a bot off of this project functions
 may change at any time
 
 The changes that are in the future rewrite have not been tested in any form
 and will not be used until proper tests have been written.  
-WARNING**
+**WARNING**
 
 Twitch chat bot with Twitch, Osu, YouTube, SRL, and LoL API integration.
 
-Coded with Python 2.7.  Dependencies are located in requirements.txt.
+Coded with Python 3.7.  Dependencies are located in requirements.txt.
 
 Commands
 ========
@@ -36,11 +36,6 @@ the broadcaster uses this command the quote/pun will go straight into the live f
 
 `!rank <user?>` will retrieve the accuracy, pp ranking, level, and username
 of the streamer (or the user specified) on osu.
-
-`!runes` will retrieve the active rune page and add up all the values.  Note that this will most likely break for the
-runes with more than one stat.
-
-`!masteries` will retrieve the active mastery page and output it like so, x/y/z.
 
 `!createvote <loose/strict> "Poll Name" (option) (if) (strict)` will allow broadcaster to start a poll.  Mods can
 start polls if the broadcaster has set so in their dashboard.  Loose means people can vote for anything while strict

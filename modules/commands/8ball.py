@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 import random
 
@@ -27,12 +27,14 @@ ANSWERS = [
     "Very doubtful"
 ]
 
+
 def call(salty_inst, c_msg, **kwargs):
     question = c_msg["message"].split(' ')[1:]
     if not question:
         return False, "Magic 8ball says: Ask me a real question!"
 
     return True, "Magic 8ball says: {0}".format(random.choice(ANSWERS))
+
 
 def test(salty_inst, c_msg, **kwargs):
     assert True

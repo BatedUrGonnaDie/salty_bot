@@ -1,4 +1,5 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
+
 
 def suffix(number):
     if number in (11, 12, 13):

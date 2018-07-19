@@ -1,8 +1,9 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 from modules.commands.helpers import get_diff_ratio
 
 HELP_TEXT = ["!leaderboard <game?>", "Attempts to find game on speedrun.com if provided, or searches the channels game."]
+
 
 def call(salty_inst, c_msg, **kwargs):
     msg_split = c_msg["message"].split(" ", 1)
@@ -36,6 +37,7 @@ def call(salty_inst, c_msg, **kwargs):
         return False, "Could not find a suitable game match for {0}.".format(game)
 
     return True, game_record["weblink"]
+
 
 def test(salty_inst, c_msg, **kwargs):
     assert True

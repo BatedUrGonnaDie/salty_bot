@@ -1,4 +1,5 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
+
 
 def format_time(time):
     m, s = divmod(float(time), 60)

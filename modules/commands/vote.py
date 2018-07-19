@@ -1,6 +1,7 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 HELP_TEXT = ["!vote <poll option>", "Places a vote in the poll."]
+
 
 def call(salty_inst, c_msg, **kwargs):
     if not salty_inst.votes:
@@ -17,7 +18,7 @@ def call(salty_inst, c_msg, **kwargs):
     if salty_inst.votes["type"] == "strict":
         if vote_lower not in salty_inst.votes["options"]:
             return False, "You must vote for one of the following options: {0}".format(
-                ", ".join(salty_inst.votes["options"].keys())
+                ", ".join(list(salty_inst.votes["options"].keys()))
             )
 
     if c_msg["sender"] in salty_inst.votes["voters"]:
@@ -49,6 +50,7 @@ def call(salty_inst, c_msg, **kwargs):
             vote_lower,
             str(salty_inst.votes["options"][vote_lower])
         )
+
 
 def test(salty_inst, c_msg, **kwargs):
     assert True

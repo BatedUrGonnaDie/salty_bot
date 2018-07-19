@@ -1,7 +1,9 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
+
 
 class DeactivatedBotException(Exception):
     pass
+
 
 class NewBotException(Exception):
     pass

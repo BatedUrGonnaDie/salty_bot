@@ -1,13 +1,14 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 import os
 
 import modules.apis.api_base as api
-from   modules.apis import api_errors
+from modules.apis import api_errors
+
 
 class Kraken(api.API):
 
-    def __init__(self, client_id = None, oauth = None, headers = None, cookies = None):
+    def __init__(self, client_id=None, oauth=None, headers=None, cookies=None):
         if not client_id and not os.environ.get("SALTY_TWITCH_CLIENT_ID", None) and not oauth:
             raise api_errors.AuthorizationRequiredError
         super(Kraken, self).__init__("https://api.twitch.tv/kraken", headers=headers, cookies=cookies)
@@ -15,10 +16,10 @@ class Kraken(api.API):
         self.headers["Client-ID"] = client_id or os.environ["SALTY_TWITCH_CLIENT_ID"]
         self.headers["Accept"] = "application/vnd.twitchtv.v3+json"
 
-
     @property
     def oauth(self):
         return self._oauth
+
     @oauth.setter
     def oauth(self, oauth):
         self._oauth = oauth
@@ -71,4 +72,3 @@ class Kraken(api.API):
         endpoint = "/channels/{0}".format(channel)
         success, response = self.put(endpoint, data=data, **kwargs)
         return success, response
-

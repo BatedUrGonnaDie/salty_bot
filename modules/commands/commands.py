@@ -1,6 +1,7 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 HELP_TEXT = ["!commands", "Displays all active commands in the current channel."]
+
 
 def call(salty_inst, c_msg, **kwargs):
     active_commands = dict(salty_inst.commands)
@@ -11,7 +12,7 @@ def call(salty_inst, c_msg, **kwargs):
             del active_commands["!highlight"]
     reg_commands = []
     admin_commands = []
-    for i in active_commands.iteritems():
+    for i in active_commands.items():
         if i[1]["mod_req"]:
             admin_commands.append(i[0])
         else:
@@ -21,6 +22,7 @@ def call(salty_inst, c_msg, **kwargs):
     if admin_commands:
         command_string += " | Mod Only Commands: {0}".format(", ".join(sorted(admin_commands)))
     return True, command_string
+
 
 def test(salty_inst, c_msg, **kwargs):
     assert True

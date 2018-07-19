@@ -1,6 +1,7 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 ON_ACTION = "USERNOTICE"
+
 
 def call(salty_inst, c_msg, balancer, **kwargs):
     if not c_msg["tags"] and c_msg["tags"]["msg-id"] == "resub":

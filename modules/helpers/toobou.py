@@ -1,8 +1,9 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 import time
 
 ON_ACTION = "PRIVMSG"
+
 
 def call(salty_inst, c_msg, balancer, **kwargs):
     if not salty_inst.toobou["active"] and not salty_inst.toobou["output"]:

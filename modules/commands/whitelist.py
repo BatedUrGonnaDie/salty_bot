@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 HELP_TEXT = ["!whitelist <name>", "[Broadcaster Only] Remove a user from the blacklist."]
 
@@ -14,6 +14,7 @@ def call(salty_inst, c_msg, **kwargs):
         fin.write("\n".join(salty_inst.blacklist))
 
     return True, "{0} have been whitelisted.".format(", ".join(users))
+
 
 def test(salty_inst, c_msg, **kwargs):
     assert True

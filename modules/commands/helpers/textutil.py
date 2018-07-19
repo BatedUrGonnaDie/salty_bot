@@ -1,4 +1,5 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
+
 
 def add(salty_inst, c_msg, text_type, **kwargs):
     try:
@@ -7,14 +8,15 @@ def add(salty_inst, c_msg, text_type, **kwargs):
         return False, "Please do not leave the quote blank."
 
     data = {
-        "reviewed" : 1 if c_msg["sender"] == salty_inst.channel else 0,
-        "text" : text,
-        "user_id" : salty_inst.user_id
+        "reviewed": 1 if c_msg["sender"] == salty_inst.channel else 0,
+        "text": text,
+        "user_id": salty_inst.user_id
     }
     success, response = salty_inst.newbs_api.add_textutil(salty_inst.channel, text_type, data, **kwargs)
     if not success:
         return False, "Error adding {0} to database ({1})".format(text_type, response.status_code)
     return True, "{0} successfully added to the database.".format(text_type.capitalize())
+
 
 def get(salty_inst, c_msg, text_type, **kwargs):
     success, response = salty_inst.newbs_api.get_textutil(salty_inst.channel, text_type, **kwargs)

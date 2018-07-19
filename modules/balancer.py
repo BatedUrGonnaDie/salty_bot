@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 import imp
 import logging
@@ -29,7 +29,7 @@ helper_functions = {
 
 
 def init_helpers():
-    for k in helper_functions.keys():
+    for k in list(helper_functions.keys()):
         helper_functions[k] = []
     helper_filenames = []
     helper_folder = os.path.join(os.path.dirname(__file__), "helpers")
@@ -44,9 +44,10 @@ def init_helpers():
             module = imp.load_source(imp_name, helper)
             sys.modules[imp_name] = module
             helper_functions[module.ON_ACTION].append(module.call)
-        except Exception, e:
-            print "Error importing {0}.".format(imp_name)
-            print e
+        except Exception as e:
+            print("Error importing {0}.".format(imp_name))
+            print(e)
+
 
 init_helpers()
 
@@ -104,8 +105,8 @@ class Balancer(object):
                 # First it checks to make sure a bot under a different name isn't still in the channel
                 channel = new_config["twitch_name"]
                 bot_name = None
-                for k, v in self.connections.iteritems():
-                    if channel in v["bots"].keys():
+                for k, v in self.connections.items():
+                    if channel in list(v["bots"].keys()):
                         bot_name = k
                 if bot_name:
                     self.remove_bot(bot_name, channel, lock=False)
@@ -115,8 +116,8 @@ class Balancer(object):
 
     def update_twitch(self, new_info):
         with self.lock:
-            for v in self.connections.values():
-                for k2, v2 in v["bots"].iteritems():
+            for v in list(self.connections.values()):
+                for k2, v2 in v["bots"].items():
                     v2.update_twitch_info(new_info[k2])
 
     def remove_bot(self, bot_name, channel_name, lock=True):
@@ -133,8 +134,8 @@ class Balancer(object):
 
     def social_message_send(self):
         while True:
-            for value in self.connections.values():
-                for bot in value["bots"].values():
+            for value in list(self.connections.values()):
+                for bot in list(value["bots"].values()):
                     if not bot.social["active"]:
                         continue
                     cur_time = time.time()
@@ -157,14 +158,14 @@ class Balancer(object):
             if c_msg.get("channel", None):
                 bots = [bots[c_msg["channel"][1:]]]
             else:
-                bots = bots.values()
+                bots = list(bots.values())
 
         for i in bots:
             try:
                 outbound_msg = i.process_message(c_msg)
                 if outbound_msg:
                     outbound.append({"channel": i.channel, "message": outbound_msg})
-            except Exception, e:
+            except Exception as e:
                 logging.exception(e)
                 logging.error(c_msg)
                 return
@@ -188,7 +189,7 @@ class Balancer(object):
         for i in helper_functions[c_msg["action"]]:
             try:
                 success, response = i(bot_obj, c_msg, self)
-            except Exception, e:
+            except Exception as e:
                 logging.exception(e)
                 continue
             if success and response and channel:

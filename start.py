@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 from itertools import chain
 import logging
@@ -28,7 +28,7 @@ def twitch_update_thread(balancer_obj):
     sleep_timer = 2
     while RUNNING:
         with balancer_obj.lock:
-            channels = [x["bots"].keys() for x in balancer_obj.connections.values()]
+            channels = [list(x["bots"].keys()) for x in list(balancer_obj.connections.values())]
         channels = list(chain.from_iterable(channels))
 
         success, response = GLOBAL_APIS["kraken"].get_streams(channels)
@@ -59,7 +59,7 @@ def listen_thread(config_obj, balancer_obj, server_obj):
         new_config = config_obj.fetch_one(retrieve_value)
         if retrieve_value:
             new_config = {"": new_config}
-        for i in new_config.values():
+        for i in list(new_config.values()):
             try:
                 balancer_obj.update_bot(i)
             except NewBotException:
@@ -103,7 +103,7 @@ def main():
 
     balancer_obj = balancer.Balancer()
     initial_configs = config_obj.initial_retrieve()
-    for k, v in initial_configs.iteritems():
+    for k, v in initial_configs.items():
         bot_inst = saltybot.SaltyBot(v)
         balancer_obj.add_bot(bot_inst)
 
@@ -118,10 +118,11 @@ def main():
     try:
         global RUNNING
         while RUNNING:
-            input("> ")
+            eval(input("> "))
     except KeyboardInterrupt:
-        print "Time to shut down!"
+        print("Time to shut down!")
         RUNNING = False
+
 
 if __name__ == "__main__":
     main()

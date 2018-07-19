@@ -1,10 +1,11 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 import re
 
 from modules.extensions import regexes
 
 HELP_TEXT = ['!createvote <loose/strict> "Poll Name" (options) (if) (strict)', "Create a new poll. Loose means any votes count, strict only can vote for supplied options. Format with quotes and parenthesis."]
+
 
 def call(salty_inst, c_msg, **kwargs):
     if not salty_inst.config["settings"]["voting_mods"]:
@@ -21,11 +22,11 @@ def call(salty_inst, c_msg, **kwargs):
         return False, "Please enter a name for the poll surronded by quotes."
 
     salty_inst.votes = {
-        "name" : poll_name,
-        "type" : poll_type,
-        "options" : {},
-        "casing" : {},
-        "voters" : {}
+        "name": poll_name,
+        "type": poll_type,
+        "options": {},
+        "casing": {},
+        "voters": {}
     }
 
     if poll_type == "strict":
@@ -47,6 +48,7 @@ def call(salty_inst, c_msg, **kwargs):
     else:
         salty_inst.votes.clear()
         return False, "Invalid poll type, only strict/loose accepted."
+
 
 def test(salty_inst, c_msg, **kwargs):
     assert True

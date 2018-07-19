@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 import json
 import os
@@ -89,14 +89,16 @@ def test_osu_regexes():
     assert regexes.OSU_URL.match("http://osu.ppy.sh/b/1121510")
     assert regexes.OSU_URL.match("osu.ppy.sh/b/1121510")
 
+
 def test_twitch_rate_limit():
     tirc = twitch_irc.TwitchIRC("test", "oauth:test")
-    assert False == tirc.rate_limited
+    assert False is tirc.rate_limited
     tirc.sent_messages = 30
-    assert True  == tirc.rate_limited
+    assert True is tirc.rate_limited
     tirc.last_reset = 0
     tirc.clear_limit()
-    assert False == tirc.rate_limited
+    assert False is tirc.rate_limited
+
 
 def test_commands():
     for v in saltybot.command_functions.values():

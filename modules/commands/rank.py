@@ -1,6 +1,7 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 HELP_TEXT = ["!rank <user?>", "Retrieve basic information about an osu user."]
+
 
 def call(salty_inst, c_msg, **kwargs):
     try:
@@ -23,6 +24,7 @@ def call(salty_inst, c_msg, **kwargs):
         "{:,}".format(int(response["pp_rank"]))
     )
     return True, msg
+
 
 def test(salty_inst, c_msg, **kwargs):
     assert True

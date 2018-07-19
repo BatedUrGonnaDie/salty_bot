@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 from modules.commands.helpers import get_category_string
 from modules.commands.helpers import get_category_title
@@ -6,6 +6,7 @@ from modules.commands.helpers import time_formatter
 from modules.commands.helpers import get_suffix
 
 HELP_TEXT = ["!pb <user?> <game shortcode?> <category?>", "Retrieve users pb for a game's category.  Will try to use game and title if stream is live, otherwise parameters are required."]
+
 
 def call(salty_inst, c_msg, **kwargs):
     msg_split = c_msg["message"].split(" ", 3)
@@ -65,6 +66,7 @@ def call(salty_inst, c_msg, **kwargs):
     )
 
     return True, msg
+
 
 def test(salty_inst, c_msg, **kwargs):
     assert True

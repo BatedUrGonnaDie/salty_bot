@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 import re
 
@@ -6,6 +6,7 @@ import modules.extensions.regexes as regexes
 import modules.commands.helpers.time_formatter as time_formatter
 
 ON_ACTION = "PRIVMSG"
+
 
 def call(salty_inst, c_msg, balancer, **kwargs):
     beatmaps = re.findall(regexes.OSU_URL, c_msg["message"])

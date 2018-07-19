@@ -5,3 +5,4 @@ blacklists/
 tests/.cache/
 venv/
 .cache/
+.pytest_cache/

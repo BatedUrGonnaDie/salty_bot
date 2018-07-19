@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3.7
 
 import json
 import logging
@@ -57,7 +57,7 @@ class DBConfig(object):
                 users_dict[i["user_id"]]["custom_commands"].append(i)
 
         channels_dict = {}
-        for v in users_dict.values():
+        for v in list(users_dict.values()):
             channels_dict[v["twitch_name"]] = v
 
         return channels_dict
@@ -89,7 +89,7 @@ class JSONConfig(object):
         with open(self.filename, "r") as fin:
             configurations = json.load(fin)
 
-        return {k: v for k, v in configurations.iteritems() if v["settings"]["active"]}
+        return {k: v for k, v in iter(configurations.items()) if v["settings"]["active"]}
 
     def fetch_one(self, *args):
         return self.initial_retrieve()
@@ -122,7 +122,7 @@ class ConfigServer(object):
             try:
                 connection, address = self.socket.accept()
                 secret = connection.recv(128)
-            except Exception, e:
+            except Exception as e:
                 logging.error("Error with connection in db_server")
                 logging.exception(e)
                 continue
