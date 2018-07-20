@@ -6,3 +6,4 @@ tests/.cache/
 venv/
 .cache/
 .pytest_cache/
+.mypy_cache/

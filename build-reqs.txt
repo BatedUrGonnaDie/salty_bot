@@ -1,5 +1,6 @@
 pytest
 vcrpy
+mypy
 isodate>=0.5.1
 pytz>=2015.2
 requests>=2.5.1

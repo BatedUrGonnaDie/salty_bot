@@ -6,12 +6,14 @@ import os
 import sys
 import threading
 import time
+from typing import Any, Callable, Dict, List
 
 from modules import twitch_irc
+from modules.saltybot import SaltyBot
 from modules.module_errors import DeactivatedBotException
 from modules.module_errors import NewBotException
 
-helper_functions = {
+helper_functions: Dict[str, List[Callable]] = {
     "PRIVMSG"         : [],
     "NOTICE"          : [],
     "USERSTATE"       : [],
@@ -28,7 +30,7 @@ helper_functions = {
 }
 
 
-def init_helpers():
+def init_helpers() -> None:
     for k in list(helper_functions.keys()):
         helper_functions[k] = []
     helper_filenames = []
@@ -43,7 +45,8 @@ def init_helpers():
         try:
             module = imp.load_source(imp_name, helper)
             sys.modules[imp_name] = module
-            helper_functions[module.ON_ACTION].append(module.call)
+            # mypy cannot infer module properties when dynamically loading apparently
+            helper_functions[module.ON_ACTION].append(module.call)  # type: ignore
         except Exception as e:
             print("Error importing {0}.".format(imp_name))
             print(e)
@@ -52,16 +55,16 @@ def init_helpers():
 init_helpers()
 
 
-class Balancer(object):
+class Balancer:
 
-    def __init__(self):
-        self.connections = {}
+    def __init__(self) -> None:
+        self.connections: Dict[str, Any] = {}
         self.social_thread = threading.Thread(target=self.social_message_send)
         self.social_thread.daemon = True
         self.social_thread.start()
         self.lock = threading.Semaphore()
 
-    def _create_connection(self, username, oauth):
+    def _create_connection(self, username: str, oauth: str) -> None:
         # Should only be called while the lock is acquired with fresh data
         # i.e. With the same lock as when you check that there is no connection
         logging.debug("Creating connection for {0}.".format(username))
@@ -72,7 +75,7 @@ class Balancer(object):
         self.connections[username] = {"thread": t_irc_thread, "irc_obj": t_irc, "bots": {}}
         t_irc_thread.start()
 
-    def _remove_connection(self, username):
+    def _remove_connection(self, username: str) -> None:
         # Should only be called while the lock is acquired with fresh data
         # i.e. With the same lock as when you check that there is no more bots on a connection
         logging.debug("Removing connection for {0}.".format(username))
@@ -80,7 +83,7 @@ class Balancer(object):
         self.connections[username]["irc_obj"].disconnect()
         del self.connections[username]
 
-    def add_bot(self, bot, lock=True):
+    def add_bot(self, bot: SaltyBot, lock=True) -> None:
         # This will overwrite any bot under the exact same name in the same channel
         # Up to implementer to check for conflictions
         # Lock should only be disabled if currently acquired from another source
@@ -95,7 +98,7 @@ class Balancer(object):
         if lock:
             self.lock.release()
 
-    def update_bot(self, new_config):
+    def update_bot(self, new_config: Dict[str, Any]) -> None:
         with self.lock:
             try:
                 self.connections[new_config["bot_nick"]]["bots"][new_config["twitch_name"]].update_config(new_config)
@@ -114,13 +117,13 @@ class Balancer(object):
             except DeactivatedBotException:
                 self.remove_bot(new_config["bot_nick"], new_config["twitch_name"], lock=False)
 
-    def update_twitch(self, new_info):
+    def update_twitch(self, new_info: Dict[str, Any]) -> None:
         with self.lock:
             for v in list(self.connections.values()):
                 for k2, v2 in v["bots"].items():
                     v2.update_twitch_info(new_info[k2])
 
-    def remove_bot(self, bot_name, channel_name, lock=True):
+    def remove_bot(self, bot_name: str, channel_name: str, lock=True) -> None:
         # Lock should only be disabled if currently acquired from another source
         logging.debug("Removing bot for {0}.".format(channel_name))
         if lock:
@@ -132,7 +135,7 @@ class Balancer(object):
         if lock:
             self.lock.release()
 
-    def social_message_send(self):
+    def social_message_send(self) -> None:
         while True:
             for value in list(self.connections.values()):
                 for bot in list(value["bots"].values()):
@@ -151,7 +154,7 @@ class Balancer(object):
                     bot.social["last_message"] = cur_messages
             time.sleep(15)
 
-    def process_incomming(self, c_msg):
+    def process_incomming(self, c_msg: Dict[str, Any]) -> None:
         outbound = []
         with self.lock:
             bots = self.connections[c_msg["bot_name"]]["bots"]
@@ -177,7 +180,7 @@ class Balancer(object):
 
         self.process_helpers(c_msg)
 
-    def process_helpers(self, c_msg):
+    def process_helpers(self, c_msg: Dict[str, Any]) -> None:
         channel = c_msg.get("channel", None)
         if channel:
             with self.lock:

@@ -1,6 +1,6 @@
 #! /usr/bin/env python3.7
 
-HELP_TEXT = []
+HELP_TEXT = ["!checkvote", "Check the current results of a live poll."]
 
 
 def call(salty_inst, c_msg, **kwargs):

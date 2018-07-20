@@ -6,6 +6,7 @@ import socket
 import ssl
 import threading
 import time
+from typing import Any, Dict, List, Set
 
 PASSTHROUGH_ACTIONS = (
     "PRIVMSG",
@@ -24,23 +25,30 @@ PASSTHROUGH_ACTIONS = (
 )
 
 
-class IRC(object):
+class IRC:
 
-    def __init__(self, host, port, username, oauth="", use_ssl=False, callback=None, max_worker_threads=5):
+    def __init__(self,
+                 host: str,
+                 port: str,
+                 username: str,
+                 oauth="",
+                 use_ssl=False,
+                 callback=None,
+                 max_worker_threads=5) -> None:
         self.host = host
         self.port = port
         self.use_ssl = use_ssl
         self.username = username
         self.oauth = oauth
-        self.socket = None
+        self.socket = socket.socket()
         self.connected = False
-        self.channels = set()
-        self.capabilities = set()
+        self.channels: Set[str] = set()
+        self.capabilities: Set[str] = set()
         self.continue_loop = True
         self.create()
         self.callback = callback
-        self.queue = queue.Queue()
-        self.queue_size = 0
+        self.msg_queue: queue.Queue = queue.Queue()
+        self.msg_queue_size = 0
         self.logger = logging.getLogger("IRC.IRC")
 
         self.worker_thread = threading.Thread(target=self.msg_worker)
@@ -51,19 +59,22 @@ class IRC(object):
         self.max_worker_threads = max_worker_threads
         self.tmp_threads = 0
 
-    def create(self):
+    def create(self) -> None:
         self.socket = socket.socket()
         self.socket.settimeout(600)
         if self.use_ssl:
             self.socket = ssl.wrap_socket(self.socket)
 
-    def connect(self):
+    def connect(self) -> None:
         sleep_time = 2
         while True:
             try:
                 self.socket.connect((self.host, self.port))
             except ValueError as e:
                 self.logger.error("Tried to connect to already connected socket!")
+                self.disconnect()
+                self.create()
+                continue
             except Exception as e:
                 self.logger.exception(e)
                 time.sleep(sleep_time)
@@ -81,66 +92,61 @@ class IRC(object):
                     time.sleep(.2)
             break
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         try:
             self.quit()
         except Exception:
             pass
         finally:
             self.socket.close()
-            self.socket = None
             self.connected = False
 
-    def reconnect(self):
+    def reconnect(self) -> None:
         self.disconnect()
         self.create()
         self.connect()
 
-    def raw(self, msg):
+    def raw(self, msg) -> None:
         self.socket.sendall("{0}\r\n".format(msg).encode("utf-8"))
 
-    def ping(self):
+    def ping(self) -> None:
         self.raw("PING")
 
-    def pong(self, host):
+    def pong(self, host: str) -> None:
         self.raw("PONG {0}".format(host))
 
-    def join(self, channel):
+    def join(self, channel: str) -> None:
         self.raw("JOIN #{0}".format(channel))
         self.channels.add(channel)
 
-    def part(self, channel):
+    def part(self, channel: str) -> None:
         self.raw("PART #{0}".format(channel))
         self.channels.remove(channel)
 
-    def quit(self):
+    def quit(self) -> None:
         self.raw("QUIT")
 
-    def capability(self, cap):
+    def capability(self, cap: str) -> None:
         self.raw("CAP REQ :{0}".format(cap))
 
-    def privmsg(self, channel, msg):
+    def privmsg(self, channel: str, msg: str) -> None:
         self.raw("PRIVMSG #{0} :{1}".format(channel, msg))
 
-    def pm(self, user, msg):
+    def pm(self, user: str, msg: str) -> None:
         self.raw("PRIVMSG {0} :{1}".format(user, msg))
 
-    def get_peer_ip(self):
+    def get_peer_ip(self) -> None:
         return self.socket.getpeername()[0]
 
-    def recv(self, amount):
+    def recv(self, amount: int) -> str:
         inc_msg = self.socket.recv(amount)
-        try:
-            return inc_msg.decode("utf-8")
-        except Exception as e:
-            self.logger.exception(e)
-            return inc_msg
+        return inc_msg.decode("utf-8")
 
     @staticmethod
-    def parse(msg):
+    def parse(msg: str) -> Dict[str, Any]:
         position = 0
         next_space = 0
-        c_msg = {
+        c_msg: Dict[str, Any] = {
             "raw": msg,
             "tags": {},
             "prefix": None,
@@ -200,8 +206,11 @@ class IRC(object):
         return c_msg
 
     @staticmethod
-    def process_tags(tags):
-        tags_dict = dict(item.split("=") for item in tags[1:].split(";"))
+    def process_tags(tags: str) -> Dict[str, str]:
+        tags_dict: Dict[str, str] = {}
+        for item in tags[1:].split(";"):
+            tmp = item.split("=")
+            tags_dict[tmp[0]] = tmp[1]
         escaped_dict = {}
         for k, v in tags_dict.items():
             new_k = k.replace("\\:", ";").replace("\\s", " ").replace("\\\\", "\\")
@@ -209,23 +218,23 @@ class IRC(object):
             escaped_dict[new_k] = new_v
         return escaped_dict
 
-    def msg_worker(self):
+    def msg_worker(self) -> None:
         while self.continue_loop:
-            if self.queue_size > 5 and self.max_worker_threads < self.tmp_threads:
+            if self.msg_queue_size > 5 and self.max_worker_threads < self.tmp_threads:
                 self.logger.info("Spawning worker thread.")
                 t = threading.Thread(target=self.tmp_msg_worker)
                 t.daemon = True
                 t.start()
                 self.tmp_threads += 1
             try:
-                self.callback(self.queue.get())
+                self.callback(self.msg_queue.get())
             except Exception as e:
                 self.logger.exception(e)
-            self.queue_size -= 1
-            self.queue.task_done()
+            self.msg_queue_size -= 1
+            self.msg_queue.task_done()
 
     @staticmethod
-    def extra_parse(msg):
+    def extra_parse(msg: str) -> Dict[str, Any]:
         c_msg = IRC.parse(msg)
         if c_msg["action"] in ("PRIVMSG", "NOTICE", "HOSTTARGET"):
             c_msg["message"] = c_msg["params"][1]
@@ -234,20 +243,20 @@ class IRC(object):
             c_msg["channel"] = c_msg["params"][0]
         return c_msg
 
-    def tmp_msg_worker(self):
+    def tmp_msg_worker(self) -> None:
         while True:
             try:
-                self.callback(self.queue.get(False))
-                self.queue_size -= 1
-                self.queue.task_done()
+                self.callback(self.msg_queue.get(False))
+                self.msg_queue_size -= 1
+                self.msg_queue.task_done()
             except queue.Empty:
                 break
         self.tmp_threads -= 1
         return
 
-    def main_loop(self):
+    def main_loop(self) -> None:
         msg_buffer = ""
-        lines = []
+        lines: List[str] = []
         while self.continue_loop:
             try:
                 tmp_buffer = self.recv(4096)
@@ -255,11 +264,6 @@ class IRC(object):
                 if self.continue_loop:
                     self.reconnect()
                 continue
-            except ssl.SSLError as e:
-                if e.message != "The read operation timed out":
-                    raise
-                if self.continue_loop:
-                    self.reconnect()
 
             self.timeout_count = 0
 
@@ -292,8 +296,8 @@ class IRC(object):
 
                 if self.callback:
                     if msg_parts["action"] in PASSTHROUGH_ACTIONS:
-                        self.queue.put(msg_parts)
-                        self.queue_size += 1
+                        self.msg_queue.put(msg_parts)
+                        self.msg_queue_size += 1
                 else:
                     raise ValueError("Callback should be defined before calling main_loop.")
             if lines[0] != "":

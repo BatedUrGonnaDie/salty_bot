@@ -52,19 +52,19 @@ class SaltyBot(object):
 
     def __init__(self, config):
         self.action_functions = {
-            "PRIVMSG"         : self.privmsg,
-            "NOTICE"          : self.notice,
-            "USERSTATE"       : self.userstate,
-            "GLOBALUSERSTATE" : self.globaluserstate,
-            "HOSTTARGET"      : self.hosttarget,
-            "CLEARCHAT"       : self.clearchat,
-            "JOIN"            : self.join,
-            "PART"            : self.part,
-            "MODE"            : self.mode,
-            "RECONNECT"       : self.reconnect,
-            "ROOMSTATE"       : self.roomstate,
-            "CAP"             : self.cap,
-            "USERNOTICE"      : self.usernotice
+            "PRIVMSG": self.privmsg,
+            "NOTICE": self.notice,
+            "USERSTATE": self.userstate,
+            "GLOBALUSERSTATE": self.globaluserstate,
+            "HOSTTARGET": self.hosttarget,
+            "CLEARCHAT": self.clearchat,
+            "JOIN": self.join,
+            "PART": self.part,
+            "MODE": self.mode,
+            "RECONNECT": self.reconnect,
+            "ROOMSTATE": self.roomstate,
+            "CAP": self.cap,
+            "USERNOTICE": self.usernotice
         }
         self.super_users = ast.literal_eval(os.environ["SALTY_SUPER_USERS"])
         self.super_users = [x.strip() for x in self.super_users]
