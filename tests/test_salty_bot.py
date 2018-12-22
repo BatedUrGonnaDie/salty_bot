@@ -24,13 +24,13 @@ SALTY_INST = saltybot.SaltyBot(config)
 
 
 def test_irc_message_parsing():
-    assert twitch_irc.TwitchIRC.extra_parse("@ban-reason=Follow\sthe\srules :tmi.twitch.tv CLEARCHAT #dallas :ronni") == {
+    assert twitch_irc.TwitchIRC.extra_parse("@ban-reason=Follow\\sthe\\srules :tmi.twitch.tv CLEARCHAT #dallas :ronni") == {
         "tags": {"ban-reason": "Follow the rules"},
         "action": "CLEARCHAT",
         "params": ["#dallas", "ronni"],
         "prefix": ":tmi.twitch.tv",
         "channel": "#dallas",
-        "raw": "@ban-reason=Follow\sthe\srules :tmi.twitch.tv CLEARCHAT #dallas :ronni"
+        "raw": "@ban-reason=Follow\\sthe\\srules :tmi.twitch.tv CLEARCHAT #dallas :ronni"
     }
 
 
