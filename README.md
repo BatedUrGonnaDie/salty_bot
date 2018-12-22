@@ -50,9 +50,6 @@ by the poll creator.
 
 `!uptime` will display how long the current stream has been live for.
 
-`!highlight` will add a timestamp and optional message to a list, and when be shown when the broadcaster uses the
-`!show_highlight` command.
-
 You can now make custom commands.  They must be one word commands and only have static text output.  You may also use
 wildcards.  `$sender` and `$param` can be used and replaced with who sent the message and the first word after the
 command respectively.

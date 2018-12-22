@@ -30,8 +30,8 @@ def call(salty_inst, c_msg, balancer, **kwargs):
     for i in response["items"]:
         final_list.append("[{0}] {1} uploaded by {2}. Views: {3}".format(
             time_formatter.format_time(isodate.parse_duration(i["contentDetails"]["duration"]).seconds),
-            i["snippet"]["title"].encode("utf-8"),
-            i["snippet"]["channelTitle"].encode("utf-8"),
+            i["snippet"]["title"],
+            i["snippet"]["channelTitle"],
             i["statistics"]["viewCount"]
         ))
     return True, " | ".join(final_list)

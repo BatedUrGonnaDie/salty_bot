@@ -29,7 +29,7 @@ class IRC:
 
     def __init__(self,
                  host: str,
-                 port: str,
+                 port: int,
                  username: str,
                  oauth="",
                  use_ssl=False,

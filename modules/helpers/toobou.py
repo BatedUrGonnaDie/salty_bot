@@ -16,4 +16,4 @@ def call(salty_inst, c_msg, balancer, **kwargs):
     msg = salty_inst.toobou["output"]
     msg = msg.replace("$sender", c_msg["sender"])
     salty_inst.toobou["last"] = time.time()
-    return True, msg.encode("utf-8")
+    return True, msg
