@@ -31,11 +31,11 @@ def call(salty_inst, c_msg, **kwargs):
         return False, \
             "Error retrieving pbs from speedrun.com ({0}).".format(response.status_code)
 
-    found_categories = []
+    found_categories = {}
     matching_games = []
     for i in response["data"]:
         if game == i["game"]["data"]["abbreviation"] or game == i["game"]["data"]["names"]["international"].lower():
-            found_categories.append(i["category"]["data"]["name"])
+            found_categories[i["category"]["data"]["name"]] = i["category"]["data"]["id"]
             matching_games.append(i)
             break
     else:
@@ -53,6 +53,9 @@ def call(salty_inst, c_msg, **kwargs):
     for i in matching_games:
         if i["category"]["data"]["name"] == cat_response:
             pb_record = i
+            break
+    else:
+        return False, "Error finding PB record."
 
     pb_time = time_formatter.format_time(i["run"]["times"]["primary_t"])
     place = "{0}{1}".format(str(pb_record["place"]), get_suffix.suffix(pb_record["place"]))
