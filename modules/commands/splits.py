@@ -36,9 +36,9 @@ def call(salty_inst, c_msg, **kwargs):
     for i in response["pbs"]:
         if not i["game"]:
             continue
-        if (i["game"]["name"] or "").lower() == game:
+        if (i["game"]["name"] or "").lower() == game.lower():
             game_pbs.append(i)
-        if (i["game"]["shortname"] or "").lower() == game:
+        if (i["game"]["shortname"] or "").lower() == game.lower():
             game_pbs.append(i)
     game_categories = {x["category"]["name"]: x["category"]["name"] for x in game_pbs if x["category"]}
 
