@@ -35,7 +35,7 @@ def call(salty_inst, c_msg, **kwargs):
     matching_games = []
     for i in response["data"]:
         if game == i["game"]["data"]["abbreviation"] or game == i["game"]["data"]["names"]["international"].lower():
-            found_categories.append(i["cateory"]["data"]["name"])
+            found_categories.append(i["category"]["data"]["name"])
             matching_games.append(i)
             break
     else:
