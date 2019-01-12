@@ -281,6 +281,18 @@ class SaltyBot(object):
             if self.commands[command]["custom"]:
                 success, response = True, self.commands[command]["output"]
             else:
+                # Update game and title for commands that need them if they are blank
+                # This will only run once for each bot once it receives a command if the user has never gone live
+                if not self.game or not self.title:
+                    success, response = self.twitch_api.get_channel(self.channel)
+                    if success:
+                        self.update_twitch_info({
+                            "game": response["game"],
+                            "title": response["status"],
+                            "stream_start": "",
+                            "is_live": False
+                        })
+
                 success, response = self.commands[command]["function"](self, c_msg)
         except Exception as e:
             logging.error("{0} triggered an error.".format(command))
