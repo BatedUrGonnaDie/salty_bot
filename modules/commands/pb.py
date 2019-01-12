@@ -17,7 +17,7 @@ def call(salty_inst, c_msg, **kwargs):
     except IndexError:
         user_name = salty_inst.speedruncom_nick
     try:
-        game = msg_split[2].lower()
+        game = msg_split[2]
     except IndexError:
         game = salty_inst.game
     try:

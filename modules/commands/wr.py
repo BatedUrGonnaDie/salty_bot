@@ -14,7 +14,7 @@ def call(salty_inst, c_msg, **kwargs):
     search_game = True
 
     try:
-        game = msg_split[1].lower()
+        game = msg_split[1]
         search_game = False
     except IndexError:
         game = salty_inst.game
@@ -25,29 +25,29 @@ def call(salty_inst, c_msg, **kwargs):
         category = salty_inst.title
 
     if search_game:
-        success, response = salty_inst.sr_com_api.get_games({"name" : game}, embeds=["categories"])
+        success, response = salty_inst.sr_com_api.get_games({"name": game}, embeds=["categories"])
         if not success:
             return False, \
                 "Error retrieving games from speedrun.com ({0}).".format(response.status_code)
 
         for i in response["data"]:
             if i["names"]["international"] == game:
-                found_categories = {x["name"] : x["id"] for x in i["categories"]["data"] if x["type"] == "per-game"}
+                found_categories = {x["name"]: x["id"] for x in i["categories"]["data"] if x["type"] == "per-game"}
                 game_id = i["id"]
                 break
         else:
             return False, "No game found for: {0}.".format(game)
     else:
-        success, response = salty_inst.sr_com_api.get_games({"abbreviation":game}, embeds=["categories"])
+        success, response = salty_inst.sr_com_api.get_games({"abbreviation": game}, embeds=["categories"])
         if not success:
             try:
                 decode = response.json()
             except ValueError:
-                decode = {"message": "Game {0} could not be found".format(game), "status" : 404}
+                decode = {"message": "Game {0} could not be found".format(game), "status": 404}
             return False, "{0} ({1})".format(decode["message"], decode["status"])
 
         try:
-            found_categories = {x["name"] : x["id"] for x in response["data"][0]["categories"]["data"] if x["type"] == "per-game"}
+            found_categories = {x["name"]: x["id"] for x in response["data"][0]["categories"]["data"] if x["type"] == "per-game"}
             game_id = response["data"][0]["id"]
         except IndexError:
             return False, "No game found for: {0}.".format(game)
@@ -60,13 +60,13 @@ def call(salty_inst, c_msg, **kwargs):
     cat_success, cat_response = category_finder(found_categories, category)
 
     if not cat_success:
-        return False, cat_response
+        cat_response = list(found_categories)[0]
 
     success, response = salty_inst.sr_com_api.get_leaderboards(
         game_id,
         found_categories[cat_response],
         embeds=["game", "players"],
-        params={"top" : 1},
+        params={"top": 1},
         **kwargs
     )
     if not success:
