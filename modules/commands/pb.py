@@ -34,11 +34,14 @@ def call(salty_inst, c_msg, **kwargs):
     found_categories = {}
     matching_games = []
     for i in response["data"]:
-        if game == i["game"]["data"]["abbreviation"] or game == i["game"]["data"]["names"]["international"].lower():
+        if game == i["game"]["data"]["abbreviation"] or game == i["game"]["data"]["names"]["international"].lower() or game == i["game"]["data"]["names"]["twitch"]:
+            if not i["category"]["data"]["type"] == "per-game":
+                continue
             found_categories[i["category"]["data"]["name"]] = i["category"]["data"]["id"]
             matching_games.append(i)
-            break
-    else:
+            continue
+
+    if not found_categories:
         return False, "Could not find a pb for {0}.".format(game)
 
     if infer_category:
