@@ -260,9 +260,13 @@ class IRC:
         while self.continue_loop:
             try:
                 tmp_buffer = self.recv(4096)
-            except socket.timeout as e:
+            except socket.timeout:
                 if self.continue_loop:
                     self.reconnect()
+                continue
+            except Exception as e:
+                # Assume connection is trashed
+                self.reconnect()
                 continue
 
             self.timeout_count = 0
