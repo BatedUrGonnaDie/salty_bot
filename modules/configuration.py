@@ -121,7 +121,7 @@ class ConfigServer(object):
             self.socket.listen(1)
             try:
                 connection, address = self.socket.accept()
-                secret = connection.recv(128)
+                secret = connection.recv(128).decode('utf-8')
             except Exception as e:
                 logging.error("Error with connection in db_server")
                 logging.exception(e)
