@@ -31,9 +31,10 @@ def twitch_update_thread(balancer_obj):
     sleep_timer = 2
     while RUNNING:
         with balancer_obj.lock:
-            channels = list(balancer_obj.bot_lookup.values())
+            ids = list(balancer_obj.bot_lookup.values())
+            channels = list(balancer_obj.bot_lookup.keys())
 
-        success, response = GLOBAL_APIS["kraken"].get_streams(channels)
+        success, response = GLOBAL_APIS["kraken"].get_streams(ids)
         if not success:
             time.sleep(sleep_timer)
             sleep_timer = sleep_timer ** 2
