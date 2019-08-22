@@ -40,7 +40,7 @@ class Kraken(api.API):
 
     def get_streams(self, channels, **kwargs):
         # Pass an array of channel you would like to retrieve stream objects for
-        endpoint = "/streams?channel={0}".format(','.join(channels))
+        endpoint = "/streams?channel={0}".format(','.join(str(x) for x in channels))
         success, response = self.get(endpoint, **kwargs)
         return success, response
 
