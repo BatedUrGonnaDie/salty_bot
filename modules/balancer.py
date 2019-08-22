@@ -59,6 +59,7 @@ class Balancer:
 
     def __init__(self) -> None:
         self.connections: Dict[str, Any] = {}
+        self.bot_lookup = {}
         self.social_thread = threading.Thread(target=self.social_message_send)
         self.social_thread.daemon = True
         self.social_thread.start()
@@ -95,6 +96,7 @@ class Balancer:
 
         self.connections[bot.bot_nick]["bots"][bot.channel] = bot
         self.connections[bot.bot_nick]["irc_obj"].join(bot.channel)
+        self.bot_lookup[bot.channel] = bot.twitch_id
         if lock:
             self.lock.release()
 
@@ -130,6 +132,7 @@ class Balancer:
             self.lock.acquire()
         self.connections[bot_name]["irc_obj"].part(channel_name)
         del self.connections[bot_name]["bots"][channel_name]
+        del self.bot_lookup[bot_name]
         if not self.connections[bot_name]["bots"]:
             self._remove_connection(bot_name)
         if lock:

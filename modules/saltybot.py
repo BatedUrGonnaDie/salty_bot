@@ -92,6 +92,7 @@ class SaltyBot(object):
             self.bot_nick = os.environ["DEFAULT_BOT_NICK"]
             self.bot_oauth = os.environ["DEFAULT_BOT_OAUTH"]
         self.channel = config["twitch_name"]
+        self.twitch_id = config["twitch_id"]
 
         if config["speedruncom_nick"]:
             self.speedruncom_nick = config["speedruncom_nick"].lower()
@@ -284,7 +285,7 @@ class SaltyBot(object):
                 # Update game and title for commands that need them if they are blank
                 # This will only run once for each bot once it receives a command if the user has never gone live
                 if not self.game or not self.title:
-                    success, response = self.twitch_api.get_channel(self.channel)
+                    success, response = self.twitch_api.get_channel(self.twitch_id)
                     if success:
                         self.update_twitch_info({
                             "game": response["game"],

@@ -23,13 +23,15 @@ RUNNING = True
 # All apis use the environment keys for the required access
 GLOBAL_APIS = {}
 
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
 
 def twitch_update_thread(balancer_obj):
     sleep_timer = 2
     while RUNNING:
         with balancer_obj.lock:
-            channels = [list(x["bots"].keys()) for x in list(balancer_obj.connections.values())]
-        channels = list(chain.from_iterable(channels))
+            channels = list(balancer.bot_lookup.values())
 
         success, response = GLOBAL_APIS["kraken"].get_streams(channels)
         if not success:

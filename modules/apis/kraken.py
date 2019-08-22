@@ -14,7 +14,7 @@ class Kraken(api.API):
         super(Kraken, self).__init__("https://api.twitch.tv/kraken", headers=headers, cookies=cookies)
         self.oauth = oauth
         self.headers["Client-ID"] = client_id or os.environ["SALTY_TWITCH_CLIENT_ID"]
-        self.headers["Accept"] = "application/vnd.twitchtv.v3+json"
+        self.headers["Accept"] = "application/vnd.twitchtv.v5+json"
 
     @property
     def oauth(self):
