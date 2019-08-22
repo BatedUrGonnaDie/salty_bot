@@ -31,7 +31,7 @@ def twitch_update_thread(balancer_obj):
     sleep_timer = 2
     while RUNNING:
         with balancer_obj.lock:
-            channels = list(balancer.bot_lookup.values())
+            channels = list(balancer_obj.bot_lookup.values())
 
         success, response = GLOBAL_APIS["kraken"].get_streams(channels)
         if not success:
