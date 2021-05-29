@@ -9,7 +9,9 @@ def call(salty_inst, c_msg, **kwargs):
         return False, \
             "Error retrieving data from LoN ({0}).".format(response.status_code)
 
-    return True, response["song"]
+    response_string = f"Map: {response['mapName']} | DL: https://osu.ppy.sh/beatmapsets/{response['setId']}#osu/{response['mapId']} "
+
+    return True, response_string
 
 
 def test(salty_inst, c_msg, **kwargs):

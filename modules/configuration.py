@@ -118,7 +118,7 @@ class ConfigServer(object):
 
     def db_server(self):
         while True:
-            self.socket.listen(1)
+            self.socket.listen()
             try:
                 connection, address = self.socket.accept()
                 secret = connection.recv(128).decode('utf-8')
