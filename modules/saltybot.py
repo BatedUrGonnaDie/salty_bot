@@ -111,8 +111,6 @@ class SaltyBot(object):
         with open(self.blacklist_file, "a+") as fin:
             self.blacklist = [x.strip() for x in fin.readlines()]
 
-        self.votes = {}
-
         self.commands = {}
         self.setup_commands(config)
         self.social = {}
@@ -183,41 +181,6 @@ class SaltyBot(object):
                     "output": i["output"],
                     "help_text": [command, i["help_text"]]
                 }
-
-        self.votes = {}
-        if config["settings"]["voting_active"]:
-            self.commands["!createvote"] = {
-                "custom": False,
-                "last": 0,
-                "limit": 0,
-                "mod_req": True,
-                "function": command_functions["!createvote"].call,
-                "help_text": command_functions["!createvote"].HELP_TEXT
-            }
-            self.commands["!vote"] = {
-                "custom": False,
-                "last": 0,
-                "limit": 0,
-                "mod_req": False,
-                "function": command_functions["!vote"].call,
-                "help_text": command_functions["!vote"].HELP_TEXT
-            }
-            self.commands["!checkvote"] = {
-                "custom": False,
-                "last": 0,
-                "limit": 15,
-                "mod_req": False,
-                "function": command_functions["!checkvote"].call,
-                "help_text": command_functions["!checkvote"].HELP_TEXT
-            }
-            self.commands["!endvote"] = {
-                "custom": False,
-                "last": 0,
-                "limit": 0,
-                "mod_req": True,
-                "function": command_functions["!endvote"].call,
-                "help_text": command_functions["!endvote"].HELP_TEXT
-            }
 
     def update_config(self, new_config):
         if self.config["settings"]["active"] and not new_config["settings"]["active"]:
