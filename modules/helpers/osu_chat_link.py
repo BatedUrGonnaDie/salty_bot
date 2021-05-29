@@ -12,7 +12,7 @@ def call(salty_inst, c_msg, balancer, **kwargs):
     beatmaps = re.findall(regexes.OSU_URL, c_msg["message"])
     final_list = []
     for i in beatmaps:
-        success, response = salty_inst.osu_api.get_beatmap("{0}={1}".format(i[0], i[1]), **kwargs)
+        success, response = salty_inst.osu_api.get_beatmap("s={0}&b={1}".format(i[0], i[1]), **kwargs)
         if not success:
             continue
         final_list.append("[{0}] {1} - {2}, mapped by {3} ({4} stars)".format(
