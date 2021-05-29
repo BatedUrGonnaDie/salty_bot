@@ -4,7 +4,7 @@ import json
 import os
 
 import pytest
-import vcr
+#  import vcr
 
 from modules import twitch_irc
 from modules import saltybot
@@ -82,12 +82,10 @@ def test_get_suffix():
 
 
 def test_osu_regexes():
-    assert regexes.OSU_URL.match("https://osu.ppy.sh/s/528824")
-    assert regexes.OSU_URL.match("http://osu.ppy.sh/s/528824")
-    assert regexes.OSU_URL.match("osu.ppy.sh/s/528824")
-    assert regexes.OSU_URL.match("https://osu.ppy.sh/b/1121510")
-    assert regexes.OSU_URL.match("http://osu.ppy.sh/b/1121510")
-    assert regexes.OSU_URL.match("osu.ppy.sh/b/1121510")
+    assert regexes.OSU_URL.match("https://osu.ppy.sh/beatmapsets/1057773#mania/2295136")
+    assert regexes.OSU_URL.match("https://osu.ppy.sh/beatmapsets/1464050#osu/3007225")
+    assert regexes.OSU_URL.match("http://osu.ppy.sh/beatmapsets/1306370#taiko/2747971")
+    assert regexes.OSU_URL.match("osu.ppy.sh/beatmapsets/1326266#taiko/2917591")
 
 
 def test_twitch_rate_limit():
