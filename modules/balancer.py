@@ -138,6 +138,11 @@ class Balancer:
         if lock:
             self.lock.release()
 
+    def shutdown(self):
+        with self.lock:
+            for k, v in self.connections.items():
+                v["irc_obj"].disconnect()
+
     def social_message_send(self) -> None:
         while True:
             for value in list(self.connections.values()):

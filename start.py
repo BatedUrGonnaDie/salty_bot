@@ -125,6 +125,7 @@ def main():
     except KeyboardInterrupt:
         print("Time to shut down!")
         RUNNING = False
+        balancer_obj.shutdown()
 
 
 if __name__ == "__main__":

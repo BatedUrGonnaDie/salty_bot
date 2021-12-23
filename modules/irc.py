@@ -100,6 +100,7 @@ class IRC:
         finally:
             self.socket.close()
             self.connected = False
+            self.continue_loop = False
 
     def reconnect(self) -> None:
         self.disconnect()
@@ -266,7 +267,8 @@ class IRC:
                 continue
             except Exception as e:
                 # Assume connection is trashed
-                self.reconnect()
+                if self.continue_loop:
+                    self.reconnect()
                 continue
 
             self.timeout_count = 0
