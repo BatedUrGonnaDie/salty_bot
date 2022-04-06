@@ -41,12 +41,12 @@ def twitch_update_thread(balancer_obj):
             continue
         new_info = {x: {"game": "", "title": "", "stream_start": "", "is_live": False} for x in channels}
         try:
-            for i in response["streams"]:
-                new_info[i["channel"]["name"]] = {
-                    "game": i["channel"]["game"],
-                    "title": i["channel"]["status"],
+            for i in response["data"]:
+                new_info[i["user_login"]] = {
+                    "game": i["game_name"],
+                    "title": i["title"],
                     "is_live": True,
-                    "stream_start": i["created_at"]
+                    "stream_start": i["started_at"]
                 }
             balancer_obj.update_twitch(new_info)
         except TypeError:
@@ -83,7 +83,6 @@ def main():
     salty_environment = setup_env.set_environment_variables()
 
     GLOBAL_APIS["kraken"] = kraken.Kraken()
-    GLOBAL_APIS["kraken"].headers["User-Agent"] = "SaltyBot"
     GLOBAL_APIS["newbs"] = newbs.NewbsAPI()
     GLOBAL_APIS["osu"] = osu.OsuAPI()
     GLOBAL_APIS["splits_io"] = splits_io.SplitsIOAPI()

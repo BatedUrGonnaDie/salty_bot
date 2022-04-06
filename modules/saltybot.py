@@ -71,7 +71,7 @@ class SaltyBot(object):
 
         self.config = config
 
-        self.twitch_api = kraken.Kraken(headers={"User-Agent": "SaltyBot"})
+        self.twitch_api = kraken.Kraken()
         self.osu_api = osu.OsuAPI()
         self.newbs_api = newbs.NewbsAPI(cookies={"session": config["session"]})
         self.srl_api = srl.SRLAPI()
@@ -248,11 +248,11 @@ class SaltyBot(object):
                 # Update game and title for commands that need them if they are blank
                 # This will only run once for each bot once it receives a command if the user has never gone live
                 if not self.game or not self.title:
-                    success, response = self.twitch_api.get_channel(self.twitch_id)
+                    success, response = self.twitch_api.get_channels(self.twitch_id)
                     if success:
                         self.update_twitch_info({
-                            "game": response["game"],
-                            "title": response["status"],
+                            "game": response["data"][0]["game_name"],
+                            "title": response["data"][0]["title"],
                             "stream_start": "",
                             "is_live": False
                         })
