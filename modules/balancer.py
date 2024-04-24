@@ -68,7 +68,7 @@ class Balancer:
     def _create_connection(self, username: str, oauth: str) -> None:
         # Should only be called while the lock is acquired with fresh data
         # i.e. With the same lock as when you check that there is no connection
-        logging.debug("Creating connection for {0}.".format(username))
+        logging.info("Creating connection for {0}.".format(username))
         t_irc = twitch_irc.TwitchIRC(username, oauth, callback=self.process_incomming)
         t_irc.connect()
         t_irc_thread = threading.Thread(target=t_irc.main_loop)
@@ -79,7 +79,7 @@ class Balancer:
     def _remove_connection(self, username: str) -> None:
         # Should only be called while the lock is acquired with fresh data
         # i.e. With the same lock as when you check that there is no more bots on a connection
-        logging.debug("Removing connection for {0}.".format(username))
+        logging.info("Removing connection for {0}.".format(username))
         self.connections[username]["irc_obj"].continue_loop = False
         self.connections[username]["irc_obj"].disconnect()
         del self.connections[username]
@@ -88,7 +88,7 @@ class Balancer:
         # This will overwrite any bot under the exact same name in the same channel
         # Up to implementer to check for conflictions
         # Lock should only be disabled if currently acquired from another source
-        logging.debug("Adding bot for {0}.".format(bot.channel))
+        logging.info("Adding bot for {0}.".format(bot.channel))
         if lock:
             self.lock.acquire()
         if not self.connections.get(bot.bot_nick, None):
@@ -104,7 +104,7 @@ class Balancer:
         with self.lock:
             try:
                 self.connections[new_config["bot_nick"]]["bots"][new_config["twitch_name"]].update_config(new_config)
-                logging.debug("Updated bot for {0}.".format(new_config["twitch_name"]))
+                logging.info("Updated bot for {0}.".format(new_config["twitch_name"]))
             except KeyError:
                 # Tells the main thread/listener to create a fresh bot
                 # First it checks to make sure a bot under a different name isn't still in the channel
@@ -127,7 +127,7 @@ class Balancer:
 
     def remove_bot(self, bot_name: str, channel_name: str, lock=True) -> None:
         # Lock should only be disabled if currently acquired from another source
-        logging.debug("Removing bot for {0}.".format(channel_name))
+        logging.info("Removing bot for {0}.".format(channel_name))
         if lock:
             self.lock.acquire()
         self.connections[bot_name]["irc_obj"].part(channel_name)

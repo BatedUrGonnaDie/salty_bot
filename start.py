@@ -74,7 +74,7 @@ def main():
     logging.basicConfig(
         filename="debug.log",
         filemode="w",
-        level=logging.DEBUG,
+        level=logging.INFO,
         format="[%(levelname)s %(asctime)s] %(message)s",
         datefmt="%m-%d %H:%M:%S"
     )
